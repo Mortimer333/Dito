@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>Joints</title>
+  </head>
+  <body>
+    <hello-world>
+
+      Hello {planet}
+
+    </hello-world>
+    <script src='./snugssi.min.js'></script>
+    <script type="text/javascript">
+      Element `hello-world`
+      (class extends HTMLElement {
+
+      get planet () // used for {planet} token
+        // "✨ automagic" token binding
+        { return 'world 🌎' }
+      })
+    </script>
+  </body>
+</html>

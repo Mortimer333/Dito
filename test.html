@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>Joint test</title>
+  </head>
+  <body>
+    <hello-world></hello-world>
+    <script type="module">
+      import { Joints } from "./main.js";
+      const container = new Joints({
+        url: 'http://joints.local/components/'
+      });
+      container.newJoint('hello-world', 1, true);
+      container.load();
+    </script>
+  </body>
+</html>
