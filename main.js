@@ -19,6 +19,7 @@ class Joints {
     this.params = settings.headers || this.params;
     this.styleNode = document.createElement('style');
     document.head.appendChild(this.styleNode);
+    this.detectCSPRestriction();
   }
 
   newJoint(name, version = 1, force = false) {
@@ -29,7 +30,6 @@ class Joints {
     let skip = false;
     if (!force && localStorage.getItem(name)) {
       const comp = JSON.parse(localStorage.getItem(name));
-      console.log("Local version found", comp);
       if (comp._version == version) {
         skip = true;
       }
@@ -149,9 +149,8 @@ class Joints {
   }
 
   renderComponent(component, node) {
-    console.log(component.js.constructor);
     if (!customElements.get(component.name)) {
-      customElements.define(component.name, component.js)
+      customElements.define(component.name, component.js);
     }
 
     node.insertBefore(component.html.cloneNode(true), node.childNodes[0]);
@@ -227,7 +226,7 @@ class Joints {
     } catch (e) {
       if (e.toString().match(/unsafe-eval|CSP/)) {
         console.error(
-          'It seems you are using the standalone build of Vue.js in an ' +
+          'It seems you are using the Joints in an ' +
           'environment with Content Security Policy that prohibits unsafe-eval. ' +
           'The template compiler cannot work in this environment. Consider ' +
           'relaxing the policy to allow unsafe-eval or pre-compiling your ' +
