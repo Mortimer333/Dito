@@ -6,6 +6,7 @@ class Joints {
   components = {};
   registered = [];
   SKIP = '_skip';
+  styleNode;
 
   constructor(settings = {}) {
     this.url = settings.url || window.location.origin;
@@ -16,12 +17,25 @@ class Joints {
     this.filename = settings.filename || this.filename;
     this.headers = settings.headers || this.headers;
     this.params = settings.headers || this.params;
+    this.styleNode = document.createElement('style');
+    document.head.appendChild(this.styleNode);
   }
 
   newJoint(name, version = 1, force = false) {
     let skip = false;
     if (!force && localStorage.getItem(name)) {
-      skip = true;
+      const comp = JSON.parse(localStorage.getItem(name));
+      console.log("Local version found", comp);
+      if (comp._version == version) {
+        skip = true;
+      }
+    }
+
+    this.components[name] = {js: null, html: null, css: null, cssInjected: false};
+
+    // If it's not force and there is currently no instance of this component on site don't retrieve it
+    if (!force && !document.querySelector(name)) {
+      return;
     }
 
     const path = this.url + name + '/' + this.filename + '.';
@@ -35,23 +49,25 @@ class Joints {
   }
 
   load() {
+    const skipSize = 3;
     Promise.all(this.registered).then(async (values) => {
       for (var i = 0; i < values.length; i++) {
-        const component = values[i];
-        if (typeof component != 'string') {
-          console.error('The name of component loaded as #' + (i/4 + 1) + ' wasn\'t found. Skipping...');
-          i += 4;
+        if (typeof values[i] != 'string') {
+          console.error('The name of component loaded as #' + ((i/4) + 1) + ' wasn\'t found. Skipping...');
+          i += skipSize;
           continue;
         }
+        const compAndVer = (values[i].split('_'));
+        const version = compAndVer[compAndVer.length - 1];
+        const component = compAndVer.slice(0, -1).join('_');
 
         let html = values[i + 1];
         let js   = values[i + 2];
         let css  = values[i + 3];
-        if (!this.validateFiles({html, js, css})) {
-          i += 4;
+        if (!await this.validateFiles(component, {html, css})) {
+          i += skipSize;
           continue;
         }
-
 
         const localComponent = JSON.parse(localStorage.getItem(component) || 'false');
         if ((html === this.SKIP || css === this.SKIP) && !localComponent) {
@@ -59,46 +75,126 @@ class Joints {
             'The component `' + component + '` was marked as already loaded once but' +
             ' he is missing from localStorage. Skipping...'
           );
-          i += 4;
+          i += skipSize;
           continue;
         }
 
+        let skipped = false;
         if (html === this.SKIP) {
+          skipped = true;
           html = localComponent.html;
         } else {
           html = await html.text();
         }
 
         if (css === this.SKIP) {
-          html = localComponent.css;
+          skipped = true;
+          css = localComponent.css;
         } else {
           css = await css.text();
         }
 
-        localStorage.setItem(component, JSON.stringify({ html, css, }));
+        localStorage.setItem(component, JSON.stringify({ html, css, _version: version }));
 
         const range = document.createRange();
         range.selectNodeContents(document.createElement('div')); // fix for safari
-        html = range.createContextualFragment('<style>' + css + '</style>' + html);
+        // @TODO Later move styles to shadow dom
+        html = range.createContextualFragment(html);
+        if (html.querySelector(component)) {
+          console.error(
+            "Script detected direct recursive use of components in `" + component + "`. " +
+            "Components' additional call won't be rendered to avoid inifnite loop."
+          );
+        }
 
         ({ default: js } = js);
-        this.components.component = {js, html, css};
-        i += 4;
+
+        this.components[component] = {name: component, js, html, css, cssInjected: false, _skipped: skipped };
+        i += skipSize;
       }
+
+      this.renderComponents(document);
       console.log(this.components);
     });
   }
 
-  validateFiles(compFiles) {
+  renderComponents(parent, skip = {}) {
+    Object.keys(this.components).forEach(function(tagName) {
+      if (skip[tagName]) {
+        return;
+      }
+
+      const tags = parent.querySelectorAll(tagName);
+      tags.forEach(function(tag) {
+        // Skip already rendered tags
+        if (tag._rendered) {
+          return;
+        }
+
+        this.renderComponent(this.components[tagName], tag);
+
+        // We skip tag if it was already rendered as parent to avoid infite loop
+        let newSkip = Object.assign({}, skip, {[tagName] : true});
+        this.renderComponents(tag, newSkip);
+      }.bind(this));
+
+      if (tags.length > 0) {
+        this.insertCss(this.components[tagName]);
+      }
+    }.bind(this));
+  }
+
+  renderComponent(component, node) {
+    node.insertBefore(component.html.cloneNode(true), node.childNodes[0]);
+    node._rendered = true;
+  }
+
+  async insertCss(component) {
+    if (component.cssInjected) {
+      return;
+    }
+
+    const sheet = this.styleNode.sheet;
+
+    if (component._skipped) {
+      component.css.forEach(rule => {
+        sheet.insertRule(rule);
+      });
+      component.cssInjected = true;
+      return;
+    }
+
+    const stylesheet = new CSSStyleSheet();
+    await stylesheet.replace(component.css).catch((err) => {
+      throw new Error('Failed to replace styles in `' + component.name + '`:', err);
+    });
+
+    const styles = [];
+    Object.values(stylesheet.cssRules).forEach(rule => {
+      styles.push(component.name + ' ' + rule.cssText);
+      sheet.insertRule(component.name + ' ' + rule.cssText);
+    });
+    component.css = styles;
+
+    // Update css with compiled one
+    const saved = JSON.parse(localStorage.getItem(component.name));
+    saved.css = component.css;
+    localStorage.setItem(component.name, JSON.stringify(saved));
+
+    component.cssInjected = true;
+  }
+
+  async validateFiles(component, compFiles) {
     const fileKeys = Object.keys(compFiles);
     for (var j = 0; j < fileKeys.length; j++) {
       const key = fileKeys[j];
       const file = compFiles[key];
 
-      if (typeof file == 'string' && file !== this.SKIP) {
-        console.log(
+      if (!file.ok && file !== this.SKIP) {
+        const error = await file.text();
+        console.error(
           key.toUpperCase() + " of component `" + component
-          + "` returned an error: " + file + '. Skipping...'
+          + "` returned an error: " + error + '. Skipping...'
         );
         return false;
       }
@@ -112,6 +208,26 @@ class Joints {
       method: 'GET',
       headers: this.headers,
     });
+  }
+
+  // From Vue
+  detectCSPRestriction() {
+    // detect possible CSP restriction
+    try {
+      new Function('return 1');
+      return true;
+    } catch (e) {
+      if (e.toString().match(/unsafe-eval|CSP/)) {
+        console.error(
+          'It seems you are using the standalone build of Vue.js in an ' +
+          'environment with Content Security Policy that prohibits unsafe-eval. ' +
+          'The template compiler cannot work in this environment. Consider ' +
+          'relaxing the policy to allow unsafe-eval or pre-compiling your ' +
+          'templates into render functions.'
+        );
+      }
+      return false;
+    }
   }
 }
 export { Joints };

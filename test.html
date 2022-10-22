@@ -5,13 +5,17 @@
     <title>Joint test</title>
   </head>
   <body>
-    <hello-world></hello-world>
+    <hello-world>
+      <h1>Heyo</h1>
+    </hello-world>
+    <second></second>
     <script type="module">
       import { Joints } from "./main.js";
       const container = new Joints({
         url: 'http://joints.local/components/'
       });
       container.newJoint('hello-world', 1, true);
+      container.newJoint('second', 2, true);
       container.load();
     </script>
   </body>
