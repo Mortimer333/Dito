@@ -22,6 +22,10 @@ class Joints {
   }
 
   newJoint(name, version = 1, force = false) {
+    if (name.indexOf('-') === -1) {
+      throw new Error('Custom elements name must contain hypen (-)');
+    }
+
     let skip = false;
     if (!force && localStorage.getItem(name)) {
       const comp = JSON.parse(localStorage.getItem(name));
@@ -145,6 +149,11 @@ class Joints {
   }
 
   renderComponent(component, node) {
+    console.log(component.js.constructor);
+    if (!customElements.get(component.name)) {
+      customElements.define(component.name, component.js)
+    }
+
     node.insertBefore(component.html.cloneNode(true), node.childNodes[0]);
     node._rendered = true;
   }
@@ -154,6 +163,7 @@ class Joints {
       return;
     }
 
+    component.cssInjected = true;
     const sheet = this.styleNode.sheet;
 
     if (component._skipped) {
@@ -180,8 +190,6 @@ class Joints {
     const saved = JSON.parse(localStorage.getItem(component.name));
     saved.css = component.css;
     localStorage.setItem(component.name, JSON.stringify(saved));
-
-    component.cssInjected = true;
   }
 
   async validateFiles(component, compFiles) {
