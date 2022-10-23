@@ -17,9 +17,9 @@
       const container = new Joints({
         url: 'http://joints.local/components/'
       });
-      container.newJoint('hello-world', 1, true);
-      container.newJoint('second-war', 2, true);
-      container.load();
+      container.register('hello-world', 1, true);
+      container.register('second-war', 2, true);
+      await container.load();
     </script>
   </body>
 </html>

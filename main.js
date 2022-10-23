@@ -22,7 +22,7 @@ class Joints {
     this.detectCSPRestriction();
   }
 
-  newJoint(name, version = 1, force = false) {
+  register(name, version = 1, force = false) {
     if (name.indexOf('-') === -1) {
       throw new Error('Custom elements name must contain hypen (-)');
     }
@@ -52,9 +52,9 @@ class Joints {
     this.registered.push(css.catch((error) => error));
   }
 
-  load() {
+  async load() {
     const skipSize = 3;
-    Promise.all(this.registered).then(async (values) => {
+    await Promise.all(this.registered).then(async (values) => {
       for (var i = 0; i < values.length; i++) {
         if (typeof values[i] != 'string') {
           console.error('The name of component loaded as #' + ((i/4) + 1) + ' wasn\'t found. Skipping...');
@@ -123,7 +123,6 @@ class Joints {
       }
 
       this.renderComponents(document);
-      console.log(this.components);
     });
   }
 

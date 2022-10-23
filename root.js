@@ -1,5 +1,6 @@
 class RootJoint extends HTMLElement {
   renderInProgress = false;
+  injectName = '__inject';
 
   constructor() {
     super();
@@ -8,11 +9,10 @@ class RootJoint extends HTMLElement {
     }
     this.defineObservable();
     this.saveMethods();
-    this.injectHTML = this.innerHTML;
+    this[this.injectName] = this.innerHTML;
   }
 
   connectedCallback() {
-    console.log('render:', this.constructor, this._joint.html, this._joint.functions);
     this.render();
   }
 
@@ -29,7 +29,6 @@ class RootJoint extends HTMLElement {
   }
 
   defineObservable() {
-    console.log("Define", this.constructor, this);
     Object.defineProperty(this, "$", {
         value: new Proxy({}, {
           tag: this,
@@ -75,16 +74,15 @@ class RootJoint extends HTMLElement {
     if (this.renderInProgress) {
       return;
     }
-    console.log("Render, contains:", document.body.contains(this));
     if (!this._joint.compiled) {
       this.compile();
     }
-    console.log('inject', this.injectHTML);
-    let html = this._joint.html + this.injectHTML;
+
+    let html = this._joint.html;
     Object.keys(this._joint.functions).forEach(key => {
       let res = '';
       try {
-        res = this._joint.functions[key](...Object.values(this.$));
+        res = this._joint.functions[key](...this.getObservablesValues());
       } catch (e) {
         console.error('Expression `' + key + '` in `' + this.constructor.name + '` is not returnable', e);
       }
@@ -96,7 +94,7 @@ class RootJoint extends HTMLElement {
       const event = this._joint.events[alias];
       this.querySelectorAll('[' + alias + ']').forEach(node => {
         node.addEventListener(event.name, (e) => {
-          event.value(e, ...Object.values(this.$), ...Object.values(this.methods));
+          event.value(e, ...this.getObservablesValues());
         });
         node.removeAttribute(alias);
       });
@@ -116,7 +114,8 @@ class RootJoint extends HTMLElement {
   }
 
   compileEvents(html) {
-    let eStart = html.indexOf(' e:');
+    const lm = ' j@e:';
+    let eStart = html.indexOf(lm);
     const strings = {
       '"' : true,
       "'" : true,
@@ -129,14 +128,14 @@ class RootJoint extends HTMLElement {
         break;
       }
 
-      const eName = html.substr(eStart + 3, eEnd - (eStart + 3)).trim();
+      const eName = html.substr(eStart + lm.length, eEnd - (eStart + lm.length)).trim();
       const wrapper = strings[html[eEnd + 1]];
       if (!wrapper) {
         console.error(
           'Event `' + eName + '` value in `' + this.constructor.name
           + '` is not wrapped in string (found letter: `' + html[eEnd + 1] + '`), skipping'
         );
-        eStart = html.indexOf(' e:', eEnd);
+        eStart = html.indexOf(lm, eEnd);
         continue;
       }
 
@@ -147,13 +146,9 @@ class RootJoint extends HTMLElement {
         name: eName,
         value: this.getEventFunction(html.substr(evStart + 1, evEnd - 1 - evStart)),
       };
-      console.log(html.substr(eStart + 1, evEnd + 1 - (eStart + 1)));
       html = html.replaceAll(html.substr(eStart + 1, evEnd + 1 - (eStart + 1)), ePlc);
-      eStart = html.indexOf(' e:', eEnd);
+      eStart = html.indexOf(lm, eEnd);
     }
-    console.log(html);
-
-    console.log("Events:", this._joint.events);
 
     return html;
   }
@@ -184,11 +179,27 @@ class RootJoint extends HTMLElement {
   }
 
   getExecuteable(script) {
-    return new Function(...Object.keys(this.$), 'return ' + script);
+    return new Function(...this.getObservablesKeys(), 'return ' + script);
   }
 
   getEventFunction(script) {
-    return new Function('e', ...Object.keys(this.$), ...Object.keys(this.methods), script).bind(this);
+    return new Function('e', ...this.getObservablesKeys(), script).bind(this);
+  }
+
+  getObservablesKeys() {
+    return [
+      ...Object.keys(this.methods),
+      ...Object.keys(this.$),
+      this.injectName
+    ];
+  }
+
+  getObservablesValues() {
+    return [
+      ...Object.values(this.methods),
+      ...Object.values(this.$),
+      this[this.injectName]
+    ];
   }
 
   debounce (func, timeout = 10) {
