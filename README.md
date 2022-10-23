@@ -5,8 +5,8 @@ Light weight library to allow separating frontend into components
 - two way binding - ([bind])
 - passing arguments - [bind]
 - passing methods on change - (bind)
-- if and for's
 - pipes
+- [DONE] if and for's
 - [DONE] reusable templates
 - [DONE] file separation
 - [DONE] events and {{}}
