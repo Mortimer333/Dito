@@ -8,6 +8,7 @@ class RootJoint extends HTMLElement {
     }
     this.defineObservable();
     this.saveMethods();
+    this.injectHTML = this.innerHTML;
   }
 
   connectedCallback() {
@@ -16,23 +17,19 @@ class RootJoint extends HTMLElement {
   }
 
   saveMethods() {
-    if (this._joint.methodsCollected) {
-      return;
-    }
-
-    this._joint.methods = {};
+    this.methods = {};
     const properties = Object.getOwnPropertyNames(this.constructor.prototype);
     properties.forEach(function (methodName) {
       if (typeof this[methodName] != 'function' || methodName == 'constructor') {
         return;
       }
 
-      this._joint.methods[methodName] = this[methodName].bind(this);
+      this.methods[methodName] = this[methodName].bind(this);
     }.bind(this));
-    this._joint.methodsCollected = true;
   }
 
   defineObservable() {
+    console.log("Define", this.constructor, this);
     Object.defineProperty(this, "$", {
         value: new Proxy({}, {
           tag: this,
@@ -82,8 +79,8 @@ class RootJoint extends HTMLElement {
     if (!this._joint.compiled) {
       this.compile();
     }
-
-    let html = this._joint.html;
+    console.log('inject', this.injectHTML);
+    let html = this._joint.html + this.injectHTML;
     Object.keys(this._joint.functions).forEach(key => {
       let res = '';
       try {
@@ -99,7 +96,7 @@ class RootJoint extends HTMLElement {
       const event = this._joint.events[alias];
       this.querySelectorAll('[' + alias + ']').forEach(node => {
         node.addEventListener(event.name, (e) => {
-          event.value(e, ...Object.values(this.$), ...Object.values(this._joint.methods));
+          event.value(e, ...Object.values(this.$), ...Object.values(this.methods));
         });
         node.removeAttribute(alias);
       });
@@ -191,7 +188,7 @@ class RootJoint extends HTMLElement {
   }
 
   getEventFunction(script) {
-    return new Function('e', ...Object.keys(this.$), ...Object.keys(this._joint.methods), script).bind(this);
+    return new Function('e', ...Object.keys(this.$), ...Object.keys(this.methods), script).bind(this);
   }
 
   debounce (func, timeout = 10) {

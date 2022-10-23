@@ -5,7 +5,8 @@ Light weight library to allow separating frontend into components
 - two way binding - ([bind])
 - passing arguments - [bind]
 - passing methods on change - (bind)
-- reusable templates
-- file separation
+- [DONE] reusable templates
+- [DONE] file separation
+- [DONE] events and {{}}
 - if and for's
-- passing html to the inside of element will result in rendering it inside of it
+- [DONE] passing html to the inside of element will result in rendering it inside of it
