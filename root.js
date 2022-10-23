@@ -78,6 +78,38 @@ class RootJoint extends HTMLElement {
       this.compile();
     }
 
+    this.innerHTML = this.renderFunctions();
+
+    this.resolveIfs();
+    this.attachEvents();
+  }
+
+  resolveIfs() {
+    Object.keys(this._joint.ifs).forEach(alias => {
+      const ifRes = this._joint.ifs[alias](...this.getObservablesValues());
+      this.querySelectorAll('[' + alias + ']').forEach(node => {
+        if (ifRes) {
+          node.removeAttribute(alias);
+        } else {
+          node.remove();
+        }
+      });
+    });
+  }
+
+  attachEvents() {
+    Object.keys(this._joint.events).forEach(alias => {
+      const event = this._joint.events[alias];
+      this.querySelectorAll('[' + alias + ']').forEach(node => {
+        node.addEventListener(event.name, (e) => {
+          event.value(e, ...this.getObservablesValues());
+        });
+        node.removeAttribute(alias);
+      });
+    });
+  }
+
+  renderFunctions() {
     let html = this._joint.html;
     Object.keys(this._joint.functions).forEach(key => {
       let res = '';
@@ -88,18 +120,7 @@ class RootJoint extends HTMLElement {
       }
       html = html.replaceAll(key, res);
     });
-
-    this.innerHTML = html;
-    Object.keys(this._joint.events).forEach(alias => {
-      const event = this._joint.events[alias];
-      this.querySelectorAll('[' + alias + ']').forEach(node => {
-        node.addEventListener(event.name, (e) => {
-          event.value(e, ...this.getObservablesValues());
-        });
-        node.removeAttribute(alias);
-      });
-    });
-
+    return html;
   }
 
   compile() {
@@ -108,46 +129,78 @@ class RootJoint extends HTMLElement {
 
     html = this.compileExecutables(html);
     html = this.compileEvents(html);
+    html = this.compileIfs(html);
 
     this._joint.html = html;
     this._joint.compiled = true;
   }
 
-  compileEvents(html) {
-    const lm = ' j@e:';
-    let eStart = html.indexOf(lm);
+  compileIfs(html) {
+    const lm = ' j@if';
+    let attr, start = 0;
+    this._joint.ifs = {};
+    while (attr = this.getAttribute(html, lm, start)) {
+      const { name, value } = attr;
+      start = value.end + 1;
+      const ifPlc = 'if' + name.start + '-' + value.end;
+      this._joint.ifs[ifPlc] = this.getExecuteable(html.substr(value.start + 1, value.end - 1 - value.start));
+      html = html.replaceAll(html.substr(name.start + 1, value.end + 1 - (name.start + 1)), ifPlc);
+    }
+
+    return html;
+  }
+
+  getAttribute(text, lm, start = 0) {
+    let aStart = text.indexOf(lm, start);
+    if (aStart === -1) {
+      return false;
+    }
+
+    let aEnd = text.indexOf('=', aStart);
+    if (aEnd === -1) {
+      return false;
+    }
+
     const strings = {
       '"' : true,
       "'" : true,
       "`" : true,
     };
+
+    const wrapper = strings[text[aEnd + 1]];
+    if (!wrapper) {
+      console.error(
+        'String wrapper for `' + lm + '` in `' + this.constructor.name
+        + '` not found (found letter: `' + text[aEnd + 1] + '`), skipping'
+      );
+      return this.getAttribute(text, lm, aEnd)
+    }
+
+    return {
+      name : {
+        start: aStart,
+        end: aEnd,
+      },
+      value: {
+        start: aEnd + 1,
+        end: this.getStringEnd(text, text[aEnd + 1], aEnd + 2)
+      }
+    }
+  }
+
+  compileEvents(html) {
+    const lm = ' j@e:';
+    let attr, start = 0;
     this._joint.events = {};
-    while (eStart !== -1) {
-      let eEnd = html.indexOf('=', eStart);
-      if (eEnd === -1) {
-        break;
-      }
-
-      const eName = html.substr(eStart + lm.length, eEnd - (eStart + lm.length)).trim();
-      const wrapper = strings[html[eEnd + 1]];
-      if (!wrapper) {
-        console.error(
-          'Event `' + eName + '` value in `' + this.constructor.name
-          + '` is not wrapped in string (found letter: `' + html[eEnd + 1] + '`), skipping'
-        );
-        eStart = html.indexOf(lm, eEnd);
-        continue;
-      }
-
-      const evStart = eEnd + 1;
-      const evEnd = this.getStringEnd(html, html[eEnd + 1], evStart + 1);
-      const ePlc = 'e' + eStart + '-' + evEnd;
+    while (attr = this.getAttribute(html, lm, start)) {
+      const { name, value } = attr;
+      start = value.end + 1;
+      const ePlc = 'e' + name.start + '-' + value.end;
       this._joint.events[ePlc] = {
-        name: eName,
-        value: this.getEventFunction(html.substr(evStart + 1, evEnd - 1 - evStart)),
+        name: html.substr(name.start + lm.length, name.end - (name.start + lm.length)).trim(),
+        value: this.getEventFunction(html.substr(value.start + 1, value.end - 1 - value.start)),
       };
-      html = html.replaceAll(html.substr(eStart + 1, evEnd + 1 - (eStart + 1)), ePlc);
-      eStart = html.indexOf(lm, eEnd);
+      html = html.replaceAll(html.substr(name.start + 1, value.end + 1 - (name.start + 1)), ePlc);
     }
 
     return html;

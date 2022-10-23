@@ -1,4 +1,4 @@
-<p>Hello {{"this is " + planet}}</p>
-{{sun}}
+<p j@if="planet == 'mars'">Hello {{"this is " + planet}}</p>
+{{planet}} {{sun}}
 {{ __inject }}
 <button type="button" name="button" j@e:click='console.log(planet); changePlanet()'>Change planet!</button>
