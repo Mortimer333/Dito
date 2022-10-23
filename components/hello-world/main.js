@@ -1,10 +1,20 @@
 import { RootJoint } from '../../root.js';
 
 class HelloWorld extends RootJoint {
-  testVar = 'a'
-  test() {
-    this.title = 'b';
-    console.log('a');
+
+  constructor() {
+    super();
+    this.$.planet = 'earth';
+    this.$.sun = () => {
+      if (this.$.planet == 'earth') {
+        return 'sun';
+      }
+      return 'mars sun';
+    };
+  }
+
+  changePlanet() {
+    this.$.planet = 'mars';
   }
 
   get var1 () {

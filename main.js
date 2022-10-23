@@ -102,9 +102,7 @@ class Joints {
 
         const range = document.createRange();
         range.selectNodeContents(document.createElement('div')); // fix for safari
-        // @TODO Later move styles to shadow dom
-        html = range.createContextualFragment(html);
-        if (html.querySelector(component)) {
+        if (range.createContextualFragment(html).querySelector(component)) {
           console.error(
             "Script detected direct recursive use of components in `" + component + "`. " +
             "Components' additional call won't be rendered to avoid inifnite loop."
@@ -112,6 +110,13 @@ class Joints {
         }
 
         ({ default: js } = js);
+
+
+        Object.defineProperty(js.prototype, "_joint", {
+            value: {},
+            writable: false
+        });
+        js.prototype._joint.html = html;
 
         this.components[component] = {name: component, js, html, css, cssInjected: false, _skipped: skipped };
         i += skipSize;
@@ -131,7 +136,7 @@ class Joints {
       const tags = parent.querySelectorAll(tagName);
       tags.forEach(function(tag) {
         // Skip already rendered tags
-        if (tag._rendered) {
+        if (tag?._joint?.rendered) {
           return;
         }
 
@@ -153,8 +158,8 @@ class Joints {
       customElements.define(component.name, component.js);
     }
 
-    node.insertBefore(component.html.cloneNode(true), node.childNodes[0]);
-    node._rendered = true;
+    // node.insertBefore(component.html.cloneNode(true), node.childNodes[0]);
+    node._joint.rendered = true;
   }
 
   async insertCss(component) {
