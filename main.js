@@ -128,37 +128,15 @@ class Joints {
 
   renderComponents(parent, skip = {}) {
     Object.keys(this.components).forEach(function(tagName) {
-      if (skip[tagName]) {
-        return;
+      if (!customElements.get(this.components[tagName].name)) {
+        customElements.define(this.components[tagName].name, this.components[tagName].js);
       }
 
       const tags = parent.querySelectorAll(tagName);
-      tags.forEach(function(tag) {
-        // Skip already rendered tags
-        if (tag?._joint?.rendered) {
-          return;
-        }
-
-        this.renderComponent(this.components[tagName], tag);
-
-        // We skip tag if it was already rendered as parent to avoid infite loop
-        let newSkip = Object.assign({}, skip, {[tagName] : true});
-        this.renderComponents(tag, newSkip);
-      }.bind(this));
-
       if (tags.length > 0) {
         this.insertCss(this.components[tagName]);
       }
     }.bind(this));
-  }
-
-  renderComponent(component, node) {
-    if (!customElements.get(component.name)) {
-      customElements.define(component.name, component.js);
-    }
-
-    // node.insertBefore(component.html.cloneNode(true), node.childNodes[0]);
-    node._joint.rendered = true;
   }
 
   async insertCss(component) {

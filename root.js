@@ -1,6 +1,8 @@
 class RootJoint extends HTMLElement {
   renderInProgress = false;
-  injectName = '__inject';
+  injectName = '$inject';
+  key = null;
+  value = null;
 
   constructor() {
     super();
@@ -10,6 +12,7 @@ class RootJoint extends HTMLElement {
     this.defineObservable();
     this.saveMethods();
     this[this.injectName] = this.innerHTML;
+    console.log("new", this.constructor.name);
   }
 
   connectedCallback() {
@@ -37,16 +40,7 @@ class RootJoint extends HTMLElement {
             this.render()
           }),
           set (obj, prop, value) {
-            // console.log('set', obj, prop, value);
-            if (typeof value == 'function') {
-              Object.defineProperty(this, prop, {
-                get() {
-                  return value.bind(this.tag)();
-                },
-              });
-            }
-
-            if (document.body.contains(this.tag) && value !== obj[prop]) {
+            if (value !== obj[prop]) {
               this.tag.renderInProgress = true;
               this.queueRender();
             }
@@ -54,7 +48,9 @@ class RootJoint extends HTMLElement {
             return Reflect.set(...arguments);
           },
           get (target, prop, receiver) {
-            // console.log('get', target, prop, receiver);
+            if (typeof target[prop] == 'function') {
+              return target[prop].bind(this.tag)();
+            }
             return Reflect.get(...arguments);
           }
         }),
@@ -71,23 +67,81 @@ class RootJoint extends HTMLElement {
   }
 
   render() {
-    if (this.renderInProgress) {
+    if (this.renderInProgress || !document.body.contains(this)) {
       return;
     }
+
+    const recursion = document.body.querySelector(this.localName + ' ' + this.localName);
+    if (recursion) {
+      throw new Error('Custom element ' + this.localName + ' is recursively called. Stopping rendering....');
+    }
+
     if (!this._joint.compiled) {
       this.compile();
     }
 
-    this.innerHTML = this.renderFunctions();
-
-    this.resolveIfs();
-    this.attachEvents();
+    this.innerHTML = '';
+    const tmp = document.createElement('div');
+    tmp.innerHTML = this._joint.html;
+    this.resolveIfs(tmp);
+    this.attachEvents(tmp);
+    this.renderFors(tmp);
+    this.renderFunctions(tmp);
+    while (tmp.childNodes.length > 0) {
+      this.appendChild(tmp.childNodes[0]);
+    }
   }
 
-  resolveIfs() {
+  renderFors(parent) {
+    Object.keys(this._joint.fors).forEach(alias => {
+      let res = this._joint.fors[alias](...this.getObservablesValues());
+      let type = typeof res;
+      if (type == 'string') {
+        res = res * 1;
+        type = typeof res;
+      }
+
+      let keys, values, skip = false;
+      if (type != 'number' && type != 'object') {
+        console.error('For in `' + this.constructor.name + '` doesn\'t have iterable value, removing node...');
+        skip = true;
+      } else {
+        if (type == 'number') {
+          res = new Array(res).fill(null);
+        }
+
+        keys = Object.keys(res);
+        values = Object.values(res);
+      }
+
+
+      parent.querySelectorAll('[' + alias + ']').forEach(function (node) {
+        if (skip) {
+          node.remove();
+          return
+        }
+
+        node.removeAttribute(alias);
+        let current = node;
+        for (var i = 0; i < keys.length; i++) {
+          this.key = keys[i];
+          this.value = values[i];
+          const clone = node.cloneNode(true);
+          this.renderFunctions(clone);
+          node.parentElement.insertBefore(clone, current.nextSibling);
+          current = clone;
+        }
+        node.remove();
+      }.bind(this));
+      this.key = null;
+      this.value = null;
+    });
+  }
+
+  resolveIfs(parent) {
     Object.keys(this._joint.ifs).forEach(alias => {
       const ifRes = this._joint.ifs[alias](...this.getObservablesValues());
-      this.querySelectorAll('[' + alias + ']').forEach(node => {
+      parent.querySelectorAll('[' + alias + ']').forEach(node => {
         if (ifRes) {
           node.removeAttribute(alias);
         } else {
@@ -97,10 +151,10 @@ class RootJoint extends HTMLElement {
     });
   }
 
-  attachEvents() {
+  attachEvents(parent) {
     Object.keys(this._joint.events).forEach(alias => {
       const event = this._joint.events[alias];
-      this.querySelectorAll('[' + alias + ']').forEach(node => {
+      parent.querySelectorAll('[' + alias + ']').forEach(node => {
         node.addEventListener(event.name, (e) => {
           event.value(e, ...this.getObservablesValues());
         });
@@ -109,18 +163,13 @@ class RootJoint extends HTMLElement {
     });
   }
 
-  renderFunctions() {
-    let html = this._joint.html;
-    Object.keys(this._joint.functions).forEach(key => {
-      let res = '';
-      try {
-        res = this._joint.functions[key](...this.getObservablesValues());
-      } catch (e) {
-        console.error('Expression `' + key + '` in `' + this.constructor.name + '` is not returnable', e);
-      }
-      html = html.replaceAll(key, res);
+  renderFunctions(parent) {
+    Object.keys(this._joint.functions).forEach(alias => {
+      parent.querySelectorAll('[' + alias + ']').forEach(node => {
+        let res = this._joint.functions[alias](...this.getObservablesValues());
+        node.outerHTML = res;
+      });
     });
-    return html;
   }
 
   compile() {
@@ -130,9 +179,25 @@ class RootJoint extends HTMLElement {
     html = this.compileExecutables(html);
     html = this.compileEvents(html);
     html = this.compileIfs(html);
+    html = this.compileFors(html);
 
     this._joint.html = html;
     this._joint.compiled = true;
+  }
+
+  compileFors(html) {
+    const lm = ' j@for';
+    let attr, start = 0;
+    this._joint.fors = {};
+    while (attr = this.getAttribute(html, lm, start)) {
+      const { name, value } = attr;
+      start = value.end + 1;
+      const forPlc = 'for' + name.start + '-' + value.end;
+      this._joint.fors[forPlc] = this.getExecuteable(html.substr(value.start + 1, value.end - 1 - value.start));
+      html = html.replaceAll(html.substr(name.start + 1, value.end + 1 - (name.start + 1)), forPlc);
+    }
+
+    return html;
   }
 
   compileIfs(html) {
@@ -224,7 +289,7 @@ class RootJoint extends HTMLElement {
       }
       const name = 'func_' + start + '_' + end;
       this._joint.functions[name] = this.getExecuteable(html.substr(start + 2, end - (start + 2)));
-      html = html.replaceAll(html.substr(start, end + 2 - start), name);
+      html = html.replaceAll(html.substr(start, end + 2 - start), '<span ' + name + '></span>');
       start = html.indexOf('{{', start + name.length);
     }
 
@@ -243,7 +308,9 @@ class RootJoint extends HTMLElement {
     return [
       ...Object.keys(this.methods),
       ...Object.keys(this.$),
-      this.injectName
+      this.injectName,
+      '$key',
+      '$value',
     ];
   }
 
@@ -251,7 +318,9 @@ class RootJoint extends HTMLElement {
     return [
       ...Object.values(this.methods),
       ...Object.values(this.$),
-      this[this.injectName]
+      this[this.injectName],
+      this.key,
+      this.value,
     ];
   }
 

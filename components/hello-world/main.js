@@ -5,6 +5,7 @@ class HelloWorld extends RootJoint {
   constructor() {
     super();
     this.$.planet = 'earth';
+    this.$.iter = 2;
     this.$.sun = () => {
       if (this.$.planet == 'earth') {
         return 'sun';
@@ -15,6 +16,7 @@ class HelloWorld extends RootJoint {
 
   changePlanet() {
     this.$.planet = 'mars';
+    this.$.iter = 3;
   }
 
   get var1 () {
