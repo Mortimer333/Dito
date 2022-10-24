@@ -76,13 +76,13 @@ class RootJoint extends HTMLElement {
       throw new Error('Custom element ' + this.localName + ' is recursively called. Stopping rendering....');
     }
 
-    if (!this._joint.compiled) {
+    if (!this._jmonkey.compiled) {
       this.compile();
     }
 
     this.innerHTML = '';
     const tmp = document.createElement('div');
-    tmp.innerHTML = this._joint.html;
+    tmp.innerHTML = this._jmonkey.html;
     this.resolveIfs(tmp);
     this.attachEvents(tmp);
     this.renderFors(tmp);
@@ -93,8 +93,8 @@ class RootJoint extends HTMLElement {
   }
 
   renderFors(parent) {
-    Object.keys(this._joint.fors).forEach(alias => {
-      let res = this._joint.fors[alias](...this.getObservablesValues());
+    Object.keys(this._jmonkey.fors).forEach(alias => {
+      let res = this._jmonkey.fors[alias](...this.getObservablesValues());
       let type = typeof res;
       if (type == 'string') {
         res = res * 1;
@@ -139,8 +139,8 @@ class RootJoint extends HTMLElement {
   }
 
   resolveIfs(parent) {
-    Object.keys(this._joint.ifs).forEach(alias => {
-      const ifRes = this._joint.ifs[alias](...this.getObservablesValues());
+    Object.keys(this._jmonkey.ifs).forEach(alias => {
+      const ifRes = this._jmonkey.ifs[alias](...this.getObservablesValues());
       parent.querySelectorAll('[' + alias + ']').forEach(node => {
         if (ifRes) {
           node.removeAttribute(alias);
@@ -152,8 +152,8 @@ class RootJoint extends HTMLElement {
   }
 
   attachEvents(parent) {
-    Object.keys(this._joint.events).forEach(alias => {
-      const event = this._joint.events[alias];
+    Object.keys(this._jmonkey.events).forEach(alias => {
+      const event = this._jmonkey.events[alias];
       parent.querySelectorAll('[' + alias + ']').forEach(node => {
         node.addEventListener(event.name, (e) => {
           event.value(e, ...this.getObservablesValues());
@@ -164,36 +164,36 @@ class RootJoint extends HTMLElement {
   }
 
   renderFunctions(parent) {
-    Object.keys(this._joint.functions).forEach(alias => {
+    Object.keys(this._jmonkey.functions).forEach(alias => {
       parent.querySelectorAll('[' + alias + ']').forEach(node => {
-        let res = this._joint.functions[alias](...this.getObservablesValues());
+        let res = this._jmonkey.functions[alias](...this.getObservablesValues());
         node.outerHTML = res;
       });
     });
   }
 
   compile() {
-    let html = this._joint.html;
-    this._joint.functions = {};
+    let html = this._jmonkey.html;
+    this._jmonkey.functions = {};
 
     html = this.compileExecutables(html);
     html = this.compileEvents(html);
     html = this.compileIfs(html);
     html = this.compileFors(html);
 
-    this._joint.html = html;
-    this._joint.compiled = true;
+    this._jmonkey.html = html;
+    this._jmonkey.compiled = true;
   }
 
   compileFors(html) {
     const lm = ' j@for';
     let attr, start = 0;
-    this._joint.fors = {};
+    this._jmonkey.fors = {};
     while (attr = this.getAttribute(html, lm, start)) {
       const { name, value } = attr;
       start = value.end + 1;
       const forPlc = 'for' + name.start + '-' + value.end;
-      this._joint.fors[forPlc] = this.getExecuteable(html.substr(value.start + 1, value.end - 1 - value.start));
+      this._jmonkey.fors[forPlc] = this.getExecuteable(html.substr(value.start + 1, value.end - 1 - value.start));
       html = html.replaceAll(html.substr(name.start + 1, value.end + 1 - (name.start + 1)), forPlc);
     }
 
@@ -203,12 +203,12 @@ class RootJoint extends HTMLElement {
   compileIfs(html) {
     const lm = ' j@if';
     let attr, start = 0;
-    this._joint.ifs = {};
+    this._jmonkey.ifs = {};
     while (attr = this.getAttribute(html, lm, start)) {
       const { name, value } = attr;
       start = value.end + 1;
       const ifPlc = 'if' + name.start + '-' + value.end;
-      this._joint.ifs[ifPlc] = this.getExecuteable(html.substr(value.start + 1, value.end - 1 - value.start));
+      this._jmonkey.ifs[ifPlc] = this.getExecuteable(html.substr(value.start + 1, value.end - 1 - value.start));
       html = html.replaceAll(html.substr(name.start + 1, value.end + 1 - (name.start + 1)), ifPlc);
     }
 
@@ -256,12 +256,12 @@ class RootJoint extends HTMLElement {
   compileEvents(html) {
     const lm = ' j@e:';
     let attr, start = 0;
-    this._joint.events = {};
+    this._jmonkey.events = {};
     while (attr = this.getAttribute(html, lm, start)) {
       const { name, value } = attr;
       start = value.end + 1;
       const ePlc = 'e' + name.start + '-' + value.end;
-      this._joint.events[ePlc] = {
+      this._jmonkey.events[ePlc] = {
         name: html.substr(name.start + lm.length, name.end - (name.start + lm.length)).trim(),
         value: this.getEventFunction(html.substr(value.start + 1, value.end - 1 - value.start)),
       };
@@ -288,7 +288,7 @@ class RootJoint extends HTMLElement {
         break;
       }
       const name = 'func_' + start + '_' + end;
-      this._joint.functions[name] = this.getExecuteable(html.substr(start + 2, end - (start + 2)));
+      this._jmonkey.functions[name] = this.getExecuteable(html.substr(start + 2, end - (start + 2)));
       html = html.replaceAll(html.substr(start, end + 2 - start), '<span ' + name + '></span>');
       start = html.indexOf('{{', start + name.length);
     }

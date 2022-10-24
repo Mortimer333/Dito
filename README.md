@@ -1,4 +1,4 @@
-# Joints
+# jMonkey
 Light weight library to allow separating frontend into components
 
 # Features:

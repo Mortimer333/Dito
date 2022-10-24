@@ -112,11 +112,11 @@ class Joints {
         ({ default: js } = js);
 
 
-        Object.defineProperty(js.prototype, "_joint", {
+        Object.defineProperty(js.prototype, "_jmonkey", {
             value: {},
             writable: false
         });
-        js.prototype._joint.html = html;
+        js.prototype._jmonkey.html = html;
 
         this.components[component] = {name: component, js, html, css, cssInjected: false, _skipped: skipped };
         i += skipSize;
