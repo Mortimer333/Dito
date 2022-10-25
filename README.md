@@ -2,10 +2,12 @@
 Light weight library to allow separating frontend into components
 
 # Features:
+- use MutationObserver to detect when component was changed outside of render and save new html
 - two way binding - ([bind])
-- passing arguments - [bind]
 - passing methods on change - (bind)
 - pipes
+- [DONE] persistent storage
+- [DONE] passing arguments - [bind]
 - [DONE] if and for's
 - [DONE] reusable templates
 - [DONE] file separation

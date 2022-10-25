@@ -14,9 +14,14 @@ class HelloWorld extends RootJoint {
     };
   }
 
+  afterRender() {
+    console.log("before change", Object.keys(this.$), this.$.pass);
+  }
+
   changePlanet() {
     this.$.planet = 'mars';
-    this.$.iter = 3;
+    this.$.iter++;
+    this.$.pass = 'changed';
   }
 
   get var1 () {

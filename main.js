@@ -9,6 +9,10 @@ class Joints {
   styleNode;
 
   constructor(settings = {}) {
+    if (this.detectCSPRestriction()) {
+      throw new Error('CSP restriction');
+    }
+
     this.url = settings.url || window.location.origin;
     if (this.url[this.url.length - 1] != '/') {
       this.url += '/';
@@ -19,7 +23,17 @@ class Joints {
     this.params = settings.headers || this.params;
     this.styleNode = document.createElement('style');
     document.head.appendChild(this.styleNode);
-    this.detectCSPRestriction();
+
+    Object.defineProperty(window, "__jmonkey", {
+        value: {
+          rendered : {},
+          lastId: 0,
+          registered: [],
+        },
+        writable: false
+    });
+    console.log("Set window", window.__jmonkey);
+
   }
 
   register(name, version = 1, force = false) {
@@ -50,12 +64,24 @@ class Joints {
     this.registered.push(html.catch((error) => error));
     this.registered.push(js.catch((error) => error));
     this.registered.push(css.catch((error) => error));
+    window.__jmonkey.registered.push(name);
   }
 
   async load() {
     const skipSize = 3;
     await Promise.all(this.registered).then(async (values) => {
       for (var i = 0; i < values.length; i++) {
+        if (values[i + 1].message || values[i + 2].message || values[i + 3].message) {
+          console.error(
+            'There was unexpected network error at #' + ((i/4) + 1) + '. Skipping...',
+            values[i + 1],
+            values[i + 2],
+            values[i + 3]
+          );
+          i += skipSize;
+          continue;
+        }
+
         if (typeof values[i] != 'string') {
           console.error('The name of component loaded as #' + ((i/4) + 1) + ' wasn\'t found. Skipping...');
           i += skipSize;
@@ -112,23 +138,23 @@ class Joints {
         ({ default: js } = js);
 
 
-        Object.defineProperty(js.prototype, "_jmonkey", {
+        Object.defineProperty(js.prototype, "__jmonkey", {
             value: {},
             writable: false
         });
-        js.prototype._jmonkey.html = html;
+        js.prototype.__jmonkey.html = html;
 
         this.components[component] = {name: component, js, html, css, cssInjected: false, _skipped: skipped };
         i += skipSize;
       }
 
       this.renderComponents(document);
-    });
+    }).catch(err => console.error(err));
   }
 
   renderComponents(parent, skip = {}) {
     Object.keys(this.components).forEach(function(tagName) {
-      if (!customElements.get(this.components[tagName].name)) {
+      if (!customElements.get(this.components[tagName].name) && typeof this.components[tagName].js == 'function') {
         customElements.define(this.components[tagName].name, this.components[tagName].js);
       }
 
@@ -204,7 +230,7 @@ class Joints {
     // detect possible CSP restriction
     try {
       new Function('return 1');
-      return true;
+      return false;
     } catch (e) {
       if (e.toString().match(/unsafe-eval|CSP/)) {
         console.error(
@@ -215,7 +241,7 @@ class Joints {
           'templates into render functions.'
         );
       }
-      return false;
+      return true;
     }
   }
 }

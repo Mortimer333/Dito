@@ -3,6 +3,7 @@ class RootJoint extends HTMLElement {
   injectName = '$inject';
   key = null;
   value = null;
+  queueRender;
 
   constructor() {
     super();
@@ -12,11 +13,22 @@ class RootJoint extends HTMLElement {
     this.defineObservable();
     this.saveMethods();
     this[this.injectName] = this.innerHTML;
-    console.log("new", this.constructor.name);
+    this.queueRender = this.debounce(e => {
+      this.renderInProgress = false;
+      this.render();
+    });
+    this.prepare();
   }
 
+  /* EVENTS */
+  prepare(){}    // Just after constructor
+  beforeRender(){} // Before first render
+  afterRender(){}  // After first render
+
   connectedCallback() {
-    this.render();
+    this.beforeRender();
+    this.render(true);
+    this.afterRender();
   }
 
   saveMethods() {
@@ -35,25 +47,35 @@ class RootJoint extends HTMLElement {
     Object.defineProperty(this, "$", {
         value: new Proxy({}, {
           tag: this,
-          queueRender: this.debounce(e => {
-            this.renderInProgress = false;
-            this.render()
-          }),
           set (obj, prop, value) {
             if (value !== obj[prop]) {
               this.tag.renderInProgress = true;
-              this.queueRender();
+              this.tag.queueRender();
+            }
+
+            if (this.tag.$input[prop]) {
+              // console.log("Set input on the provider", this.tag.$input[prop][prop]);
+              this.tag.$input[prop][prop] = value;
+              // this.tag.renderInProgress = false;
+              // this.tag.queueRender('clear');
             }
 
             return Reflect.set(...arguments);
           },
           get (target, prop, receiver) {
-            if (typeof target[prop] == 'function') {
-              return target[prop].bind(this.tag)();
+            let value = target[prop];
+
+            if (typeof value == 'function') {
+              return value.bind(this.tag)();
             }
             return Reflect.get(...arguments);
           }
         }),
+        writable: false
+    });
+
+    Object.defineProperty(this, "$input", {
+        value: {},
         writable: false
     });
   }
@@ -66,23 +88,40 @@ class RootJoint extends HTMLElement {
     console.log(name, oldValue, newValue);
   }
 
-  render() {
+  render(force = false) {
     if (this.renderInProgress || !document.body.contains(this)) {
       return;
     }
+    this.queueRender('clear');
 
     const recursion = document.body.querySelector(this.localName + ' ' + this.localName);
     if (recursion) {
       throw new Error('Custom element ' + this.localName + ' is recursively called. Stopping rendering....');
     }
 
-    if (!this._jmonkey.compiled) {
+    if (!this.__jmonkey.compiled) {
       this.compile();
     }
 
     this.innerHTML = '';
     const tmp = document.createElement('div');
-    tmp.innerHTML = this._jmonkey.html;
+    tmp.innerHTML = this.__jmonkey.html;
+
+    if (this.__jmonkeyId) {
+      console.log("Render from storage");
+      const components = tmp.querySelectorAll(window.__jmonkey.registered.join(','));
+      console.log(window.__jmonkey.rendered);
+      components.forEach((component, i) => {
+        const rendered = window.__jmonkey.rendered[this.__jmonkeyId + 1 + i];
+        console.log("Component", component.localName, rendered);
+        if (rendered) {
+          component.parentElement.insertBefore(rendered, component);
+          component.remove();
+        }
+      });
+    }
+
+    this.resolveVars(tmp);
     this.resolveIfs(tmp);
     this.attachEvents(tmp);
     this.renderFors(tmp);
@@ -90,11 +129,40 @@ class RootJoint extends HTMLElement {
     while (tmp.childNodes.length > 0) {
       this.appendChild(tmp.childNodes[0]);
     }
+
+    if (!this.__jmonkeyId) {
+      window.__jmonkey.lastId++;
+      this.__jmonkeyId = window.__jmonkey.lastId;
+      console.log(this);
+      window.__jmonkey.rendered[this.__jmonkeyId] = this;
+    }
+  }
+
+  // @TODO create method which updates current html but only in this component use MutationObserver
+
+  resolveVars(parent) {
+    Object.keys(this.__jmonkey.vars).forEach(alias => {
+      const varName = this.__jmonkey.vars[alias];
+      let skip = false;
+      if (!this.$[varName]) {
+        console.error(
+          'Observable in `' + this.constructor.name + '` doesn\'t have `' + varName + '` variable, skipping'
+        );
+        skip = true;
+      }
+      parent.querySelectorAll('[' + alias + ']').forEach((node) => {
+        if (!skip) {
+          node.$[varName] = this.$[varName];
+          node.$input[varName] = this.$;
+        }
+        node.removeAttribute(alias);
+      });
+    });
   }
 
   renderFors(parent) {
-    Object.keys(this._jmonkey.fors).forEach(alias => {
-      let res = this._jmonkey.fors[alias](...this.getObservablesValues());
+    Object.keys(this.__jmonkey.fors).forEach(alias => {
+      let res = this.getExecuteable(this.__jmonkey.fors[alias])(...this.getObservablesValues());
       let type = typeof res;
       if (type == 'string') {
         res = res * 1;
@@ -139,8 +207,8 @@ class RootJoint extends HTMLElement {
   }
 
   resolveIfs(parent) {
-    Object.keys(this._jmonkey.ifs).forEach(alias => {
-      const ifRes = this._jmonkey.ifs[alias](...this.getObservablesValues());
+    Object.keys(this.__jmonkey.ifs).forEach(alias => {
+      const ifRes = this.getExecuteable(this.__jmonkey.ifs[alias])(...this.getObservablesValues());
       parent.querySelectorAll('[' + alias + ']').forEach(node => {
         if (ifRes) {
           node.removeAttribute(alias);
@@ -152,11 +220,11 @@ class RootJoint extends HTMLElement {
   }
 
   attachEvents(parent) {
-    Object.keys(this._jmonkey.events).forEach(alias => {
-      const event = this._jmonkey.events[alias];
+    Object.keys(this.__jmonkey.events).forEach(alias => {
+      const event = this.__jmonkey.events[alias];
       parent.querySelectorAll('[' + alias + ']').forEach(node => {
         node.addEventListener(event.name, (e) => {
-          event.value(e, ...this.getObservablesValues());
+          this.getEventFunction(event.value)(e, ...this.getObservablesValues());
         });
         node.removeAttribute(alias);
       });
@@ -164,36 +232,52 @@ class RootJoint extends HTMLElement {
   }
 
   renderFunctions(parent) {
-    Object.keys(this._jmonkey.functions).forEach(alias => {
+    Object.keys(this.__jmonkey.functions).forEach(alias => {
       parent.querySelectorAll('[' + alias + ']').forEach(node => {
-        let res = this._jmonkey.functions[alias](...this.getObservablesValues());
+        let res = this.getExecuteable(this.__jmonkey.functions[alias])(...this.getObservablesValues());
         node.outerHTML = res;
       });
     });
   }
 
   compile() {
-    let html = this._jmonkey.html;
-    this._jmonkey.functions = {};
+    let html = this.__jmonkey.html;
+    this.__jmonkey.functions = {};
 
+    html = this.compileVars(html);
     html = this.compileExecutables(html);
     html = this.compileEvents(html);
     html = this.compileIfs(html);
     html = this.compileFors(html);
 
-    this._jmonkey.html = html;
-    this._jmonkey.compiled = true;
+    this.__jmonkey.html = html;
+    this.__jmonkey.compiled = true;
+  }
+
+  compileVars(html) {
+    const lm = ' @v';
+    let attr, start = 0;
+    this.__jmonkey.vars = {};
+    while (attr = this.getAttribute(html, lm, start)) {
+      const { name, value } = attr;
+      start = value.end + 1;
+      const varPlc = 'v' + name.start + '-' + value.end;
+      this.__jmonkey.vars[varPlc] = html.substr(value.start + 1, value.end - 1 - value.start);
+      html = html.replaceAll(html.substr(name.start + 1, value.end + 1 - (name.start + 1)), varPlc);
+    }
+
+    return html;
   }
 
   compileFors(html) {
-    const lm = ' j@for';
+    const lm = ' @for';
     let attr, start = 0;
-    this._jmonkey.fors = {};
+    this.__jmonkey.fors = {};
     while (attr = this.getAttribute(html, lm, start)) {
       const { name, value } = attr;
       start = value.end + 1;
       const forPlc = 'for' + name.start + '-' + value.end;
-      this._jmonkey.fors[forPlc] = this.getExecuteable(html.substr(value.start + 1, value.end - 1 - value.start));
+      this.__jmonkey.fors[forPlc] = html.substr(value.start + 1, value.end - 1 - value.start);
       html = html.replaceAll(html.substr(name.start + 1, value.end + 1 - (name.start + 1)), forPlc);
     }
 
@@ -201,14 +285,14 @@ class RootJoint extends HTMLElement {
   }
 
   compileIfs(html) {
-    const lm = ' j@if';
+    const lm = ' @if';
     let attr, start = 0;
-    this._jmonkey.ifs = {};
+    this.__jmonkey.ifs = {};
     while (attr = this.getAttribute(html, lm, start)) {
       const { name, value } = attr;
       start = value.end + 1;
       const ifPlc = 'if' + name.start + '-' + value.end;
-      this._jmonkey.ifs[ifPlc] = this.getExecuteable(html.substr(value.start + 1, value.end - 1 - value.start));
+      this.__jmonkey.ifs[ifPlc] = html.substr(value.start + 1, value.end - 1 - value.start);
       html = html.replaceAll(html.substr(name.start + 1, value.end + 1 - (name.start + 1)), ifPlc);
     }
 
@@ -254,16 +338,16 @@ class RootJoint extends HTMLElement {
   }
 
   compileEvents(html) {
-    const lm = ' j@e:';
+    const lm = ' @e:';
     let attr, start = 0;
-    this._jmonkey.events = {};
+    this.__jmonkey.events = {};
     while (attr = this.getAttribute(html, lm, start)) {
       const { name, value } = attr;
       start = value.end + 1;
       const ePlc = 'e' + name.start + '-' + value.end;
-      this._jmonkey.events[ePlc] = {
+      this.__jmonkey.events[ePlc] = {
         name: html.substr(name.start + lm.length, name.end - (name.start + lm.length)).trim(),
-        value: this.getEventFunction(html.substr(value.start + 1, value.end - 1 - value.start)),
+        value: html.substr(value.start + 1, value.end - 1 - value.start),
       };
       html = html.replaceAll(html.substr(name.start + 1, value.end + 1 - (name.start + 1)), ePlc);
     }
@@ -288,7 +372,7 @@ class RootJoint extends HTMLElement {
         break;
       }
       const name = 'func_' + start + '_' + end;
-      this._jmonkey.functions[name] = this.getExecuteable(html.substr(start + 2, end - (start + 2)));
+      this.__jmonkey.functions[name] = html.substr(start + 2, end - (start + 2));
       html = html.replaceAll(html.substr(start, end + 2 - start), '<span ' + name + '></span>');
       start = html.indexOf('{{', start + name.length);
     }

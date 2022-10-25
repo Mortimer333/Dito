@@ -1,7 +1,8 @@
-<p j@if="planet == 'mars'">Hello {{"this is " + planet}}</p>
+<p @if="planet == 'mars'">Hello {{"this is " + planet}}</p>
 {{planet}} {{sun}}
 {{ $inject }}
-<button type="button" name="button" j@e:click='console.log(planet); changePlanet()'>Change planet!</button>
-<p j@for="iter">
+<button type="button" name="button" @e:click='console.log(planet); changePlanet()'>Change planet!</button>
+<p @for="iter">
   {{$key}} => {{$value}}
 </p>
+{{typeof pass != 'undefined' ? pass : 'no pass'}}
