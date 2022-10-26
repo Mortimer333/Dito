@@ -7,6 +7,7 @@ class Joints {
   registered = [];
   SKIP = '_skip';
   styleNode;
+  mutationObsConf = { childList: true, subtree: true };
 
   constructor(settings = {}) {
     if (this.detectCSPRestriction()) {
@@ -26,14 +27,13 @@ class Joints {
 
     Object.defineProperty(window, "__jmonkey", {
         value: {
+          main: this,
           rendered : {},
           lastId: 0,
-          registered: [],
+          registered: {}
         },
         writable: false
     });
-    console.log("Set window", window.__jmonkey);
-
   }
 
   register(name, version = 1, force = false) {
@@ -64,7 +64,7 @@ class Joints {
     this.registered.push(html.catch((error) => error));
     this.registered.push(js.catch((error) => error));
     this.registered.push(css.catch((error) => error));
-    window.__jmonkey.registered.push(name);
+    window.__jmonkey.registered[name] = true;
   }
 
   async load() {

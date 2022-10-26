@@ -2,12 +2,11 @@ import { RootJoint } from '../../root.js';
 
 class Second extends RootJoint {
   prepare() {
-    this.$.test = '2';
+    this.$.test = 'test';
     this.$.pass = 'a';
   }
 
   test() {
-    console.log('b');
   }
 }
 

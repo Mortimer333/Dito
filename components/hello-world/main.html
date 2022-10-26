@@ -2,7 +2,15 @@
 {{planet}} {{sun}}
 {{ $inject }}
 <button type="button" name="button" @e:click='console.log(planet); changePlanet()'>Change planet!</button>
+<input type="text" @a:value="iter">
 <p @for="iter">
   {{$key}} => {{$value}}
 </p>
 {{typeof pass != 'undefined' ? pass : 'no pass'}}
+<h1>
+  <p>
+    <span>
+      aaa
+    </span>
+  </p>
+</h1>

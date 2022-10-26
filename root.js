@@ -18,6 +18,8 @@ class RootJoint extends HTMLElement {
       this.render();
     });
     this.prepare();
+
+    console.log(this);
   }
 
   /* EVENTS */
@@ -26,9 +28,7 @@ class RootJoint extends HTMLElement {
   afterRender(){}  // After first render
 
   connectedCallback() {
-    this.beforeRender();
-    this.render(true);
-    this.afterRender();
+    this.render();
   }
 
   saveMethods() {
@@ -54,10 +54,7 @@ class RootJoint extends HTMLElement {
             }
 
             if (this.tag.$input[prop]) {
-              // console.log("Set input on the provider", this.tag.$input[prop][prop]);
               this.tag.$input[prop][prop] = value;
-              // this.tag.renderInProgress = false;
-              // this.tag.queueRender('clear');
             }
 
             return Reflect.set(...arguments);
@@ -85,60 +82,63 @@ class RootJoint extends HTMLElement {
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
-    console.log(name, oldValue, newValue);
   }
 
-  render(force = false) {
+  render() {
     if (this.renderInProgress || !document.body.contains(this)) {
       return;
     }
     this.queueRender('clear');
 
-    const recursion = document.body.querySelector(this.localName + ' ' + this.localName);
-    if (recursion) {
-      throw new Error('Custom element ' + this.localName + ' is recursively called. Stopping rendering....');
+    if (document.body.querySelector(this.localName + ' ' + this.localName)) {
+      throw new Error('Custom element ' + this.localName + ' is recursively called. Stopping the render....');
     }
 
-    if (!this.__jmonkey.compiled) {
-      this.compile();
-    }
+    this.beforeRender();
+    try {
+      if (!this.__jmonkey.compiled) {
+        this.compile();
+      }
 
-    this.innerHTML = '';
-    const tmp = document.createElement('div');
-    tmp.innerHTML = this.__jmonkey.html;
+      this.innerHTML = '';
+      const tmp = document.createElement('div');
+      tmp.innerHTML = this.__jmonkey.html;
 
-    if (this.__jmonkeyId) {
-      console.log("Render from storage");
-      const components = tmp.querySelectorAll(window.__jmonkey.registered.join(','));
-      console.log(window.__jmonkey.rendered);
-      components.forEach((component, i) => {
-        const rendered = window.__jmonkey.rendered[this.__jmonkeyId + 1 + i];
-        console.log("Component", component.localName, rendered);
-        if (rendered) {
-          component.parentElement.insertBefore(rendered, component);
-          component.remove();
-        }
-      });
-    }
+      if (this.__jmonkeyId) {
+        const components = tmp.querySelectorAll(Object.keys(window.__jmonkey.registered).join(','));
+        components.forEach((component, i) => {
+          const rendered = window.__jmonkey.rendered[this.__jmonkeyId + 1 + i];
+          if (rendered) {
+            component.parentElement.insertBefore(rendered, component);
+            component.remove();
+          }
+        });
+      }
 
-    this.resolveVars(tmp);
-    this.resolveIfs(tmp);
-    this.attachEvents(tmp);
-    this.renderFors(tmp);
-    this.renderFunctions(tmp);
-    while (tmp.childNodes.length > 0) {
-      this.appendChild(tmp.childNodes[0]);
-    }
+      this.resolveVars(tmp);
+      this.resolveAttrs(tmp);
+      this.resolveIfs(tmp);
+      this.attachEvents(tmp);
+      this.renderFors(tmp);
+      this.renderFunctions(tmp);
+      while (tmp.childNodes.length > 0) {
+        this.appendChild(tmp.childNodes[0]);
+      }
 
-    if (!this.__jmonkeyId) {
-      window.__jmonkey.lastId++;
-      this.__jmonkeyId = window.__jmonkey.lastId;
-      console.log(this);
-      window.__jmonkey.rendered[this.__jmonkeyId] = this;
+      if (!this.__jmonkeyId) {
+        window.__jmonkey.lastId++;
+        this.__jmonkeyId = window.__jmonkey.lastId;
+        window.__jmonkey.rendered[this.__jmonkeyId] = this;
+      }
+
+      this.afterRender({success: true});
+      return true;
+    } catch (e) {
+      console.error('There was an error during rendering', e);
+      this.afterRender({success: false, error: e});
+      return false;
     }
   }
-
-  // @TODO create method which updates current html but only in this component use MutationObserver
 
   resolveVars(parent) {
     Object.keys(this.__jmonkey.vars).forEach(alias => {
@@ -155,6 +155,17 @@ class RootJoint extends HTMLElement {
           node.$[varName] = this.$[varName];
           node.$input[varName] = this.$;
         }
+        node.removeAttribute(alias);
+      });
+    });
+  }
+
+  resolveAttrs(parent) {
+    Object.keys(this.__jmonkey.attrs).forEach(alias => {
+      const attr = this.__jmonkey.attrs[alias];
+      let skip = false;
+      parent.querySelectorAll('[' + alias + ']').forEach((node) => {
+        node.setAttribute(attr.name, this.getExecuteable(attr.value)(...this.getObservablesValues()));
         node.removeAttribute(alias);
       });
     });
@@ -245,6 +256,7 @@ class RootJoint extends HTMLElement {
     this.__jmonkey.functions = {};
 
     html = this.compileVars(html);
+    html = this.compileAttributes(html);
     html = this.compileExecutables(html);
     html = this.compileEvents(html);
     html = this.compileIfs(html);
@@ -252,6 +264,23 @@ class RootJoint extends HTMLElement {
 
     this.__jmonkey.html = html;
     this.__jmonkey.compiled = true;
+  }
+
+  compileAttributes(html) {
+    const lm = ' @a:';
+    let attr, start = 0;
+    this.__jmonkey.attrs = {};
+    while (attr = this.getAttribute(html, lm, start)) {
+      const { name, value } = attr;
+      const attPlc = 'a' + name.start + '-' + value.end;
+      this.__jmonkey.attrs[attPlc] = {
+        name: html.substr(name.start + lm.length, name.end - (name.start + lm.length)).trim(),
+        value: html.substr(value.start + 1, value.end - 1 - value.start),
+      };
+      html = html.replaceAll(html.substr(name.start + 1, value.end + 1 - (name.start + 1)), attPlc);
+    }
+
+    return html;
   }
 
   compileVars(html) {
@@ -343,7 +372,6 @@ class RootJoint extends HTMLElement {
     this.__jmonkey.events = {};
     while (attr = this.getAttribute(html, lm, start)) {
       const { name, value } = attr;
-      start = value.end + 1;
       const ePlc = 'e' + name.start + '-' + value.end;
       this.__jmonkey.events[ePlc] = {
         name: html.substr(name.start + lm.length, name.end - (name.start + lm.length)).trim(),

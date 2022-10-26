@@ -15,7 +15,6 @@ class HelloWorld extends RootJoint {
   }
 
   afterRender() {
-    console.log("before change", Object.keys(this.$), this.$.pass);
   }
 
   changePlanet() {
