@@ -6,7 +6,9 @@ class Second extends RootJoint {
     this.$.pass = 'a';
   }
 
-  test() {
+  testFunc() {
+    console.log("Not test");
+    this.$.test = 'not test';
   }
 }
 

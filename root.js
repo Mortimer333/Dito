@@ -114,6 +114,7 @@ class RootJoint extends HTMLElement {
       }
 
       this.resolveBinds(tmp);
+      this.resolveInputs(tmp);
       this.resolveAttrs(tmp);
       this.resolveIfs(tmp);
       this.resolveEvents(tmp);
@@ -153,6 +154,16 @@ class RootJoint extends HTMLElement {
           node.$[bind.name] = this.$[bind.value];
           node.$input[bind.name] = this.$;
         }
+        node.removeAttribute(alias);
+      });
+    });
+  }
+
+  resolveInputs(parent) {
+    Object.keys(this.__jmonkey.inputs).forEach(alias => {
+      const input = this.__jmonkey.inputs[alias];
+      parent.querySelectorAll('[' + alias + ']').forEach((node) => {
+        node.$[input.name] = this.getExecuteable(input.value)(...this.getObservablesValues());
         node.removeAttribute(alias);
       });
     });
@@ -252,6 +263,7 @@ class RootJoint extends HTMLElement {
     this.__jmonkey.functions = {};
 
     html = this.compileBinds(html);
+    html = this.compileInputs(html);
     html = this.compileAttributes(html);
     html = this.compileExecutables(html);
     html = this.compileEvents(html);
@@ -282,6 +294,10 @@ class RootJoint extends HTMLElement {
     return html;
   }
 
+  compileInputs(html) {
+    return this.compileFindAndReplace(html, ' @i:', 'i', 'inputs', true);
+  }
+
   compileAttributes(html) {
     return this.compileFindAndReplace(html, ' @a:', 'a', 'attrs', true);
   }
@@ -299,7 +315,7 @@ class RootJoint extends HTMLElement {
   }
 
   compileEvents(html) {
-    return this.compileFindAndReplace(html, ' @e', 'e', 'events', true);
+    return this.compileFindAndReplace(html, ' @e:', 'e', 'events', true);
   }
 
   getAttribute(text, lm, start = 0) {
