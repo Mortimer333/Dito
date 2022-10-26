@@ -18,12 +18,10 @@ class RootJoint extends HTMLElement {
       this.render();
     });
     this.prepare();
-
-    console.log(this);
   }
 
   /* EVENTS */
-  prepare(){}    // Just after constructor
+  prepare(){}      // Just after constructor
   beforeRender(){} // Before first render
   afterRender(){}  // After first render
 
@@ -115,12 +113,12 @@ class RootJoint extends HTMLElement {
         });
       }
 
-      this.resolveVars(tmp);
+      this.resolveBinds(tmp);
       this.resolveAttrs(tmp);
       this.resolveIfs(tmp);
-      this.attachEvents(tmp);
+      this.resolveEvents(tmp);
       this.renderFors(tmp);
-      this.renderFunctions(tmp);
+      this.resolveFunctions(tmp);
       while (tmp.childNodes.length > 0) {
         this.appendChild(tmp.childNodes[0]);
       }
@@ -140,20 +138,20 @@ class RootJoint extends HTMLElement {
     }
   }
 
-  resolveVars(parent) {
-    Object.keys(this.__jmonkey.vars).forEach(alias => {
-      const varName = this.__jmonkey.vars[alias];
+  resolveBinds(parent) {
+    Object.keys(this.__jmonkey.binds).forEach(alias => {
+      const bind = this.__jmonkey.binds[alias];
       let skip = false;
-      if (!this.$[varName]) {
+      if (!this.$[bind.value]) {
         console.error(
-          'Observable in `' + this.constructor.name + '` doesn\'t have `' + varName + '` variable, skipping'
+          'Observable in `' + this.constructor.name + '` doesn\'t have `' + bind.value + '` variable, skipping'
         );
         skip = true;
       }
       parent.querySelectorAll('[' + alias + ']').forEach((node) => {
         if (!skip) {
-          node.$[varName] = this.$[varName];
-          node.$input[varName] = this.$;
+          node.$[bind.name] = this.$[bind.value];
+          node.$input[bind.name] = this.$;
         }
         node.removeAttribute(alias);
       });
@@ -163,7 +161,6 @@ class RootJoint extends HTMLElement {
   resolveAttrs(parent) {
     Object.keys(this.__jmonkey.attrs).forEach(alias => {
       const attr = this.__jmonkey.attrs[alias];
-      let skip = false;
       parent.querySelectorAll('[' + alias + ']').forEach((node) => {
         node.setAttribute(attr.name, this.getExecuteable(attr.value)(...this.getObservablesValues()));
         node.removeAttribute(alias);
@@ -206,7 +203,7 @@ class RootJoint extends HTMLElement {
           this.key = keys[i];
           this.value = values[i];
           const clone = node.cloneNode(true);
-          this.renderFunctions(clone);
+          this.resolveFunctions(clone);
           node.parentElement.insertBefore(clone, current.nextSibling);
           current = clone;
         }
@@ -230,7 +227,7 @@ class RootJoint extends HTMLElement {
     });
   }
 
-  attachEvents(parent) {
+  resolveEvents(parent) {
     Object.keys(this.__jmonkey.events).forEach(alias => {
       const event = this.__jmonkey.events[alias];
       parent.querySelectorAll('[' + alias + ']').forEach(node => {
@@ -242,11 +239,10 @@ class RootJoint extends HTMLElement {
     });
   }
 
-  renderFunctions(parent) {
+  resolveFunctions(parent) {
     Object.keys(this.__jmonkey.functions).forEach(alias => {
       parent.querySelectorAll('[' + alias + ']').forEach(node => {
-        let res = this.getExecuteable(this.__jmonkey.functions[alias])(...this.getObservablesValues());
-        node.outerHTML = res;
+        node.outerHTML = this.getExecuteable(this.__jmonkey.functions[alias])(...this.getObservablesValues());
       });
     });
   }
@@ -255,7 +251,7 @@ class RootJoint extends HTMLElement {
     let html = this.__jmonkey.html;
     this.__jmonkey.functions = {};
 
-    html = this.compileVars(html);
+    html = this.compileBinds(html);
     html = this.compileAttributes(html);
     html = this.compileExecutables(html);
     html = this.compileEvents(html);
@@ -266,66 +262,44 @@ class RootJoint extends HTMLElement {
     this.__jmonkey.compiled = true;
   }
 
-  compileAttributes(html) {
-    const lm = ' @a:';
+  compileFindAndReplace(html, lm, prefix, attrName, hasName = false) {
     let attr, start = 0;
-    this.__jmonkey.attrs = {};
+    this.__jmonkey[attrName] = {};
     while (attr = this.getAttribute(html, lm, start)) {
       const { name, value } = attr;
-      const attPlc = 'a' + name.start + '-' + value.end;
-      this.__jmonkey.attrs[attPlc] = {
-        name: html.substr(name.start + lm.length, name.end - (name.start + lm.length)).trim(),
-        value: html.substr(value.start + 1, value.end - 1 - value.start),
-      };
-      html = html.replaceAll(html.substr(name.start + 1, value.end + 1 - (name.start + 1)), attPlc);
+      const plc = prefix + name.start + '-' + value.end;
+      if (hasName) {
+        this.__jmonkey[attrName][plc] = {
+          name: html.substr(name.start + lm.length, name.end - (name.start + lm.length)).trim(),
+          value: html.substr(value.start + 1, value.end - 1 - value.start),
+        };
+      } else {
+        this.__jmonkey[attrName][plc] = html.substr(value.start + 1, value.end - 1 - value.start);
+      }
+      html = html.replaceAll(html.substr(name.start + 1, value.end + 1 - (name.start + 1)), plc);
     }
 
     return html;
   }
 
-  compileVars(html) {
-    const lm = ' @v';
-    let attr, start = 0;
-    this.__jmonkey.vars = {};
-    while (attr = this.getAttribute(html, lm, start)) {
-      const { name, value } = attr;
-      start = value.end + 1;
-      const varPlc = 'v' + name.start + '-' + value.end;
-      this.__jmonkey.vars[varPlc] = html.substr(value.start + 1, value.end - 1 - value.start);
-      html = html.replaceAll(html.substr(name.start + 1, value.end + 1 - (name.start + 1)), varPlc);
-    }
+  compileAttributes(html) {
+    return this.compileFindAndReplace(html, ' @a:', 'a', 'attrs', true);
+  }
 
-    return html;
+  compileBinds(html) {
+    return this.compileFindAndReplace(html, ' @b:', 'b', 'binds', true);
   }
 
   compileFors(html) {
-    const lm = ' @for';
-    let attr, start = 0;
-    this.__jmonkey.fors = {};
-    while (attr = this.getAttribute(html, lm, start)) {
-      const { name, value } = attr;
-      start = value.end + 1;
-      const forPlc = 'for' + name.start + '-' + value.end;
-      this.__jmonkey.fors[forPlc] = html.substr(value.start + 1, value.end - 1 - value.start);
-      html = html.replaceAll(html.substr(name.start + 1, value.end + 1 - (name.start + 1)), forPlc);
-    }
-
-    return html;
+    return this.compileFindAndReplace(html, ' @for', 'for', 'fors');
   }
 
   compileIfs(html) {
-    const lm = ' @if';
-    let attr, start = 0;
-    this.__jmonkey.ifs = {};
-    while (attr = this.getAttribute(html, lm, start)) {
-      const { name, value } = attr;
-      start = value.end + 1;
-      const ifPlc = 'if' + name.start + '-' + value.end;
-      this.__jmonkey.ifs[ifPlc] = html.substr(value.start + 1, value.end - 1 - value.start);
-      html = html.replaceAll(html.substr(name.start + 1, value.end + 1 - (name.start + 1)), ifPlc);
-    }
+    return this.compileFindAndReplace(html, ' @if', 'if', 'ifs');
+  }
 
-    return html;
+  compileEvents(html) {
+    return this.compileFindAndReplace(html, ' @e', 'e', 'events', true);
   }
 
   getAttribute(text, lm, start = 0) {
@@ -364,23 +338,6 @@ class RootJoint extends HTMLElement {
         end: this.getStringEnd(text, text[aEnd + 1], aEnd + 2)
       }
     }
-  }
-
-  compileEvents(html) {
-    const lm = ' @e:';
-    let attr, start = 0;
-    this.__jmonkey.events = {};
-    while (attr = this.getAttribute(html, lm, start)) {
-      const { name, value } = attr;
-      const ePlc = 'e' + name.start + '-' + value.end;
-      this.__jmonkey.events[ePlc] = {
-        name: html.substr(name.start + lm.length, name.end - (name.start + lm.length)).trim(),
-        value: html.substr(value.start + 1, value.end - 1 - value.start),
-      };
-      html = html.replaceAll(html.substr(name.start + 1, value.end + 1 - (name.start + 1)), ePlc);
-    }
-
-    return html;
   }
 
   getStringEnd(text, sLandmark, start = 0) {
