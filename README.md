@@ -1,7 +1,9 @@
 # jMonkey
-Light weight library to allow separating frontend into components
+Light weight library to allow separating frontend into reusable components
 
 # Features:
+- check if registrated component (which wasn't displayed at start) is properly downloaded
+- Check if binded value when passed as bind to the third component works as intended
 - [DONE] changes in events and outputs should update actual value in observable
 - [DONE] passing methods on change - (bind)
 - [DONE] passing arguments - [bind]

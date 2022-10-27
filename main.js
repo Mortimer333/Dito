@@ -5,6 +5,7 @@ class JMonkey {
   params = {};
   components = {};
   registered = [];
+  notDownloaded = {};
   SKIP = '_skip';
   styleNode;
   mutationObsConf = { childList: true, subtree: true };
@@ -28,7 +29,6 @@ class JMonkey {
     Object.defineProperty(window, "__jmonkey", {
         value: {
           main: this,
-          rendered : {},
           lastId: 0,
           registered: {}
         },
@@ -36,10 +36,22 @@ class JMonkey {
     });
   }
 
-  register(name, version = 1, force = false) {
+  register(name, version = 1, path = '', force = false) {
     if (name.indexOf('-') === -1) {
       throw new Error('Custom elements name must contain hypen (-)');
     }
+
+    // If it's not force and there is currently no instance of this component on site - don't retrieve it
+    if (!force && !document.querySelector(name)) {
+      this.notDownloaded[name] = { name, version, path };
+      return;
+    }
+
+    const promises = this.createRegisterPromise(path, name, version, force);
+    this.registered = [...this.registered, ...promises];
+  }
+
+  createRegisterPromise(path, name, version, force = false) {
 
     let skip = false;
     if (!force && localStorage.getItem(name)) {
@@ -50,26 +62,26 @@ class JMonkey {
     }
 
     this.components[name] = {js: null, html: null, css: null, cssInjected: false};
-
-    // If it's not force and there is currently no instance of this component on site don't retrieve it
-    if (!force && !document.querySelector(name)) {
-      return;
-    }
-
-    const path = this.url + name + '/' + this.filename + '.';
+    path = this.url + path + name + '/' + this.filename + '.';
     const js = import(path + 'js');
     const html = skip ? Promise.resolve(this.SKIP) : this.fetch(path + 'html');
     const css = skip ? Promise.resolve(this.SKIP) : this.fetch(path + 'css');
-    this.registered.push(Promise.resolve(name + '_' + version));
-    this.registered.push(html.catch((error) => error));
-    this.registered.push(js.catch((error) => error));
-    this.registered.push(css.catch((error) => error));
+    const registered = [];
+    registered.push(Promise.resolve(name + '_' + version));
+    registered.push(html.catch((error) => error));
+    registered.push(js.catch((error) => error));
+    registered.push(css.catch((error) => error));
     window.__jmonkey.registered[name] = true;
+    return registered;
   }
 
-  async load() {
+  async load(registered = null) {
+    if (!registered) {
+      registered = this.registered;
+    }
+
     const skipSize = 3;
-    await Promise.all(this.registered).then(async (values) => {
+    await Promise.all(registered).then(async (values) => {
       for (var i = 0; i < values.length; i++) {
         if (values[i + 1].message || values[i + 2].message || values[i + 3].message) {
           console.error(
@@ -143,12 +155,12 @@ class JMonkey {
             writable: false
         });
         js.prototype.__jmonkey.html = html;
-
         this.components[component] = {name: component, js, html, css, cssInjected: false, _skipped: skipped };
         i += skipSize;
       }
 
       this.renderComponents(document);
+      registered = [];
     }).catch(err => console.error(err));
   }
 

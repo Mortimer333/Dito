@@ -4,6 +4,7 @@ class JMonkeyElement extends HTMLElement {
   key = null;
   value = null;
   queueRender;
+  loaderClass = 'jmonkey-spinner';
 
   constructor() {
     super();
@@ -17,6 +18,7 @@ class JMonkeyElement extends HTMLElement {
       this.renderInProgress = false;
       this.render();
     });
+    this.classList.remove(this.loaderClass);
     this.prepare();
   }
 
@@ -87,6 +89,11 @@ class JMonkeyElement extends HTMLElement {
       value: {},
       writable: false
     });
+
+    Object.defineProperty(this, "__jmonkeySelf", {
+      value: {},
+      writable: false
+    });
   }
 
   static get observedAttributes() {
@@ -101,7 +108,6 @@ class JMonkeyElement extends HTMLElement {
       return;
     }
     this.queueRender('clear');
-
     if (document.body.querySelector(this.localName + ' ' + this.localName)) {
       throw new Error('Custom element ' + this.localName + ' is recursively called. Stopping the render....');
     }
@@ -116,21 +122,25 @@ class JMonkeyElement extends HTMLElement {
       const tmp = document.createElement('div');
       tmp.innerHTML = this.__jmonkey.html;
 
-      if (this.__jmonkeyId) {
+      if (this.__jmonkeySelf.children) {
         const components = tmp.querySelectorAll(Object.keys(window.__jmonkey.registered).join(','));
         components.forEach((component, i) => {
-          const rendered = window.__jmonkey.rendered[this.__jmonkeyId + 1 + i];
+          const rendered = this.__jmonkeySelf.children[this.__jmonkeySelf.path + '.' + component.localName];
           if (rendered) {
             const binded = this.$binder.get(rendered);
             if (binded) {
               binded.forEach(name => {
-                rendered.$[name] = this.$[name];
+                rendered.$[name.receiver] = this.$[name.provider];
               });
             }
             component.parentElement.insertBefore(rendered, component);
             component.remove();
           }
         });
+      }
+
+      if (!this.__jmonkeySelf.children) {
+        this.assigneChildren(tmp);
       }
 
       this.resolveBinds(tmp);
@@ -141,16 +151,13 @@ class JMonkeyElement extends HTMLElement {
       this.resolveEvents(tmp);
       this.renderFors(tmp);
       this.resolveFunctions(tmp);
+
+
       while (tmp.childNodes.length > 0) {
         this.appendChild(tmp.childNodes[0]);
       }
 
-      if (!this.__jmonkeyId) {
-        window.__jmonkey.lastId++;
-        this.__jmonkeyId = window.__jmonkey.lastId;
-        window.__jmonkey.rendered[this.__jmonkeyId] = this;
-      }
-
+      this.searchForNotDownloaded();
       this.afterRender({success: true});
       return true;
     } catch (e) {
@@ -160,25 +167,64 @@ class JMonkeyElement extends HTMLElement {
     }
   }
 
+  assigneChildren(tmp) {
+    this.__jmonkeySelf.children = {};
+    if (!this.__jmonkeySelf.path) {
+      this.__jmonkeySelf.path = 'body';
+    }
+    tmp.querySelectorAll(Object.keys(window.__jmonkey.registered).join(',')).forEach(node => {
+      node.__jmonkeySelf.parent = this;
+      node.__jmonkeySelf.path = this.__jmonkeySelf.path + '.' + node.localName;
+      this.__jmonkeySelf.children[node.__jmonkeySelf.path] = node;
+    });
+  }
+
+  searchForNotDownloaded() {
+    const notDownloaded = window.__jmonkey.main.notDownloaded;
+    const keys = Object.keys(notDownloaded);
+    if (keys.length == 0) {
+      return;
+    }
+
+    const nodes = this.querySelectorAll(keys.join(','))
+    let promises = [];
+    nodes.forEach((node, i) => {
+      node.classList.add(this.loaderClass);
+      if (!window.__jmonkey.registered[node.localName]) {
+        const component = notDownloaded[keys[i]];
+        promises = [
+          ...promises,
+          ...window.__jmonkey.main.createRegisterPromise(component.path, component.name, component.version)
+        ];
+      }
+    });
+    if (promises.length > 0) {
+      window.__jmonkey.main.load(promises);
+    }
+  }
+
   resolveBinds(parent) {
     Object.keys(this.__jmonkey.binds).forEach(alias => {
       const bind = this.__jmonkey.binds[alias];
       let skip = false;
       if (!this.$[bind.value]) {
         console.error(
-          'Observable in `' + this.constructor.name + '` doesn\'t have `' + bind.value + '` variable, skipping'
+          'Observable in `' + this.constructor.name + '` doesn\'t have `' + bind.value + '` variable, skipping binding'
         );
         skip = true;
       }
       parent.querySelectorAll('[' + alias + ']').forEach((node) => {
-        if (!skip) {
+        if (!node.$) {
+          console.error("Selected node was not made with JMokey library and can't have assigned bind");
+        } else if (!skip) {
           node.$[bind.name] = this.$[bind.value];
           node.$binded[bind.name] = this.$;
+          const item = {receiver: bind.name, provider: bind.value};
           const binded = this.$binder.get(node);
           if (binded) {
-            this.$binder.set(node, [...binded, bind.name]);
+            this.$binder.set(node, [...binded, item]);
           } else {
-            this.$binder.set(node, [bind.name]);
+            this.$binder.set(node, [item]);
           }
         }
         node.removeAttribute(alias);
@@ -206,7 +252,11 @@ class JMonkeyElement extends HTMLElement {
     Object.keys(this.__jmonkey.inputs).forEach(alias => {
       const input = this.__jmonkey.inputs[alias];
       parent.querySelectorAll('[' + alias + ']').forEach((node) => {
-        node.$[input.name] = this.getExecuteable(input.value)(...this.getObservablesValues());
+        if (!node.$) {
+          console.error("Selected node was not made with JMokey library and can't have assigned input");
+        } else {
+          node.$[input.name] = this.getExecuteable(input.value)(...this.getObservablesValues());
+        }
         node.removeAttribute(alias);
       });
     });

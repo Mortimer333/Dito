@@ -1,17 +1,5 @@
-<p @if="planet == 'mars'">Hello {{"this is " + planet}}</p>
-{{planet}} {{sun}}
-{{ $inject }}
-<button type="button" name="button" @e:click='console.log(planet); changePlanet()'>Change planet!</button>
-<input type="text" @a:value="iter">
-<p @for="iter">
-  {{$key}} => {{$value}}
+<p>
+  hello world {{ typeof pass != 'undefined' ? pass : 'no pass'}}
 </p>
-{{typeof test != 'undefined' ? test : 'no test'}}
-{{typeof pass != 'undefined' ? pass : 'no pass'}}
-<h1>
-  <p>
-    <span>
-      aaa
-    </span>
-  </p>
-</h1>
+<button type="button" name="button" @e:click='changePass()'>Change pass!</button>
+<second-bind @b:pass2="pass"></second-bind>

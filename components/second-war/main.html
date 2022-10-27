@@ -1,5 +1,6 @@
-second {{pass}} {{test}}
-<button @e:click="test = 'output test2'; testFunc()" name="button">change test</button>
-<hello-world @b:pass="pass" @i:test="test" @o:send="console.log('event:', $event); test = 'output test'">
-  <h3>Bbb</h3>
+<p>
+  second war {{ typeof pass != 'undefined' ? pass : 'no pass'}}
+</p>
+<button @e:click="changePass()" name="button">change test</button>
+<hello-world @b:pass="pass">
 </hello-world>

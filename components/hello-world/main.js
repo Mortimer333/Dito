@@ -4,6 +4,7 @@ class HelloWorld extends JMonkeyElement {
 
   constructor() {
     super();
+    this.$.pass = 'hello world pass';
     this.$.planet = 'earth';
     this.$.iter = 2;
     this.$.sun = () => {
@@ -17,12 +18,12 @@ class HelloWorld extends JMonkeyElement {
   afterRender() {
   }
 
-  changePlanet() {
-    console.log(this.$output);
-    this.$output.send?.emit('asd');
-    this.$.planet = 'mars';
-    this.$.iter++;
-    this.$.pass = 'changed';
+  changePass() {
+    if (this.$.pass == 'hello world pass') {
+      this.$.pass = 'hello world pass 2';
+    } else {
+      this.$.pass = 'hello world pass';
+    }
   }
 
   get var1 () {

@@ -1,0 +1,7 @@
+<p>
+  second bind {{ typeof pass2 != 'undefined' ? pass2 : 'no pass2'}}
+</p>
+<button type="button" @e:click="change = !change">Toggle</button>
+<div @if="change">
+  If check
+</div>
