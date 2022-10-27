@@ -18,12 +18,14 @@ Light weight library to allow separating frontend into components
 
 # Weird behaviour
 
-Due to this being simple library there are few weird behaviours.
+Due to this being a very simple library there are few weird behaviours because of corner cutting.
 
 ## Values set in events and outputs overwrite those set in functions
-Becuase of how script gets variable values from those features the actual change is applied after the event/output finishes - overwritting any change in process.
-So any change during the call, inside classes scope, will be overwritten by the change inside the output/event after it finishes.
+Because of how the script retrieves variable values from those features (outputs/events) the actual change is applied after the event/output finishes - overwriting any change made in class method in process.
+So any change during the call, inside classes scope, will be overwritten by the change inside the output/event after it finishes. **(that's not all, read to the end)**
+
 ### Example:
+
 #### HTML of `<cake-block>` element
 ```html
 {{ test }}
@@ -46,7 +48,7 @@ output test
 <div class="cake-room">Cake room!</div>
 ```
 
-As you can see `test` got changed to `"output test"` even thought `testFn` got called later. This happened because `test` in this scope is disconnected from main observer and assigned again. **if changed**. after the event/output finishes. But if there was no change:
+As you can see `test` was rendered as `"output test"` even thought `testFn` got called later. This happened because `test` in this scope is disconnected from main observer and assigned again after call finishes **(if changed)**. But if there was no change:
 
 ### New HTML of `<cake-block>` element
 ```html
@@ -85,3 +87,42 @@ class CakeBlock extends RootJoin {
 output test event
 <button>Click</button>
 ```
+
+### The very weird part
+If you emit output or dispatch method again the correct result will appear. That's because the old value matches new values in function scope. The script intentionally doesn't check if the new value is different from the one in the main observer as it would always overwrite any changed made in functions (in class scope).
+
+#### First render of `<cake-block>`
+```html
+output test
+<div class="cake-room">Cake room!</div>
+```
+
+#### Second render of `<cake-block>`
+```html
+function test
+<div class="cake-room">Cake room!</div>
+```
+
+#### Third render of `<cake-block>`
+```html
+output test
+<div class="cake-room">Cake room!</div>
+```
+
+and so on.
+
+## Solution
+Don't mix function calls and assignment in events or output. Use one or another, or you might encounter some unexpected behaviour.
+### This
+
+```html
+<cake-room @o:test="test = 'output test'"></cake-room>
+```
+
+### Or this
+
+```html
+<cake-room @o:test="testFn()"></cake-room>
+```
+
+### But not both!
