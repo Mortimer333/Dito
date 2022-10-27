@@ -18,6 +18,8 @@ class HelloWorld extends RootJoint {
   }
 
   changePlanet() {
+    console.log(this.$output);
+    this.$output.send?.emit('asd');
     this.$.planet = 'mars';
     this.$.iter++;
     this.$.pass = 'changed';

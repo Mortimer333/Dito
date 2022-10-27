@@ -70,8 +70,13 @@ class RootJoint extends HTMLElement {
     });
 
     Object.defineProperty(this, "$input", {
-        value: {},
-        writable: false
+      value: {},
+      writable: false
+    });
+
+    Object.defineProperty(this, "$output", {
+      value: {},
+      writable: false
     });
   }
 
@@ -115,6 +120,7 @@ class RootJoint extends HTMLElement {
 
       this.resolveBinds(tmp);
       this.resolveInputs(tmp);
+      this.resolveOutputs(tmp);
       this.resolveAttrs(tmp);
       this.resolveIfs(tmp);
       this.resolveEvents(tmp);
@@ -154,6 +160,19 @@ class RootJoint extends HTMLElement {
           node.$[bind.name] = this.$[bind.value];
           node.$input[bind.name] = this.$;
         }
+        node.removeAttribute(alias);
+      });
+    });
+  }
+
+  resolveOutputs(parent) {
+    Object.keys(this.__jmonkey.outputs).forEach(alias => {
+      const output = this.__jmonkey.outputs[alias];
+      parent.querySelectorAll('[' + alias + ']').forEach((node) => {
+        node.$output[output.name] = {};
+        node.$output[output.name].emit = function (e = false) {
+          this.getOutputFunction(output.value).bind(this)(e, ...this.getObservablesValues());
+        }.bind(this);
         node.removeAttribute(alias);
       });
     });
@@ -264,6 +283,7 @@ class RootJoint extends HTMLElement {
 
     html = this.compileBinds(html);
     html = this.compileInputs(html);
+    html = this.compileOutputs(html);
     html = this.compileAttributes(html);
     html = this.compileExecutables(html);
     html = this.compileEvents(html);
@@ -292,6 +312,10 @@ class RootJoint extends HTMLElement {
     }
 
     return html;
+  }
+
+  compileOutputs(html) {
+    return this.compileFindAndReplace(html, ' @o:', 'o', 'outputs', true);
   }
 
   compileInputs(html) {
@@ -383,6 +407,10 @@ class RootJoint extends HTMLElement {
 
   getExecuteable(script) {
     return new Function(...this.getObservablesKeys(), 'return ' + script);
+  }
+
+  getOutputFunction(script) {
+    return new Function('$event', ...this.getObservablesKeys(), script).bind(this);
   }
 
   getEventFunction(script) {

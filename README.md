@@ -2,9 +2,10 @@
 Light weight library to allow separating frontend into components
 
 # Features:
-- passing arguments - [bind]
-- passing methods on change - (bind)
-- pipes
+- changes in events and outputs should update actual value in observable
+- [DONE] passing methods on change - (bind)
+- [DONE] passing arguments - [bind]
+- [REMOVED] pipes
 - [DONE] Attributes
 - [DONE] persistent storage
 - [DONE] two way binding - ([bind])
