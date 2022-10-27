@@ -11,15 +11,24 @@
     <second-war>
       aaa
     </second-war>
-    <script type="module">
-      import { RootJoint } from "./root.js";
-      import { Joints } from "./main.js";
-      const container = new Joints({
+    <script src="./merged.js" charset="utf-8"></script>
+    <script type="text/javascript">
+       (async () => {const container = new Joints({
         url: 'http://jmonkey.local/components/'
       });
       container.register('hello-world', 1, true);
       container.register('second-war', 2, true);
-      await container.load();
+      await container.load();})()
+    </script>
+    <script type="module">
+      // import { RootJoint } from "./root.js";
+      // import { Joints } from "./main.js";
+      // const container = new Joints({
+      //   url: 'http://jmonkey.local/components/'
+      // });
+      // container.register('hello-world', 1, true);
+      // container.register('second-war', 2, true);
+      // await container.load();
     </script>
   </body>
 </html>

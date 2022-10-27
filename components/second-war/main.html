@@ -1,5 +1,5 @@
 second {{pass}} {{test}}
-<button @e:click="testFunc()" name="button">change test</button>
-<hello-world @b:pass="pass" @i:test="test" @o:send="console.log('event:', $event);">
+<button @e:click="test = 'output test2'; testFunc()" name="button">change test</button>
+<hello-world @b:pass="pass" @i:test="test" @o:send="console.log('event:', $event); test = 'output test'">
   <h3>Bbb</h3>
 </hello-world>
