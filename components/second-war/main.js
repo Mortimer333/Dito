@@ -1,6 +1,6 @@
-import { RootJoint } from '../../root.js';
+import { JMonkeyElement } from '../../root.js';
 
-class Second extends RootJoint {
+class Second extends JMonkeyElement {
   prepare() {
     this.$.test = 'test';
     this.$.pass = 'hello pass here';
@@ -9,6 +9,7 @@ class Second extends RootJoint {
   testFunc() {
     console.log("Not test");
     this.$.test = 'not test';
+    this.$.pass = 'second war pass'
     console.log(this.$.test);
   }
 }

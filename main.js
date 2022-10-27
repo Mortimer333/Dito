@@ -1,4 +1,4 @@
-class Joints {
+class JMonkey {
   url;
   filename = 'main';
   headers = {};
@@ -245,4 +245,4 @@ class Joints {
     }
   }
 }
-export { Joints };
+export { JMonkey };

@@ -1,4 +1,4 @@
-class RootJoint extends HTMLElement {
+class JMonkeyElement extends HTMLElement {
   renderInProgress = false;
   injectName = '$inject';
   key = null;
@@ -7,8 +7,8 @@ class RootJoint extends HTMLElement {
 
   constructor() {
     super();
-    if (this.constructor === RootJoint) {
-      throw new Error("RootJoint is an abstract and cannot be instantiated as separate class");
+    if (this.constructor === JMonkeyElement) {
+      throw new Error("JMonkeyElement is an abstract and cannot be instantiated as separate class");
     }
     this.defineObservable();
     this.saveMethods();
@@ -55,8 +55,8 @@ class RootJoint extends HTMLElement {
               this.tag.queueRender();
             }
 
-            if (this.tag.$input[prop]) {
-              this.tag.$input[prop][prop] = value;
+            if (this.tag.$binded[prop] && this.tag.$binded[prop][prop] !== value) {
+              this.tag.$binded[prop][prop] = value;
             }
 
             return Reflect.set(...arguments);
@@ -73,8 +73,13 @@ class RootJoint extends HTMLElement {
         writable: false
     });
 
-    Object.defineProperty(this, "$input", {
+    Object.defineProperty(this, "$binded", {
       value: {},
+      writable: false
+    });
+
+    Object.defineProperty(this, "$binder", {
+      value: new WeakMap(),
       writable: false
     });
 
@@ -116,6 +121,12 @@ class RootJoint extends HTMLElement {
         components.forEach((component, i) => {
           const rendered = window.__jmonkey.rendered[this.__jmonkeyId + 1 + i];
           if (rendered) {
+            const binded = this.$binder.get(rendered);
+            if (binded) {
+              binded.forEach(name => {
+                rendered.$[name] = this.$[name];
+              });
+            }
             component.parentElement.insertBefore(rendered, component);
             component.remove();
           }
@@ -162,7 +173,13 @@ class RootJoint extends HTMLElement {
       parent.querySelectorAll('[' + alias + ']').forEach((node) => {
         if (!skip) {
           node.$[bind.name] = this.$[bind.value];
-          node.$input[bind.name] = this.$;
+          node.$binded[bind.name] = this.$;
+          const binded = this.$binder.get(node);
+          if (binded) {
+            this.$binder.set(node, [...binded, bind.name]);
+          } else {
+            this.$binder.set(node, [bind.name]);
+          }
         }
         node.removeAttribute(alias);
       });
@@ -470,4 +487,4 @@ class RootJoint extends HTMLElement {
   }
 }
 
-export { RootJoint };
+export { JMonkeyElement };

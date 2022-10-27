@@ -1,6 +1,6 @@
-import { RootJoint } from '../../root.js';
+import { JMonkeyElement } from '../../root.js';
 
-class HelloWorld extends RootJoint {
+class HelloWorld extends JMonkeyElement {
 
   constructor() {
     super();
