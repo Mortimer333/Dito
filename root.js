@@ -90,7 +90,7 @@ class JMonkeyElement extends HTMLElement {
       writable: false
     });
 
-    Object.defineProperty(this, "__jmonkeySelf", {
+    Object.defineProperty(this, "$self", {
       value: {},
       writable: false
     });
@@ -122,10 +122,10 @@ class JMonkeyElement extends HTMLElement {
       const tmp = document.createElement('div');
       tmp.innerHTML = this.__jmonkey.html;
 
-      if (this.__jmonkeySelf.children) {
+      if (this.$self.children) {
         const components = tmp.querySelectorAll(Object.keys(window.__jmonkey.registered).join(','));
         components.forEach((component, i) => {
-          const rendered = this.__jmonkeySelf.children[this.__jmonkeySelf.path + '.' + component.localName];
+          const rendered = this.$self.children[this.$self.path + '.' + component.localName + i];
           if (rendered) {
             const binded = this.$binder.get(rendered);
             if (binded) {
@@ -139,7 +139,7 @@ class JMonkeyElement extends HTMLElement {
         });
       }
 
-      if (!this.__jmonkeySelf.children) {
+      if (!this.$self.children) {
         this.assigneChildren(tmp);
       }
 
@@ -168,14 +168,14 @@ class JMonkeyElement extends HTMLElement {
   }
 
   assigneChildren(tmp) {
-    this.__jmonkeySelf.children = {};
-    if (!this.__jmonkeySelf.path) {
-      this.__jmonkeySelf.path = 'body';
+    this.$self.children = {};
+    if (!this.$self.path) {
+      this.$self.path = 'body';
     }
-    tmp.querySelectorAll(Object.keys(window.__jmonkey.registered).join(',')).forEach(node => {
-      node.__jmonkeySelf.parent = this;
-      node.__jmonkeySelf.path = this.__jmonkeySelf.path + '.' + node.localName;
-      this.__jmonkeySelf.children[node.__jmonkeySelf.path] = node;
+    tmp.querySelectorAll(Object.keys(window.__jmonkey.registered).join(',')).forEach((node, i) => {
+      node.$self.parent = this;
+      node.$self.path = this.$self.path + '.' + node.localName + i;
+      this.$self.children[node.$self.path] = node;
     });
   }
 
