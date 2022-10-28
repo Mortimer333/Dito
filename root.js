@@ -4,7 +4,6 @@ class JMonkeyElement extends HTMLElement {
   key = null;
   value = null;
   queueRender;
-  loaderClass = 'jmonkey-spinner';
 
   constructor() {
     super();
@@ -18,7 +17,6 @@ class JMonkeyElement extends HTMLElement {
       this.renderInProgress = false;
       this.render();
     });
-    this.classList.remove(this.loaderClass);
     this.prepare();
   }
 
@@ -189,7 +187,6 @@ class JMonkeyElement extends HTMLElement {
     const nodes = this.querySelectorAll(keys.join(','))
     let promises = [];
     nodes.forEach((node, i) => {
-      node.classList.add(this.loaderClass);
       if (!window.__jmonkey.registered[node.localName]) {
         const component = notDownloaded[keys[i]];
         promises = [
