@@ -121,47 +121,99 @@ class JMonkey {
           continue;
         }
 
-        let skipped = false;
+        let cssSkipped = false;
+        let htmlSkipped = false;
+        const promises = [];
         if (html === this.SKIP) {
-          skipped = true;
+          htmlSkipped = true;
           html = localComponent.html;
         } else {
-          html = await html.text();
+          promises.push(html.text());
         }
 
         if (css === this.SKIP) {
-          skipped = true;
+          cssSkipped = true;
           css = localComponent.css;
         } else {
-          css = await css.text();
+          promises.push(css.text());
         }
 
-        localStorage.setItem(component, JSON.stringify({ html, css, _version: version }));
+        await Promise.all(promises).then((values) => {
+          if (!htmlSkipped && !cssSkipped) {
+            html = values[0];
+            css = values[1];
+          } else if (!htmlSkipped) {
+            css = values[0];
+          } else if (!cssSkipped) {
+            html = values[0];
+          }
 
-        const range = document.createRange();
-        range.selectNodeContents(document.createElement('div')); // fix for safari
-        if (range.createContextualFragment(html).querySelector(component)) {
-          console.error(
-            "Script detected direct recursive use of components in `" + component + "`. " +
-            "Components' additional call won't be rendered to avoid inifnite loop."
-          );
-        }
+          this.saveComponent(component, JSON.stringify({ html, css, _version: version, _time: +new Date() }));
 
-        ({ default: js } = js);
+          const range = document.createRange();
+          range.selectNodeContents(document.createElement('div')); // fix for safari
+          if (range.createContextualFragment(html).querySelector(component)) {
+            console.error(
+              "Script detected direct recursive use of components in `" + component + "`. " +
+              "Components' additional call won't be rendered to avoid inifnite loop."
+            );
+          }
 
-
-        Object.defineProperty(js.prototype, "__jmonkey", {
-            value: {},
-            writable: false
+          ({ default: js } = js);
+          Object.defineProperty(js.prototype, "__jmonkey", {
+              value: {},
+              writable: false
+          });
+          js.prototype.__jmonkey.html = html;
+          this.components[component] = {name: component, js, html, css, cssInjected: false, _cssSkipped: cssSkipped };
+          i += skipSize;
         });
-        js.prototype.__jmonkey.html = html;
-        this.components[component] = {name: component, js, html, css, cssInjected: false, _skipped: skipped };
-        i += skipSize;
+
       }
 
       this.renderComponents(document);
       registered = [];
     }).catch(err => console.error(err));
+  }
+
+  saveComponent(key, data) {
+    try {
+      localStorage.setItem(key, data);
+    } catch (e) {
+      if (e.name.toLowerCase().match(/quota/)) {
+        if (localStorage.length == 0) {
+          console.error('Component `' + key + '` won\'t be saved for later because of his size (over 5mb)');
+          return;
+        }
+        this.removeOldestComponent();
+        this.saveComponent(key, data);
+      }
+    }
+  }
+
+  removeOldestComponent() {
+    const oldest = {
+      key: null,
+      time: null,
+    }
+    for (let i=0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      const component = localStorage.getItem(key);
+      if (!oldest.time) {
+        oldest.time = component.time;
+        oldest.key = key;
+        continue;
+      }
+
+      if (oldest.time > component.time) {
+        oldest.time = component.time;
+        oldest.key = key;
+      }
+    }
+
+    if (oldest.key) {
+      localStorage.removeItem(oldest.key);
+    }
   }
 
   renderComponents(parent, skip = {}) {
@@ -185,7 +237,7 @@ class JMonkey {
     component.cssInjected = true;
     const sheet = this.styleNode.sheet;
 
-    if (component._skipped) {
+    if (component._cssSkipped) {
       component.css.forEach(rule => {
         sheet.insertRule(rule);
       });

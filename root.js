@@ -496,12 +496,12 @@ class JMonkeyElement extends HTMLElement {
   }
 
   getExecuteable(script) {
-    return new Function(...this.getObservablesKeys(), 'return ' + script);
+    return new Function(...this.getObservablesKeys(), 'return ' + script).bind({});
   }
 
   getFunction(script, vars = []) {
     const observableKeys = this.getObservablesKeys();
-    return new Function(...vars, ...observableKeys, script + '; return [' + observableKeys.join(',') + '];');
+    return new Function(...vars, ...observableKeys, script + '; return [' + observableKeys.join(',') + '];').bind({});
   }
 
   getObservablesKeys() {
