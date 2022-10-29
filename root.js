@@ -1,32 +1,36 @@
 class JMonkeyElement extends HTMLElement {
-  renderInProgress = false;
   injectName = '$inject';
+  keyName = "$key";
+  valueName = "$value";
+  eventName = "$event";
   key = null;
   value = null;
-  queueRender;
 
   constructor() {
     super();
     if (this.constructor === JMonkeyElement) {
       throw new Error("JMonkeyElement is an abstract and cannot be instantiated as separate class");
     }
+    this.prepare();
     this.defineObservable();
     this.saveMethods();
-    this[this.injectName] = this.innerHTML;
-    this.queueRender = this.debounce(e => {
-      this.renderInProgress = false;
+    this.$self.renderInProgress = false;
+    this.$self[this.injectName] = this.innerHTML;
+    this.$self.debounceRender = this.debounce(e => {
+      this.$self.renderInProgress = false;
       this.render();
     });
-    this.prepare();
+    this.afterInit();
   }
 
   /* EVENTS */
-  prepare(){}      // Just after constructor
-  beforeRender(){} // Before first render
-  afterRender(){}  // After first render
+  prepare(){}            // Before constructor starts but after HTMLElement constructor
+  afterInit(){}          // After constructor finishes
+  beforeRender(){}       // Before render
+  afterRender(result){}  // After render
 
   connectedCallback() {
-    this.render();
+    this.queueRender();
   }
 
   saveMethods() {
@@ -41,6 +45,16 @@ class JMonkeyElement extends HTMLElement {
     }.bind(this));
   }
 
+  queueRender() {
+    this.$self.renderInProgress = true;
+    this.$self.debounceRender();
+  }
+
+  clearRenderQueue() {
+    this.$self.renderInProgress = false;
+    this.$self.debounceRender('clear');
+  }
+
   defineObservable() {
     Object.defineProperty(this, "$", {
         value: new Proxy({}, {
@@ -51,7 +65,6 @@ class JMonkeyElement extends HTMLElement {
             }
 
             if (value !== obj[prop]) {
-              this.tag.renderInProgress = true;
               this.tag.queueRender();
             }
 
@@ -67,6 +80,7 @@ class JMonkeyElement extends HTMLElement {
             if (typeof value == 'function') {
               return value.bind(this.tag)();
             }
+
             return Reflect.get(...arguments);
           }
         }),
@@ -83,29 +97,40 @@ class JMonkeyElement extends HTMLElement {
       writable: false
     });
 
-    Object.defineProperty(this, "$output", {
-      value: {},
-      writable: false
-    });
+    if (!this.$output) {
+      this.defineOutput(this);
+    }
 
-    Object.defineProperty(this, "$self", {
-      value: {},
+    if (!this.$self) {
+      this.defineSelf(this);
+    }
+  }
+
+  defineSelf(obj) {
+    Object.defineProperty(obj, "$self", {
+      value: {
+        toBind: [],
+        parent: null,
+        children: null,
+        path: null
+      },
       writable: false
     });
   }
 
-  static get observedAttributes() {
-    return [];
-  }
-
-  attributeChangedCallback(name, oldValue, newValue) {
+  defineOutput(obj) {
+    Object.defineProperty(obj, "$output", {
+      value: {},
+      writable: false
+    });
   }
 
   render() {
-    if (this.renderInProgress || !document.body.contains(this)) {
+    if (this.$self.renderInProgress || !document.body.contains(this)) {
       return;
     }
-    this.queueRender('clear');
+
+    this.clearRenderQueue();
     if (document.body.querySelector(this.localName + ' ' + this.localName)) {
       throw new Error('Custom element ' + this.localName + ' is recursively called. Stopping the render....');
     }
@@ -120,42 +145,47 @@ class JMonkeyElement extends HTMLElement {
       const tmp = document.createElement('div');
       tmp.innerHTML = this.__jmonkey.html;
 
-      if (this.$self.children) {
-        const components = tmp.querySelectorAll(Object.keys(window.__jmonkey.registered).join(','));
-        components.forEach((component, i) => {
-          const rendered = this.$self.children[this.$self.path + '.' + component.localName + i];
-          if (rendered) {
-            const binded = this.$binder.get(rendered);
-            if (binded) {
-              binded.forEach(name => {
-                rendered.$[name.receiver] = this.$[name.provider];
-              });
-            }
-            component.parentElement.insertBefore(rendered, component);
-            component.remove();
-          }
-        });
-      }
-
       if (!this.$self.children) {
-        this.assigneChildren(tmp);
+        this.retrieveBindedValues();
+        this.searchForNotDownloaded(tmp);
+        this.assignChildren(tmp);
+        // Those 3 should only be resolved once
+        this.resolveBinds(tmp);
+        this.resolveInputs(tmp);
+        this.resolveOutputs(tmp);
+      } else {
+        tmp.querySelectorAll(Object.keys(window.__jmonkey.registered).join(',')).forEach(function (component, i) {
+          if (!component.$) {
+            return;
+          }
+
+          const rendered = this.$self.children[this.$self.path + '.' + component.localName + i];
+          if (!rendered) {
+            return;
+          }
+
+          // Updating binded values manually to avoid infinite loop
+          const binded = this.$binder.get(rendered);
+          if (binded) {
+            binded.forEach(name => {
+              rendered.$[name.receiver] = this.$[name.provider];
+            });
+          }
+          component.parentElement.insertBefore(rendered, component);
+          component.remove();
+        }.bind(this));
       }
 
-      this.resolveBinds(tmp);
-      this.resolveInputs(tmp);
-      this.resolveOutputs(tmp);
       this.resolveAttrs(tmp);
       this.resolveIfs(tmp);
       this.resolveEvents(tmp);
-      this.renderFors(tmp);
-      this.resolveFunctions(tmp);
-
+      this.renderFors(tmp); // For must be before `executables` as it has different scope then the rest of nodes
+      this.resolveExecutables(tmp);
 
       while (tmp.childNodes.length > 0) {
         this.appendChild(tmp.childNodes[0]);
       }
 
-      this.searchForNotDownloaded();
       this.afterRender({success: true});
       return true;
     } catch (e) {
@@ -165,38 +195,60 @@ class JMonkeyElement extends HTMLElement {
     }
   }
 
-  assigneChildren(tmp) {
+  retrieveBindedValues() {
+    if (this.$self.parent) {
+      this.checkBinds.bind(this.$self.parent)()
+    }
+  }
+
+  checkBinds() {
+    for (var i = 0; i < this.$self.toBind.length; i++) {
+      const item = this.$self.toBind[i];
+      if (item.node.$) {
+        this.setBind(item.bind, item.node);
+        this.$self.toBind.splice(i, 1);
+        i--;
+      }
+    }
+  }
+
+  assignChildren(tmp) {
     this.$self.children = {};
     if (!this.$self.path) {
       this.$self.path = 'body';
     }
     tmp.querySelectorAll(Object.keys(window.__jmonkey.registered).join(',')).forEach((node, i) => {
+      if (!node.$self) {
+        this.defineSelf(node);
+      }
       node.$self.parent = this;
       node.$self.path = this.$self.path + '.' + node.localName + i;
       this.$self.children[node.$self.path] = node;
     });
   }
 
-  searchForNotDownloaded() {
+  searchForNotDownloaded(parent) {
     const notDownloaded = window.__jmonkey.main.notDownloaded;
     const keys = Object.keys(notDownloaded);
     if (keys.length == 0) {
       return;
     }
 
-    const nodes = this.querySelectorAll(keys.join(','))
     let promises = [];
-    nodes.forEach((node, i) => {
+    parent.querySelectorAll(keys.join(',')).forEach((node, i) => {
       if (!window.__jmonkey.registered[node.localName]) {
         const component = notDownloaded[keys[i]];
-        promises = [
-          ...promises,
+        promises.push(
           ...window.__jmonkey.main.createRegisterPromise(component.path, component.name, component.version)
-        ];
+        );
+        delete notDownloaded[keys[i]];
       }
     });
+
     if (promises.length > 0) {
-      window.__jmonkey.main.load(promises);
+      (async function() {
+        await window.__jmonkey.main.load(promises);
+      }).bind(this)()
     }
   }
 
@@ -206,22 +258,17 @@ class JMonkeyElement extends HTMLElement {
       let skip = false;
       if (!this.$[bind.value]) {
         console.error(
-          'Observable in `' + this.constructor.name + '` doesn\'t have `' + bind.value + '` variable, skipping binding'
+          'Observable in `' + this.constructor.name + '` doesn\'t have `'
+          + bind.value + '` variable, skipping binding...'
         );
         skip = true;
       }
       parent.querySelectorAll('[' + alias + ']').forEach((node) => {
-        if (!node.$) {
-          console.error("Selected node was not made with JMokey library and can't have assigned bind");
-        } else if (!skip) {
-          node.$[bind.name] = this.$[bind.value];
-          node.$binded[bind.name] = this.$;
-          const item = {receiver: bind.name, provider: bind.value};
-          const binded = this.$binder.get(node);
-          if (binded) {
-            this.$binder.set(node, [...binded, item]);
+        if (!skip) {
+          if (!node.$) {
+            this.$self.toBind.push({bind, node});
           } else {
-            this.$binder.set(node, [item]);
+            this.setBind(bind, node);
           }
         }
         node.removeAttribute(alias);
@@ -229,25 +276,54 @@ class JMonkeyElement extends HTMLElement {
     });
   }
 
+  setBind(bind, node) {
+    node.$[bind.name] = this.$[bind.value];
+    node.$binded[bind.name] = this.$;
+    const item = {receiver: bind.name, provider: bind.value};
+    const binded = this.$binder.get(node);
+    if (binded) {
+      this.$binder.set(node, [...binded, item]);
+    } else {
+      this.$binder.set(node, [item]);
+    }
+  }
+
   resolveOutputs(parent) {
-    Object.keys(this.__jmonkey.outputs).forEach(alias => {
-      const output = this.__jmonkey.outputs[alias];
+    const obj = this.__jmonkey.outputs;
+    for (var alias in obj) {
+      if (!obj.hasOwnProperty(alias)) {
+        continue;
+      }
+
+      const output = obj[alias];
       parent.querySelectorAll('[' + alias + ']').forEach((node) => {
+        if (!node.$output) {
+          this.defineOutput(node);
+        }
+
         node.$output[output.name] = {};
-        node.$output[output.name].emit = function (e = false) {
+        node.$output[output.name].emit = function (e) {
           const observableKeys = this.getObservablesKeys();
           const valuesBefore = this.getObservablesValues();
-          const res = this.getFunction(output.value, ['$event']).bind(this)(e, ...valuesBefore);
-          this.updatedChangedValues(res, observableKeys, valuesBefore);
+          try {
+            const res = this.getFunction(output.value, [this.eventName]).bind(this)(e, ...valuesBefore);
+            this.updatedChangedValues(res, observableKeys, valuesBefore);
+          } catch (e) {
+            console.error("Error on output", e);
+          }
         }.bind(this);
         node.removeAttribute(alias);
       });
-    });
+    }
   }
 
   resolveInputs(parent) {
-    Object.keys(this.__jmonkey.inputs).forEach(alias => {
-      const input = this.__jmonkey.inputs[alias];
+    const obj = this.__jmonkey.inputs;
+    for (var alias in obj) {
+      if (!obj.hasOwnProperty(alias)) {
+        continue;
+      }
+      const input = obj[alias];
       parent.querySelectorAll('[' + alias + ']').forEach((node) => {
         if (!node.$) {
           console.error("Selected node was not made with JMokey library and can't have assigned input");
@@ -256,17 +332,21 @@ class JMonkeyElement extends HTMLElement {
         }
         node.removeAttribute(alias);
       });
-    });
+    }
   }
 
   resolveAttrs(parent) {
-    Object.keys(this.__jmonkey.attrs).forEach(alias => {
-      const attr = this.__jmonkey.attrs[alias];
+    const obj = this.__jmonkey.attrs;
+    for (var alias in obj) {
+      if (!obj.hasOwnProperty(alias)) {
+        continue;
+      }
+      const attr = obj[alias];
       parent.querySelectorAll('[' + alias + ']').forEach((node) => {
         node.setAttribute(attr.name, this.getExecuteable(attr.value)(...this.getObservablesValues()));
         node.removeAttribute(alias);
       });
-    });
+    }
   }
 
   renderFors(parent) {
@@ -304,7 +384,7 @@ class JMonkeyElement extends HTMLElement {
           this.key = keys[i];
           this.value = values[i];
           const clone = node.cloneNode(true);
-          this.resolveFunctions(clone);
+          this.resolveExecutables(clone);
           node.parentElement.insertBefore(clone, current.nextSibling);
           current = clone;
         }
@@ -343,10 +423,10 @@ class JMonkeyElement extends HTMLElement {
     });
   }
 
-  resolveFunctions(parent) {
-    Object.keys(this.__jmonkey.functions).forEach(alias => {
+  resolveExecutables(parent) {
+    Object.keys(this.__jmonkey.executables).forEach(alias => {
       parent.querySelectorAll('[' + alias + ']').forEach(node => {
-        node.outerHTML = this.getExecuteable(this.__jmonkey.functions[alias])(...this.getObservablesValues());
+        node.outerHTML = this.getExecuteable(this.__jmonkey.executables[alias])(...this.getObservablesValues());
       });
     });
   }
@@ -366,7 +446,6 @@ class JMonkeyElement extends HTMLElement {
 
   compile() {
     let html = this.__jmonkey.html;
-    this.__jmonkey.functions = {};
 
     html = this.compileBinds(html);
     html = this.compileInputs(html);
@@ -375,9 +454,8 @@ class JMonkeyElement extends HTMLElement {
     html = this.compileExecutables(html);
     html = this.compileEvents(html);
     html = this.compileIfs(html);
-    html = this.compileFors(html);
+    this.__jmonkey.html = this.compileFors(html);
 
-    this.__jmonkey.html = html;
     this.__jmonkey.compiled = true;
   }
 
@@ -477,14 +555,15 @@ class JMonkeyElement extends HTMLElement {
   }
 
   compileExecutables(html) {
+    this.__jmonkey.executables = {};
     let start = html.indexOf('{{');
     while (start !== -1) {
       let end = html.indexOf('}}', start);
       if (end === -1) {
         break;
       }
-      const name = 'func_' + start + '_' + end;
-      this.__jmonkey.functions[name] = html.substr(start + 2, end - (start + 2));
+      const name = 'exec_' + start + '_' + end;
+      this.__jmonkey.executables[name] = html.substr(start + 2, end - (start + 2));
       html = html.replaceAll(html.substr(start, end + 2 - start), '<span ' + name + '></span>');
       start = html.indexOf('{{', start + name.length);
     }
@@ -506,8 +585,8 @@ class JMonkeyElement extends HTMLElement {
       ...Object.keys(this.methods),
       ...Object.keys(this.$),
       this.injectName,
-      '$key',
-      '$value',
+      this.keyName,
+      this.valueName,
     ];
   }
 
@@ -515,7 +594,7 @@ class JMonkeyElement extends HTMLElement {
     return [
       ...Object.values(this.methods),
       ...Object.values(this.$),
-      this[this.injectName],
+      this.$self[this.injectName],
       this.key,
       this.value,
     ];
@@ -525,8 +604,9 @@ class JMonkeyElement extends HTMLElement {
     let timer;
     return (...args) => {
       clearTimeout(timer);
-      if ( args[0] === "clear" ) {
-        return; // if passed `clear` then stop debouncing
+      // if passed `clear` then stop debouncing
+      if (args[0] === "clear") {
+        return;
       }
 
       timer = setTimeout(() => { func.apply(this, args); }, timeout);

@@ -2,16 +2,14 @@
 Light weight library to allow separating frontend into reusable components
 
 # Features:
-- Add jmonkey-spinner class
-- [REMOVED] Add a way to send all templates for page in one file
-- [REMOVED] Save JS in local storage and build it from Function
+- dynamic CSS variables?
+- Event when first render finishes and every component is downloaded
 - [DONE] Find a way how to figure out when local storage is overflowing and how to remove old templates
 - [DONE] check if registrated component (which wasn't displayed at start) is properly downloaded
 - [DONE] Check if binded value when passed as bind to the third component works as intended
 - [DONE] changes in events and outputs should update actual value in observable
 - [DONE] passing methods on change - (bind)
 - [DONE] passing arguments - [bind]
-- [REMOVED] pipes
 - [DONE] Attributes
 - [DONE] persistent storage
 - [DONE] two way binding - ([bind])
@@ -21,6 +19,10 @@ Light weight library to allow separating frontend into reusable components
 - [DONE] events and {{}}
 - [DONE] passing html to the inside of element will result in rendering it inside of it
 - [DONE] allow choosing where to put injected html
+- [REMOVED] Add jmonkey-spinner class - if someone wants to have loaders they will add them
+- [REMOVED] Add a way to send all templates for page in one file - can't put js modules in string and make it work with Function
+- [REMOVED] Save JS in local storage and build it from Function - same reason as single file - can't put exports in string
+- [REMOVED] pipes - not needed, we can actually use method
 
 # Weird behaviour
 

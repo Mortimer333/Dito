@@ -52,7 +52,6 @@ class JMonkey {
   }
 
   createRegisterPromise(path, name, version, force = false) {
-
     let skip = false;
     if (!force && localStorage.getItem(name)) {
       const comp = JSON.parse(localStorage.getItem(name));
@@ -61,18 +60,17 @@ class JMonkey {
       }
     }
 
-    this.components[name] = {js: null, html: null, css: null, cssInjected: false};
     path = this.url + path + name + '/' + this.filename + '.';
-    const js = import(path + 'js');
-    const html = skip ? Promise.resolve(this.SKIP) : this.fetch(path + 'html');
-    const css = skip ? Promise.resolve(this.SKIP) : this.fetch(path + 'css');
-    const registered = [];
-    registered.push(Promise.resolve(name + '_' + version));
-    registered.push(html.catch((error) => error));
-    registered.push(js.catch((error) => error));
-    registered.push(css.catch((error) => error));
+    const js = import(path + 'js?v=' + version);
+    const html = skip ? Promise.resolve(this.SKIP) : this.fetch(path + 'html?v=' + version);
+    const css = skip ? Promise.resolve(this.SKIP) : this.fetch(path + 'css?v=' + version);
     window.__jmonkey.registered[name] = true;
-    return registered;
+    return [
+      Promise.resolve(name + '_' + version),
+      html.catch((error) => error),
+      js.catch((error) => error),
+      css.catch((error) => error)
+    ];
   }
 
   async load(registered = null) {
@@ -167,6 +165,8 @@ class JMonkey {
           js.prototype.__jmonkey.html = html;
           this.components[component] = {name: component, js, html, css, cssInjected: false, _cssSkipped: cssSkipped };
           i += skipSize;
+          delete this.notDownloaded[component];
+
         });
 
       }
@@ -223,9 +223,7 @@ class JMonkey {
       }
 
       const tags = parent.querySelectorAll(tagName);
-      if (tags.length > 0) {
-        this.insertCss(this.components[tagName]);
-      }
+      this.insertCss(this.components[tagName]);
     }.bind(this));
   }
 
@@ -239,7 +237,7 @@ class JMonkey {
 
     if (component._cssSkipped) {
       component.css.forEach(rule => {
-        sheet.insertRule(rule);
+        sheet.insertRule(rule, sheet.cssRules.length);
       });
       component.cssInjected = true;
       return;
@@ -253,14 +251,14 @@ class JMonkey {
     const styles = [];
     Object.values(stylesheet.cssRules).forEach(rule => {
       styles.push(component.name + ' ' + rule.cssText);
-      sheet.insertRule(component.name + ' ' + rule.cssText);
+      sheet.insertRule(component.name + ' ' + rule.cssText, sheet.cssRules.length);
     });
     component.css = styles;
 
     // Update css with compiled one
     const saved = JSON.parse(localStorage.getItem(component.name));
     saved.css = component.css;
-    localStorage.setItem(component.name, JSON.stringify(saved));
+    this.saveComponent(component.name, JSON.stringify(saved));
   }
 
   async validateFiles(component, compFiles) {

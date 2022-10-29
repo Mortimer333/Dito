@@ -2,8 +2,7 @@ import { JMonkeyElement } from '../../root.js';
 
 class HelloWorld extends JMonkeyElement {
 
-  constructor() {
-    super();
+  afterInit() {
     this.$.pass = 'hello world pass';
     this.$.planet = 'earth';
     this.$.iter = 2;

@@ -1,12 +1,16 @@
 import { JMonkeyElement } from '../../root.js';
 
 class Second extends JMonkeyElement {
-  prepare() {
+  afterInit() {
     this.$.pass = 'second war pass';
   }
 
   changePass() {
-    this.$.pass = 'second war pass';
+    if (this.$.pass == 'second war pass') {
+      this.$.pass = 'second war pass2';
+    } else {
+      this.$.pass = 'second war pass';
+    }
   }
 }
 

@@ -6,20 +6,23 @@
   </head>
   <body>
     <hello-world>
-      <h1>Heyo</h1>
+      <h1>
+        Hello
+      </h1>
     </hello-world>
     <second-war>
       aaa
     </second-war>
     <script src="./merged.js" charset="utf-8"></script>
     <script type="module">
+      import { JMonkeyElement } from "./root.js";
       import { JMonkey } from "./main.js";
       const container = new JMonkey({
         url: 'http://jmonkey.local/components/'
       });
-      container.register('hello-world', 1, '', true);
-      container.register('second-war', 2, '', true);
-      container.register('second-bind', 1, '', true);
+      container.register('hello-world', 7, '', true);
+      container.register('second-war', 3, '', true);
+      container.register('second-bind', 6, '', true);
       await container.load();
     </script>
   </body>
