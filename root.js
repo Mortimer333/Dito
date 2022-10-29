@@ -253,27 +253,29 @@ class JMonkeyElement extends HTMLElement {
   }
 
   resolveBinds(parent) {
-    Object.keys(this.__jmonkey.binds).forEach(alias => {
-      const bind = this.__jmonkey.binds[alias];
-      let skip = false;
-      if (!this.$[bind.value]) {
-        console.error(
-          'Observable in `' + this.constructor.name + '` doesn\'t have `'
-          + bind.value + '` variable, skipping binding...'
-        );
-        skip = true;
-      }
-      parent.querySelectorAll('[' + alias + ']').forEach((node) => {
+    this.resolve(
+      parent,
+      'binds',
+      (alias, obj, item, node, skip) => {
         if (!skip) {
           if (!node.$) {
-            this.$self.toBind.push({bind, node});
+            this.$self.toBind.push({item, node});
           } else {
-            this.setBind(bind, node);
+            this.setBind(item, node);
           }
         }
-        node.removeAttribute(alias);
-      });
-    });
+      },
+      (alias, obj, item) => {
+        if (!this.$[item.value]) {
+          console.error(
+            'Observable in `' + this.constructor.name + '` doesn\'t have `'
+            + item.value + '` variable, skipping binding...'
+          );
+          return [true];
+        }
+        return [false];
+      }
+    );
   }
 
   setBind(bind, node) {
@@ -289,90 +291,46 @@ class JMonkeyElement extends HTMLElement {
   }
 
   resolveOutputs(parent) {
-    const obj = this.__jmonkey.outputs;
-    for (var alias in obj) {
-      if (!obj.hasOwnProperty(alias)) {
-        continue;
+    this.resolve(parent, 'outputs', (alias, obj, item, node) => {
+      if (!node.$output) {
+        this.defineOutput(node);
       }
 
-      const output = obj[alias];
-      parent.querySelectorAll('[' + alias + ']').forEach((node) => {
-        if (!node.$output) {
-          this.defineOutput(node);
+      node.$output[item.name] = {};
+      node.$output[item.name].emit = function (e) {
+        const observableKeys = this.getObservablesKeys();
+        const valuesBefore = this.getObservablesValues();
+        try {
+          const res = this.getFunction(item.value, [this.eventName]).bind(this)(e, ...valuesBefore);
+          this.updatedChangedValues(res, observableKeys, valuesBefore);
+        } catch (e) {
+          console.error("Error on output", e);
         }
-
-        node.$output[output.name] = {};
-        node.$output[output.name].emit = function (e) {
-          const observableKeys = this.getObservablesKeys();
-          const valuesBefore = this.getObservablesValues();
-          try {
-            const res = this.getFunction(output.value, [this.eventName]).bind(this)(e, ...valuesBefore);
-            this.updatedChangedValues(res, observableKeys, valuesBefore);
-          } catch (e) {
-            console.error("Error on output", e);
-          }
-        }.bind(this);
-        node.removeAttribute(alias);
-      });
-    }
+      }.bind(this);
+    });
   }
 
   resolveInputs(parent) {
-    const obj = this.__jmonkey.inputs;
-    for (var alias in obj) {
-      if (!obj.hasOwnProperty(alias)) {
-        continue;
+    this.resolve(parent, 'inputs', (alias, obj, item, node) => {
+      if (!node.$) {
+        console.error("Selected node was not made with JMokey library and can't have assigned input");
+      } else {
+        node.$[item.name] = this.getExecuteable(item.value)(...this.getObservablesValues());
       }
-      const input = obj[alias];
-      parent.querySelectorAll('[' + alias + ']').forEach((node) => {
-        if (!node.$) {
-          console.error("Selected node was not made with JMokey library and can't have assigned input");
-        } else {
-          node.$[input.name] = this.getExecuteable(input.value)(...this.getObservablesValues());
-        }
-        node.removeAttribute(alias);
-      });
-    }
+    });
   }
 
   resolveAttrs(parent) {
-    const obj = this.__jmonkey.attrs;
-    for (var alias in obj) {
-      if (!obj.hasOwnProperty(alias)) {
-        continue;
-      }
-      const attr = obj[alias];
-      parent.querySelectorAll('[' + alias + ']').forEach((node) => {
-        node.setAttribute(attr.name, this.getExecuteable(attr.value)(...this.getObservablesValues()));
-        node.removeAttribute(alias);
-      });
-    }
+    this.resolve(parent, 'attrs', (alias, obj, item, node) => {
+      node.setAttribute(item.name, this.getExecuteable(item.value)(...this.getObservablesValues()));
+    });
   }
 
   renderFors(parent) {
-    Object.keys(this.__jmonkey.fors).forEach(alias => {
-      let res = this.getExecuteable(this.__jmonkey.fors[alias])(...this.getObservablesValues());
-      let type = typeof res;
-      if (type == 'string') {
-        res = res * 1;
-        type = typeof res;
-      }
-
-      let keys, values, skip = false;
-      if (type != 'number' && type != 'object') {
-        console.error('For in `' + this.constructor.name + '` doesn\'t have iterable value, removing node...');
-        skip = true;
-      } else {
-        if (type == 'number') {
-          res = new Array(res).fill(null);
-        }
-
-        keys = Object.keys(res);
-        values = Object.values(res);
-      }
-
-
-      parent.querySelectorAll('[' + alias + ']').forEach(function (node) {
+    this.resolve(
+      parent,
+      'fors',
+      (alias, obj, item, node, skip, keys, values) => {
         if (skip) {
           node.remove();
           return
@@ -389,46 +347,80 @@ class JMonkeyElement extends HTMLElement {
           current = clone;
         }
         node.remove();
-      }.bind(this));
-      this.key = null;
-      this.value = null;
-    });
+      },
+      (alias, obj) => {
+        let res = this.getExecuteable(obj[alias])(...this.getObservablesValues());
+        let type = typeof res;
+        if (type == 'string') {
+          res = res * 1;
+          type = typeof res;
+        }
+
+        let keys, values, skip = false;
+        if (type != 'number' && type != 'object') {
+          console.error('For in `' + this.constructor.name + '` doesn\'t have iterable value, removing node...');
+          skip = true;
+        } else {
+          if (type == 'number') {
+            res = new Array(res).fill(null);
+          }
+
+          keys = Object.keys(res);
+          values = Object.values(res);
+        }
+
+        return [skip, keys, values];
+      },
+    );
+    this.key = null;
+    this.value = null;
   }
 
   resolveIfs(parent) {
-    Object.keys(this.__jmonkey.ifs).forEach(alias => {
-      const ifRes = this.getExecuteable(this.__jmonkey.ifs[alias])(...this.getObservablesValues());
-      parent.querySelectorAll('[' + alias + ']').forEach(node => {
-        if (ifRes) {
-          node.removeAttribute(alias);
-        } else {
+    this.resolve(
+      parent,
+      'ifs',
+      (alias, obj, item, node, ifRes) => {
+        if (!ifRes) {
           node.remove();
         }
-      });
-    });
+      },
+      (alias, obj) => [this.getExecuteable(obj[alias])(...this.getObservablesValues())],
+    );
   }
 
   resolveEvents(parent) {
-    Object.keys(this.__jmonkey.events).forEach(alias => {
-      const event = this.__jmonkey.events[alias];
-      parent.querySelectorAll('[' + alias + ']').forEach(node => {
-        node.addEventListener(event.name, (e) => {
-          const observableKeys = this.getObservablesKeys();
-          const valuesBefore = this.getObservablesValues();
-          const res = this.getFunction(event.value, ['e'])(e, ...valuesBefore);
-          this.updatedChangedValues(res, observableKeys, valuesBefore);
-        });
-        node.removeAttribute(alias);
+    this.resolve(parent, 'events', (alias, obj, item, node) => {
+      node.addEventListener(item.name, (e) => {
+        const observableKeys = this.getObservablesKeys();
+        const valuesBefore = this.getObservablesValues();
+        const res = this.getFunction(item.value, ['e'])(e, ...valuesBefore);
+        this.updatedChangedValues(res, observableKeys, valuesBefore);
       });
     });
   }
 
   resolveExecutables(parent) {
-    Object.keys(this.__jmonkey.executables).forEach(alias => {
-      parent.querySelectorAll('[' + alias + ']').forEach(node => {
-        node.outerHTML = this.getExecuteable(this.__jmonkey.executables[alias])(...this.getObservablesValues());
-      });
+    this.resolve(parent, 'executables', (alias, obj, item, node) => {
+      node.outerHTML = this.getExecuteable(obj[alias])(...this.getObservablesValues());
     });
+  }
+
+  resolve(parent, attr, mainCallback, beforeCallback = null, afterCallback = null) {
+    const obj = this.__jmonkey[attr];
+    for (var alias in obj) {
+      if (!obj.hasOwnProperty(alias)) {
+        continue;
+      }
+
+      const item = obj[alias];
+      const args = beforeCallback ? beforeCallback.bind(this)(alias, obj, item) : [];
+      parent.querySelectorAll('[' + alias + ']').forEach(node => {
+        mainCallback.bind(this)(alias, obj, item, node, ...args);
+        node.removeAttribute(alias);
+      });
+      afterCallback ? afterCallback.bind(this)(alias, obj, item) : [];
+    }
   }
 
   updatedChangedValues(res, observableKeys, valuesBefore) {
