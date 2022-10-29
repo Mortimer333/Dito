@@ -60,7 +60,7 @@ class JMonkey {
     }
 
     path = this.url + path + name + '/' + this.filename + '.';
-    const js = import(path + 'js?v=' + version);
+    const js = import(path + 'js?v=' + version + this.getQuery());
     const html = skip ? Promise.resolve(this._SKIP) : this.fetch(path + 'html?v=' + version);
     const css = skip ? Promise.resolve(this._SKIP) : this.fetch(path + 'css?v=' + version);
     window.__jmonkey.registered[name] = true;
@@ -283,19 +283,21 @@ class JMonkey {
   }
 
   fetch(url) {
-    let query = '';
-    const keys = Object.keys(this.params);
-    if (keys.length > 0) {
-      query = '?';
-      keys.forEach(key => {
-        query += key + '=' + encodeURIComponent(this.params[key]);
-      });
-    }
-
-    return fetch(url + query, {
+    return fetch(url + this.getQuery(), {
       method: 'GET',
       headers: this.headers,
     });
+  }
+
+  getQuery() {
+    let query = '';
+    const keys = Object.keys(this.params);
+    if (keys.length > 0) {
+      keys.forEach(key => {
+        query += '&' + key + '=' + encodeURIComponent(this.params[key]);
+      });
+    }
+    return query;
   }
 
   // From Vue
