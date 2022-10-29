@@ -1,14 +1,14 @@
 class JMonkey {
   url;
+  localStorage = true;
   filename = 'main';
   headers = {};
   params = {};
   components = {};
   registered = [];
   notDownloaded = {};
-  SKIP = '_skip';
+  _SKIP = '_skip';
   styleNode;
-  mutationObsConf = { childList: true, subtree: true };
 
   constructor(settings = {}) {
     if (this.detectCSPRestriction()) {
@@ -22,21 +22,21 @@ class JMonkey {
 
     this.filename = settings.filename || this.filename;
     this.headers = settings.headers || this.headers;
-    this.params = settings.headers || this.params;
+    this.params = settings.params || this.params;
+    this.localStorage = typeof settings.localStorage != 'undefined' ? settings.localStorage : this.localStorage;
     this.styleNode = document.createElement('style');
     document.head.appendChild(this.styleNode);
 
     Object.defineProperty(window, "__jmonkey", {
         value: {
           main: this,
-          lastId: 0,
           registered: {}
         },
         writable: false
     });
   }
 
-  register(name, version = 1, path = '', force = false) {
+  register(name, version, path = '', force = false) {
     if (name.indexOf('-') === -1) {
       throw new Error('Custom elements name must contain hypen (-)');
     }
@@ -47,13 +47,12 @@ class JMonkey {
       return;
     }
 
-    const promises = this.createRegisterPromise(path, name, version, force);
-    this.registered = [...this.registered, ...promises];
+    this.registered.push(...this.createRegisterPromise(path, name, version, force));
   }
 
   createRegisterPromise(path, name, version, force = false) {
     let skip = false;
-    if (!force && localStorage.getItem(name)) {
+    if (this.localStorage && !force && localStorage.getItem(name)) {
       const comp = JSON.parse(localStorage.getItem(name));
       if (comp._version == version) {
         skip = true;
@@ -62,8 +61,8 @@ class JMonkey {
 
     path = this.url + path + name + '/' + this.filename + '.';
     const js = import(path + 'js?v=' + version);
-    const html = skip ? Promise.resolve(this.SKIP) : this.fetch(path + 'html?v=' + version);
-    const css = skip ? Promise.resolve(this.SKIP) : this.fetch(path + 'css?v=' + version);
+    const html = skip ? Promise.resolve(this._SKIP) : this.fetch(path + 'html?v=' + version);
+    const css = skip ? Promise.resolve(this._SKIP) : this.fetch(path + 'css?v=' + version);
     window.__jmonkey.registered[name] = true;
     return [
       Promise.resolve(name + '_' + version),
@@ -79,7 +78,7 @@ class JMonkey {
     }
 
     const skipSize = 3;
-    await Promise.all(registered).then(async (values) => {
+    await Promise.all(registered).then(async values => {
       for (var i = 0; i < values.length; i++) {
         if (values[i + 1].message || values[i + 2].message || values[i + 3].message) {
           console.error(
@@ -97,6 +96,7 @@ class JMonkey {
           i += skipSize;
           continue;
         }
+
         const compAndVer = (values[i].split('_'));
         const version = compAndVer[compAndVer.length - 1];
         const component = compAndVer.slice(0, -1).join('_');
@@ -110,7 +110,7 @@ class JMonkey {
         }
 
         const localComponent = JSON.parse(localStorage.getItem(component) || 'false');
-        if ((html === this.SKIP || css === this.SKIP) && !localComponent) {
+        if (!localComponent && (html === this._SKIP || css === this._SKIP)) {
           console.error(
             'The component `' + component + '` was marked as already loaded once but' +
             ' he is missing from localStorage. Skipping...'
@@ -122,14 +122,14 @@ class JMonkey {
         let cssSkipped = false;
         let htmlSkipped = false;
         const promises = [];
-        if (html === this.SKIP) {
+        if (html === this._SKIP) {
           htmlSkipped = true;
           html = localComponent.html;
         } else {
           promises.push(html.text());
         }
 
-        if (css === this.SKIP) {
+        if (css === this._SKIP) {
           cssSkipped = true;
           css = localComponent.css;
         } else {
@@ -171,18 +171,21 @@ class JMonkey {
 
       }
 
-      this.renderComponents(document);
+      this.defineElements(document);
       registered = [];
     }).catch(err => console.error(err));
   }
 
   saveComponent(key, data) {
+    if (!this.localStorage) {
+      return;
+    }
     try {
       localStorage.setItem(key, data);
     } catch (e) {
       if (e.name.toLowerCase().match(/quota/)) {
         if (localStorage.length == 0) {
-          console.error('Component `' + key + '` won\'t be saved for later because of his size (over 5mb)');
+          console.error("Component `" + key + "` won't be cached because of his size (over 5mb)");
           return;
         }
         this.removeOldestComponent();
@@ -216,14 +219,14 @@ class JMonkey {
     }
   }
 
-  renderComponents(parent, skip = {}) {
+  defineElements(parent, skip = {}) {
     Object.keys(this.components).forEach(function(tagName) {
-      if (!customElements.get(this.components[tagName].name) && typeof this.components[tagName].js == 'function') {
-        customElements.define(this.components[tagName].name, this.components[tagName].js);
+      const component = this.components[tagName];
+      if (!customElements.get(component.name) && typeof component.js == 'function') {
+        customElements.define(component.name, component.js);
       }
 
-      const tags = parent.querySelectorAll(tagName);
-      this.insertCss(this.components[tagName]);
+      this.insertCss(component);
     }.bind(this));
   }
 
@@ -244,18 +247,18 @@ class JMonkey {
     }
 
     const stylesheet = new CSSStyleSheet();
-    await stylesheet.replace(component.css).catch((err) => {
-      throw new Error('Failed to replace styles in `' + component.name + '`:', err);
+    await stylesheet.replace(component.css).catch(err => {
+      throw new Error('Failed to replace styles in `' + component.name + '`: ' + err);
     });
 
     const styles = [];
     Object.values(stylesheet.cssRules).forEach(rule => {
-      styles.push(component.name + ' ' + rule.cssText);
-      sheet.insertRule(component.name + ' ' + rule.cssText, sheet.cssRules.length);
+      const style = component.name + ' ' + rule.cssText;
+      styles.push(style);
+      sheet.insertRule(style, sheet.cssRules.length);
     });
     component.css = styles;
 
-    // Update css with compiled one
     const saved = JSON.parse(localStorage.getItem(component.name));
     saved.css = component.css;
     this.saveComponent(component.name, JSON.stringify(saved));
@@ -264,10 +267,9 @@ class JMonkey {
   async validateFiles(component, compFiles) {
     const fileKeys = Object.keys(compFiles);
     for (var j = 0; j < fileKeys.length; j++) {
-      const key = fileKeys[j];
-      const file = compFiles[key];
+      const file = compFiles[fileKeys[j]];
 
-      if (!file.ok && file !== this.SKIP) {
+      if (!file.ok && file !== this._SKIP) {
         const error = await file.text();
         console.error(
           key.toUpperCase() + " of component `" + component
@@ -280,8 +282,17 @@ class JMonkey {
     return true;
   }
 
-  async fetch(url) {
-    return fetch(url, {
+  fetch(url) {
+    let query = '';
+    const keys = Object.keys(this.params);
+    if (keys.length > 0) {
+      query = '?';
+      keys.forEach(key => {
+        query += key + '=' + encodeURIComponent(this.params[key]);
+      });
+    }
+
+    return fetch(url + query, {
       method: 'GET',
       headers: this.headers,
     });

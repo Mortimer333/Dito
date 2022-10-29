@@ -259,7 +259,7 @@ class JMonkeyElement extends HTMLElement {
       (alias, obj, item, node, skip) => {
         if (!skip) {
           if (!node.$) {
-            this.$self.toBind.push({item, node});
+            this.$self.toBind.push({bind: item, node});
           } else {
             this.setBind(item, node);
           }

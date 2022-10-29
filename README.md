@@ -4,6 +4,7 @@ Light weight library to allow separating frontend into reusable components
 # Features:
 - dynamic CSS variables?
 - Event when first render finishes and every component is downloaded
+- [DONE] Setting to allow use of local storage
 - [DONE] Find a way how to figure out when local storage is overflowing and how to remove old templates
 - [DONE] check if registrated component (which wasn't displayed at start) is properly downloaded
 - [DONE] Check if binded value when passed as bind to the third component works as intended
