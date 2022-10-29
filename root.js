@@ -37,7 +37,6 @@ class JMonkeyElement extends HTMLElement {
 
   connectedCallback() {
     this.queueRender();
-    this.queueCssRender();
   }
 
   saveMethods() {
@@ -201,7 +200,6 @@ class JMonkeyElement extends HTMLElement {
 
     const styles = [];
     const sheet = window.__jmonkey.main.styleNode.sheet;
-    const path = this.pathToCss(this.$self.path);
     Object.values(stylesheet.cssRules).forEach((rule, i) => {
       let index = sheet.cssRules.length;
       if (this.$self.cssIndices[i]) {
@@ -256,6 +254,7 @@ class JMonkeyElement extends HTMLElement {
       tmp.innerHTML = this.__jmonkey.html;
 
       if (!this.$self.children) {
+        this.cssRender();
         this.retrieveBindedValues();
         this.searchForNotDownloaded(tmp);
         this.assignChildren(tmp);

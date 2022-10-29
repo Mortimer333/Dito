@@ -2,7 +2,7 @@
 Light weight library to allow separating frontend into reusable components
 
 # Features:
-- have only one style tag
+- [DONE] have only one style tag
 - [DONE] dynamic CSS variables?
 - [DONE] Setting to allow use of local storage
 - [DONE] Find a way how to figure out when local storage is overflowing and how to remove old templates
