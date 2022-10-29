@@ -2,7 +2,8 @@ import { JMonkeyElement } from '../../root.js';
 
 class HelloWorld extends JMonkeyElement {
 
-  afterInit() {
+  init() {
+    console.log("hello");
     this.$css.color = 'violet';
     this.$.pass = 'hello world pass';
     this.$.planet = 'earth';

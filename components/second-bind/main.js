@@ -1,7 +1,7 @@
 import { JMonkeyElement } from '../../root.js';
 
 class SecondBind extends JMonkeyElement {
-  afterInit() {
+  init() {
     this.$.change = false;
   }
 

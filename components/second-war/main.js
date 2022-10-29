@@ -1,7 +1,7 @@
 import { JMonkeyElement } from '../../root.js';
 
 class Second extends JMonkeyElement {
-  afterInit() {
+  init() {
     this.$css.color = 'blue';
     this.$.pass = 'second war pass';
   }

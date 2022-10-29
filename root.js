@@ -26,16 +26,24 @@ class JMonkeyElement extends HTMLElement {
       this.$self.cssRenderInProgress = false;
       this.cssRender();
     });
-    this.afterInit();
   }
 
   /* EVENTS */
   prepare(){}            // Before constructor starts but after HTMLElement constructor
-  afterInit(){}          // After constructor finishes
+  init(){}          // After constructor finishes
   beforeRender(){}       // Before render
   afterRender(result){}  // After render
 
   connectedCallback() {
+    if (!document.body.contains(this)) {
+      return;
+    }
+
+    if (!this.$self.rendered) {
+      this.$self.rendered = true;
+      this.init();
+    }
+
     this.queueRender();
   }
 
@@ -152,7 +160,8 @@ class JMonkeyElement extends HTMLElement {
         children: null,
         path: null,
         cssIndices: [],
-        cssPath: null
+        cssPath: null,
+        rendered: false
       },
       writable: false
     });
@@ -187,6 +196,10 @@ class JMonkeyElement extends HTMLElement {
   }
 
   async cssRender() {
+    if (this.$self.cssRenderInProgress || !document.body.contains(this)) {
+      return;
+    }
+
     if (!this.__jmonkey.compiledCSS) {
       this.compileCSS();
     }
