@@ -6,7 +6,6 @@ class JMonkeyElement extends HTMLElement {
   indexAttrName = 'jmi';
   key = null;
   value = null;
-  styleNode;
 
   constructor() {
     super();
@@ -27,8 +26,6 @@ class JMonkeyElement extends HTMLElement {
       this.$self.cssRenderInProgress = false;
       this.cssRender();
     });
-    this.styleNode = document.createElement('style');
-    document.head.appendChild(this.styleNode);
     this.afterInit();
   }
 
@@ -154,7 +151,9 @@ class JMonkeyElement extends HTMLElement {
         toBind: [],
         parent: null,
         children: null,
-        path: null
+        path: null,
+        cssIndices: [],
+        cssPath: null
       },
       writable: false
     });
@@ -201,46 +200,21 @@ class JMonkeyElement extends HTMLElement {
     });
 
     const styles = [];
-    const sheet = this.styleNode.sheet;
+    const sheet = window.__jmonkey.main.styleNode.sheet;
     const path = this.pathToCss(this.$self.path);
     Object.values(stylesheet.cssRules).forEach((rule, i) => {
-      const nestedRule = path + ' ' + rule.cssText;
-      console.log(nestedRule);
-      if (sheet.cssRules[i]) {
-        sheet.deleteRule(i);
+      let index = sheet.cssRules.length;
+      if (this.$self.cssIndices[i]) {
+        index = this.$self.cssIndices[i];
+      } else {
+        this.$self.cssIndices[i] = index;
       }
-      sheet.insertRule(nestedRule, i);
-      // const lenBefore = Object.keys(this.__jmonkey.cssExecutables).length;
-      // styles.push({
-      //   css,
-      //   executables,
-      //   dynamic: Object.keys(executables).length > 0,
-      //   index: null,
-      // });
+      const nestedRule = this.$self.cssPath + ' ' + rule.cssText;
+      if (sheet.cssRules[index]) {
+        sheet.deleteRule(index);
+      }
+      sheet.insertRule(nestedRule, index);
     });
-
-
-
-
-    // this.__jmonkey.css.forEach(rule => {
-    //   if (!rule.index) {
-    //     rule.index = sheet.cssRules.length;
-    //     sheet.insertRule(, sheet.cssRules.length);
-    //   } else if (rule.dynamic) {
-    //     sheet.cssRules[rule.index].style.content = this.resolveCssExecutables(rule);
-    //   }
-    // });
-    //
-    // const sheet = window.__jmonkey.main.styleNode.sheet;
-
-
-    // if (component._cssSkipped) {
-    //   component.css.forEach(rule => {
-    //     sheet.insertRule(rule.css, sheet.cssRules.length);
-    //   });
-    //   component.cssInjected = true;
-    //   return;
-    // }
   }
 
   pathToCss(path) {
@@ -353,6 +327,7 @@ class JMonkeyElement extends HTMLElement {
       const index = Array.prototype.indexOf.call(this.parentElement.children, this);
       this.setAttribute(this.indexAttrName, index);
       this.$self.path = this.localName + '@' + index;
+      this.$self.cssPath = this.pathToCss(this.$self.path);
     }
     tmp.querySelectorAll(Object.keys(window.__jmonkey.registered).join(',')).forEach((node, i) => {
       if (!node.$self) {
@@ -361,6 +336,7 @@ class JMonkeyElement extends HTMLElement {
       node.$self.parent = this;
       node.setAttribute(this.indexAttrName, i);
       node.$self.path = this.$self.path + '.' + node.localName + '@' + i;
+      node.$self.cssPath = this.pathToCss(node.$self.path);
       this.$self.children[node.$self.path] = node;
     });
   }

@@ -1,6 +1,7 @@
 <p>
   hello world {{ typeof pass != 'undefined' ? pass : 'no pass'}}
 </p>
+<button type="button" name="button" @e:click='changeColor()'>Change color!</button>
 <button type="button" name="button" @e:click='changePass()'>Change pass!</button>
 <second-bind @b:pass2="pass" @o:out="console.log('out', $event)"></second-bind>
 <p @for="iter" @a:style="'background-color:black;padding:5px;'">

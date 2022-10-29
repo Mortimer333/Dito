@@ -24,6 +24,8 @@ class JMonkey {
     this.headers = settings.headers || this.headers;
     this.params = settings.params || this.params;
     this.localStorage = typeof settings.localStorage != 'undefined' ? settings.localStorage : this.localStorage;
+    this.styleNode = document.createElement('style');
+    document.head.appendChild(this.styleNode);
 
     Object.defineProperty(window, "__jmonkey", {
         value: {
