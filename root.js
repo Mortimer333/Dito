@@ -3,8 +3,10 @@ class JMonkeyElement extends HTMLElement {
   keyName = "$key";
   valueName = "$value";
   eventName = "$event";
+  indexAttrName = 'jmi';
   key = null;
   value = null;
+  styleNode;
 
   constructor() {
     super();
@@ -14,12 +16,19 @@ class JMonkeyElement extends HTMLElement {
     this.prepare();
     this.defineObservable();
     this.saveMethods();
+    this.$self.cssRenderInProgress = false;
     this.$self.renderInProgress = false;
     this.$self[this.injectName] = this.innerHTML;
     this.$self.debounceRender = this.debounce(e => {
       this.$self.renderInProgress = false;
       this.render();
     });
+    this.$self.debounceCssRender = this.debounce(e => {
+      this.$self.cssRenderInProgress = false;
+      this.cssRender();
+    });
+    this.styleNode = document.createElement('style');
+    document.head.appendChild(this.styleNode);
     this.afterInit();
   }
 
@@ -31,6 +40,7 @@ class JMonkeyElement extends HTMLElement {
 
   connectedCallback() {
     this.queueRender();
+    this.queueCssRender();
   }
 
   saveMethods() {
@@ -53,6 +63,16 @@ class JMonkeyElement extends HTMLElement {
   clearRenderQueue() {
     this.$self.renderInProgress = false;
     this.$self.debounceRender('clear');
+  }
+
+  queueCssRender() {
+    this.$self.cssRenderInProgress = true;
+    this.$self.debounceCssRender();
+  }
+
+  clearCssRenderQueue() {
+    this.$self.cssRenderInProgress = false;
+    this.$self.debounceCssRender('clear');
   }
 
   defineObservable() {
@@ -97,6 +117,28 @@ class JMonkeyElement extends HTMLElement {
       writable: false
     });
 
+    Object.defineProperty(this, "$css", {
+      value: new Proxy({}, {
+        tag: this,
+        set (obj, prop, value) {
+          if (value !== obj[prop]) {
+            this.tag.queueCssRender(prop);
+          }
+          return Reflect.set(...arguments);
+        },
+        get (target, prop, receiver) {
+          let value = target[prop];
+
+          if (typeof value == 'function') {
+            return value.bind(this.tag)();
+          }
+
+          return Reflect.get(...arguments);
+        }
+      }),
+      writable: false
+    });
+
     if (!this.$output) {
       this.defineOutput(this);
     }
@@ -125,6 +167,100 @@ class JMonkeyElement extends HTMLElement {
     });
   }
 
+  compileCSS() {
+    this.__jmonkey.css = this.compileCSSExecutables(this.__jmonkey.css);
+    this.__jmonkey.compiledCSS = true;
+  }
+
+  compileCSSExecutables(css) {
+    this.__jmonkey.cssExecutables = {};
+    let start = css.indexOf('{{');
+    while (start !== -1) {
+      let end = css.indexOf('}}', start);
+      if (end === -1) {
+        break;
+      }
+      const name = 'cssExec_' + start + '_' + end;
+      this.__jmonkey.cssExecutables[name] = css.substr(start + 2, end - (start + 2));
+      css = css.replaceAll(css.substr(start, end + 2 - start), name);
+      start = css.indexOf('{{', start + name.length);
+    }
+    return css;
+  }
+
+  async cssRender() {
+    if (!this.__jmonkey.compiledCSS) {
+      this.compileCSS();
+    }
+
+    let css = this.__jmonkey.css;
+    css = this.resolveCssExecutables(css)
+    const stylesheet = new CSSStyleSheet();
+    await stylesheet.replace(css).catch(err => {
+      throw new Error('Failed to replace styles in `' + this.localName + '`: ' + err);
+    });
+
+    const styles = [];
+    const sheet = this.styleNode.sheet;
+    const path = this.pathToCss(this.$self.path);
+    Object.values(stylesheet.cssRules).forEach((rule, i) => {
+      const nestedRule = path + ' ' + rule.cssText;
+      console.log(nestedRule);
+      if (sheet.cssRules[i]) {
+        sheet.deleteRule(i);
+      }
+      sheet.insertRule(nestedRule, i);
+      // const lenBefore = Object.keys(this.__jmonkey.cssExecutables).length;
+      // styles.push({
+      //   css,
+      //   executables,
+      //   dynamic: Object.keys(executables).length > 0,
+      //   index: null,
+      // });
+    });
+
+
+
+
+    // this.__jmonkey.css.forEach(rule => {
+    //   if (!rule.index) {
+    //     rule.index = sheet.cssRules.length;
+    //     sheet.insertRule(, sheet.cssRules.length);
+    //   } else if (rule.dynamic) {
+    //     sheet.cssRules[rule.index].style.content = this.resolveCssExecutables(rule);
+    //   }
+    // });
+    //
+    // const sheet = window.__jmonkey.main.styleNode.sheet;
+
+
+    // if (component._cssSkipped) {
+    //   component.css.forEach(rule => {
+    //     sheet.insertRule(rule.css, sheet.cssRules.length);
+    //   });
+    //   component.cssInjected = true;
+    //   return;
+    // }
+  }
+
+  pathToCss(path) {
+    let cssRule = '';
+
+    path.split('.').forEach(link => {
+      const [name, index] = link.split('@');
+      cssRule += name + '[' + this.indexAttrName + '="' + index + '"' + ']' + ' ';
+    });
+    return cssRule.trim();
+  }
+
+  resolveCssExecutables(css) {
+    const exe = this.__jmonkey.cssExecutables;
+    Object.keys(exe).forEach(alias => {
+      css = css.replaceAll(alias, this.getCSSExecuteable(exe[alias])(...this.getCSSObservablesValues()));
+    });
+    return css;
+  }
+
   render() {
     if (this.$self.renderInProgress || !document.body.contains(this)) {
       return;
@@ -137,7 +273,7 @@ class JMonkeyElement extends HTMLElement {
 
     this.beforeRender();
     try {
-      if (!this.__jmonkey.compiled) {
+      if (!this.__jmonkey.compiledHTML) {
         this.compile();
       }
 
@@ -158,8 +294,7 @@ class JMonkeyElement extends HTMLElement {
           if (!component.$) {
             return;
           }
-
-          const rendered = this.$self.children[this.$self.path + '.' + component.localName + i];
+          const rendered = this.$self.children[this.$self.path + '.' + component.localName + '@' + i];
           if (!rendered) {
             return;
           }
@@ -215,14 +350,17 @@ class JMonkeyElement extends HTMLElement {
   assignChildren(tmp) {
     this.$self.children = {};
     if (!this.$self.path) {
-      this.$self.path = 'body';
+      const index = Array.prototype.indexOf.call(this.parentElement.children, this);
+      this.setAttribute(this.indexAttrName, index);
+      this.$self.path = this.localName + '@' + index;
     }
     tmp.querySelectorAll(Object.keys(window.__jmonkey.registered).join(',')).forEach((node, i) => {
       if (!node.$self) {
         this.defineSelf(node);
       }
       node.$self.parent = this;
-      node.$self.path = this.$self.path + '.' + node.localName + i;
+      node.setAttribute(this.indexAttrName, i);
+      node.$self.path = this.$self.path + '.' + node.localName + '@' + i;
       this.$self.children[node.$self.path] = node;
     });
   }
@@ -448,7 +586,7 @@ class JMonkeyElement extends HTMLElement {
     html = this.compileIfs(html);
     this.__jmonkey.html = this.compileFors(html);
 
-    this.__jmonkey.compiled = true;
+    this.__jmonkey.compiledHTML = true;
   }
 
   compileFindAndReplace(html, lm, prefix, attrName, hasName = false) {
@@ -567,6 +705,10 @@ class JMonkeyElement extends HTMLElement {
     return new Function(...this.getObservablesKeys(), 'return ' + script).bind({});
   }
 
+  getCSSExecuteable(script) {
+    return new Function(...this.getCSSObservablesKeys(), 'return ' + script).bind({});
+  }
+
   getFunction(script, vars = []) {
     const observableKeys = this.getObservablesKeys();
     return new Function(...vars, ...observableKeys, script + '; return [' + observableKeys.join(',') + '];').bind({});
@@ -582,6 +724,13 @@ class JMonkeyElement extends HTMLElement {
     ];
   }
 
+  getCSSObservablesKeys() {
+    return [
+      ...Object.keys(this.methods),
+      ...Object.keys(this.$css)
+    ];
+  }
+
   getObservablesValues() {
     return [
       ...Object.values(this.methods),
@@ -589,6 +738,13 @@ class JMonkeyElement extends HTMLElement {
       this.$self[this.injectName],
       this.key,
       this.value,
+    ];
+  }
+
+  getCSSObservablesValues() {
+    return [
+      ...Object.values(this.methods),
+      ...Object.values(this.$css)
     ];
   }
 

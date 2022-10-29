@@ -20,11 +20,11 @@
       import { JMonkey } from "./main.js";
       const container = new JMonkey({
         url: 'http://jmonkey.local/components/',
-        localStorage: true
+        localStorage: false
       });
-      container.register('hello-world', 6, '');
-      container.register('second-war', 4, '');
-      container.register('second-bind', 2, '');
+      container.register('hello-world', 6);
+      container.register('second-war', 4);
+      container.register('second-bind', 2);
       container.register('third-check', 1);
       await container.load();
     </script>

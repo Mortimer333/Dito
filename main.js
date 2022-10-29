@@ -24,8 +24,6 @@ class JMonkey {
     this.headers = settings.headers || this.headers;
     this.params = settings.params || this.params;
     this.localStorage = typeof settings.localStorage != 'undefined' ? settings.localStorage : this.localStorage;
-    this.styleNode = document.createElement('style');
-    document.head.appendChild(this.styleNode);
 
     Object.defineProperty(window, "__jmonkey", {
         value: {
@@ -163,6 +161,7 @@ class JMonkey {
               writable: false
           });
           js.prototype.__jmonkey.html = html;
+          js.prototype.__jmonkey.css = css;
           this.components[component] = {name: component, js, html, css, cssInjected: false, _cssSkipped: cssSkipped };
           i += skipSize;
           delete this.notDownloaded[component];
@@ -225,43 +224,7 @@ class JMonkey {
       if (!customElements.get(component.name) && typeof component.js == 'function') {
         customElements.define(component.name, component.js);
       }
-
-      this.insertCss(component);
     }.bind(this));
-  }
-
-  async insertCss(component) {
-    if (component.cssInjected) {
-      return;
-    }
-
-    component.cssInjected = true;
-    const sheet = this.styleNode.sheet;
-
-    if (component._cssSkipped) {
-      component.css.forEach(rule => {
-        sheet.insertRule(rule, sheet.cssRules.length);
-      });
-      component.cssInjected = true;
-      return;
-    }
-
-    const stylesheet = new CSSStyleSheet();
-    await stylesheet.replace(component.css).catch(err => {
-      throw new Error('Failed to replace styles in `' + component.name + '`: ' + err);
-    });
-
-    const styles = [];
-    Object.values(stylesheet.cssRules).forEach(rule => {
-      const style = component.name + ' ' + rule.cssText;
-      styles.push(style);
-      sheet.insertRule(style, sheet.cssRules.length);
-    });
-    component.css = styles;
-
-    const saved = JSON.parse(localStorage.getItem(component.name));
-    saved.css = component.css;
-    this.saveComponent(component.name, JSON.stringify(saved));
   }
 
   async validateFiles(component, compFiles) {
