@@ -16,7 +16,7 @@ export { EarthElement as default };
 
 ### HTML:
 ```html
-<h1 @a:class="className">Planet: {{name}} {{icon}}</h1>
+<h1 @a:className="className">Planet: {{name}} {{icon}}</h1>
 ```
 
 ### Output:
