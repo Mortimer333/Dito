@@ -312,10 +312,10 @@ class DitoElement extends HTMLElement {
         });
       }
 
-      this.resolveAttrs(tmp);
+      this.renderFors(tmp); // For must be resolved first
       this.resolveIfs(tmp);
       this.resolveEvents(tmp);
-      this.renderFors(tmp); // For must be before `executables` as it has different scope then the rest of nodes
+      this.resolveAttrs(tmp);
       this.resolveExecutables(tmp);
 
       while (tmp.childNodes.length > 0) {
@@ -502,6 +502,11 @@ class DitoElement extends HTMLElement {
           this.key = keys[i];
           this.value = values[i];
           const clone = node.cloneNode(true);
+          console.log(this.key, this.value);
+          console.log(clone.outerHTML);
+          this.resolveIfs(clone);
+          this.resolveEvents(clone);
+          this.resolveAttrs(clone);
           this.resolveExecutables(clone);
           node.parentElement.insertBefore(clone, current.nextSibling);
           current = clone;

@@ -5,22 +5,13 @@
     <title>Joint test</title>
   </head>
   <body>
-    <hello-world>
-      <h1>
-        Hello
-      </h1>
-    </hello-world>
-    <second-war>
-      aaa
-    </second-war>
     <third-check></third-check>
-    <script src="./merged.js" charset="utf-8"></script>
     <script type="module">
       import { DitoElement } from "./root.js";
       import { Dito } from "./main.js";
       const container = new Dito({
         url: 'http://jsmonkey.local/components/',
-        localStorage: true
+        localStorage: false
       });
       container.register('hello-world', 6);
       container.register('second-war', 4);
