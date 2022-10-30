@@ -1,0 +1,27 @@
+# Features:
+- let injected html use features on library and make it so its connected with parent and not child that html is injected into
+- allow injected html to be separate int different packages that can be used in few places
+- [DONE] bind default attributes
+- [DONE] have only one style tag
+- [DONE] dynamic CSS variables?
+- [DONE] Setting to allow use of local storage
+- [DONE] Find a way how to figure out when local storage is overflowing and how to remove old templates
+- [DONE] check if registrated component (which wasn't displayed at start) is properly downloaded
+- [DONE] Check if binded value when passed as bind to the third component works as intended
+- [DONE] changes in events and outputs should update actual value in observable
+- [DONE] passing methods on change - (bind)
+- [DONE] passing arguments - [bind]
+- [DONE] Attributes
+- [DONE] persistent storage
+- [DONE] two way binding - ([bind])
+- [DONE] if and for's
+- [DONE] reusable templates
+- [DONE] file separation
+- [DONE] events and {{}}
+- [DONE] passing html to the inside of element will result in rendering it inside of it
+- [DONE] allow choosing where to put injected html
+- [REMOVED] Event when first render finishes and every component is downloaded - not really doable with all those asyncs, and removing that creates pretty long waiting time
+- [REMOVED] Add jmonkey-spinner class - if someone wants to have loaders they will add them
+- [REMOVED] Add a way to send all templates for page in one file - can't put js modules in string and make it work with Function
+- [REMOVED] Save JS in local storage and build it from Function - same reason as single file - can't put exports in string
+- [REMOVED] pipes - not needed, we can actually use method

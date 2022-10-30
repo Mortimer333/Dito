@@ -139,16 +139,15 @@ div {
 <p>{{ value }}</p>
 ```
 
-# Events
-In previous example you can see that I used method `init` inside the `ElementOne` class. It's one of the few "event" calls during the life cycle of the components:
+## Lify cycle
+In previous example, you can see, that I've used method called `init` inside the `ElementOne` class. It's one of the few "event" calls during the life cycle of the components:
 - **prepare** - called before any preparation of the `DitoElement` constructor but after `HTMLElement` constructor was called
 - **init** - called only once per component instance, before its first render
 - **beforeRender** - called each time before render of component was started
 - **afterRender** - called each time render finished (successfully or not), as first argument it accepts result fo ther render
 
 # Template language
-To help with creation of html a lot of frameworks (also this one) introduced template language - syntax which allows you to dynamically change the content of your template without need for custom js.
-Inside them you can
+Quick and easy way to build HTML without need for additonal JS. In template inline call you have access to all values inside `$` and methods defined on the class.
 
 ## Executables
 
@@ -170,7 +169,7 @@ Library also supports `for` and `if` features. Like all special actions you have
   I will be shown 3 times
 </p>
 ```
-anything inside `if` and `for` have to be wrapped in string and is executed similarly to `executables`. As `if` is pretty self explanatory we will move to the `for`
+anything inside `if` and `for` have to be wrapped in string symbols and is resolved similarly to `executables`. As `if` is pretty self explanatory we will move to the `for`:
 
 ### `for`
 `for` accepts:
@@ -178,15 +177,15 @@ anything inside `if` and `for` have to be wrapped in string and is executed simi
 - arrays
 - objects
 
-It will iterate over all those 3 types but each will behave slithly different:
-- When `number` was passed, `for` will iterate the amount of time number is equal or bigger then zero. It will also create key for it but not value will available.
-- When `array` was passed, `for` will iterate the same amount of time as is arrays length. It will create kew and value.
-- When `object` wass passed, `for` will iterate the numer of time that equals length of array from `Object.key` method. It will create kew and value.
+It will iterate over all those 3 types but each of them will behave slithly different:
+- When `number` was passed, `for` will iterate the amount of time the `number` is equal or bigger then zero. It will also create key for it but no value will available.
+- When `array` was passed, `for` will iterate the same amount of time as its arrays length. It will create kew and value.
+- When `object` wass passed, `for` will iterate the numer of time that equals length of array from `Object.key` method. It will create key and value.
 
 #### `$key` and `$value`
 Inside `for` you have access to two additional values `$key` and `$value`:
 - `$key` - iteration counter
-- `$value` - current item (in case of number it will be `null`)
+- `$value` - current item (in case of `number` it will be `null`)
 
 ```html
 <p @for="3">
@@ -203,31 +202,122 @@ Inside `for` you have access to two additional values `$key` and `$value`:
 </p>
 ```
 
-# Features:
-- [DONE] bind default attributes
-- [DONE] have only one style tag
-- [DONE] dynamic CSS variables?
-- [DONE] Setting to allow use of local storage
-- [DONE] Find a way how to figure out when local storage is overflowing and how to remove old templates
-- [DONE] check if registrated component (which wasn't displayed at start) is properly downloaded
-- [DONE] Check if binded value when passed as bind to the third component works as intended
-- [DONE] changes in events and outputs should update actual value in observable
-- [DONE] passing methods on change - (bind)
-- [DONE] passing arguments - [bind]
-- [DONE] Attributes
-- [DONE] persistent storage
-- [DONE] two way binding - ([bind])
-- [DONE] if and for's
-- [DONE] reusable templates
-- [DONE] file separation
-- [DONE] events and {{}}
-- [DONE] passing html to the inside of element will result in rendering it inside of it
-- [DONE] allow choosing where to put injected html
-- [REMOVED] Event when first render finishes and every component is downloaded - not really doable with all those asyncs, and removing that creates pretty long waiting time
-- [REMOVED] Add jmonkey-spinner class - if someone wants to have loaders they will add them
-- [REMOVED] Add a way to send all templates for page in one file - can't put js modules in string and make it work with Function
-- [REMOVED] Save JS in local storage and build it from Function - same reason as single file - can't put exports in string
-- [REMOVED] pipes - not needed, we can actually use method
+## Events
+You can attach any kind of event to the element that will be resolved with functionality from template by addign `@e:` prefix and transforming name to the one used by `addEventListener`:
+#### before:
+```html
+<button type="button" name="button" onclick='ClassInstance.changeColor()'>Change color!</button>
+```
+#### after:
+```html
+<button type="button" name="button" @e:click='changeColor()'>Change color!</button>
+```
+
+Variable changed inside `event` will be replaced in real `$` - see "Weird behaviour" for more info.
+
+## Attributes
+Binding attributes to observables is similar to the `events` - prefix your attribute with `@a:` then name of your attribute used in JS:
+#### before:
+```html
+<p class="quote">
+  Lorem ipsum
+</p>
+```
+#### after:
+```html
+<p @a:className="pClass">
+  Lorem ipsum
+</p>
+```
+Class will be updated each time `pClass` changes.
+
+## Comunication between components
+All of the components are downloaded asnychroniusly and can't really see each other without some setup to fix this problem library presents similar solution to Angular: `inputs`, `outputs` and `binds`.
+
+### Inputs
+To pass values into the instance and severe connection to it you would use `input` - start with `@i:` then add the name of the chosen attribute (it can exist or not):
+```html
+<element-two @i:list="[1,2,3]" @i:name="customName"></element-two>
+```
+Now this element will have two additional value `list` and `name` which will replace or create new values inside of it.
+
+### Outputs
+Outputs are used when you want to dispatch an event without need to create custom events. When you emit this value the parent element will run its updating script. Inside the call you are able to pass value up to the parent which can later use it for its own purposes. Similarly to `input` start with `@o:` and add name of existing or not attribute in `$outputs` variable in the child element:
+```html
+<element-two @o:change="childChanged($event)"></element-two>
+```
+#### `$event`
+Outputs have their own special variable, called `$event`, which holds value passed from the emitter (from child which dispatched this output).
+
+#### Child setup
+To set up `outputs` you don't have to do anything special, the only thing to remember is to actually call the `emit` on `output`:
+
+```es
+  outFn() {
+    this.$output?.change.emit({ status: 'changed' });
+  }
+```
+
+As you can see we are checking if `$output` variable has attribute to call emit on (`$output?.change`). Script automatically detects when output was set and creates/replace attribute to the one containing emit method. So creation of output actually comes from parent and not from child.
+
+Variable changed inside `output` will be replaced in real `$` - see "Weird behaviour" for more info.
+
+### Binds
+Value when changed updates across all binded parents and children. It will always have the same value across all binded instances and will appear the same in all templates. It syntax is similar but completly different then other special actions: start with `@b:` then name of attribute to bind in child and in value only place name of variable you want to bind in parent - nothing else:
+```js
+<element-two @b:twoBind="oneBind"></element-two>
+```
+Now when `twoBind` is updated `oneBind` will be updated and when `oneBind` changes `twoBind` will also change. Remember that this will make rerender all of the binded components which might be performance issue when wrongly implemented.
+
+#### Nativ tags
+You can bind values on native tags like `input`. It extremly usefull when used on `value`:
+```js
+<input @b:value="inputValue">
+```
+**!IMPORTANT**: update happenes on `change` event which is triggered mostly on `focusout` when using inputs.
+
+## Injected HTML
+You can inject HTML to the components and decide where to use it inside the template with `$inject` special variable:
+```html
+<element-two>
+  <h1>Hello, its ElementOne</h1>
+  <h3>Just simple Dito component</h3>
+</element-two>
+```
+And `element-two` template:
+```html
+Our parent:
+{{ $inject }}
+```
+This will result in all html between `element-two` tags being rendered in place of `$inject` variable:
+
+```html
+Our parent:
+<h1>Hello, its ElementOne</h1>
+<h3>Just simple Dito component</h3>
+```
+
+**!IMPORTANT** Currently injected HTML doesn't benefit from any functionality presented by library (executables, for, if etc.). Only simple HTML is accepted.
+
+# Dynamic CSS
+CSS is also downloabeing downloaded and assigned to the component so why not allow using variables inside of it? Anything set in `$css` will be available inside your components CSS file:
+
+#### Functionality:
+```js
+init() {
+  this.$css.color = "brown";
+}
+```
+#### Styles:
+```css
+p {
+  color: {{ color }};
+  background-color: {{ color }};
+}
+```
+Rerenders of the template doesn't actually update CSS, so you need to specifically change value in `$css` to make it update.
+
+### Currently CSS file supports only executables
 
 # Weird behaviour
 
