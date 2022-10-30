@@ -419,7 +419,6 @@ class DitoElement extends HTMLElement {
               name: item.name,
               value: item.value
             };
-            console.log("Add native node binding", item.name);
           }
         } else {
           this.setBind(item, node);
@@ -502,8 +501,6 @@ class DitoElement extends HTMLElement {
           this.key = keys[i];
           this.value = values[i];
           const clone = node.cloneNode(true);
-          console.log(this.key, this.value);
-          console.log(clone.outerHTML);
           this.resolveIfs(clone);
           this.resolveEvents(clone);
           this.resolveAttrs(clone);
