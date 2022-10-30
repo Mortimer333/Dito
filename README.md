@@ -26,7 +26,10 @@ export { EarthElement as default };
 ```
 
 # Components
-Main purpose of this library is to have reusable Front End components with their own scope in CSS and JS without need for any large frame to make it work. So the main difference between this and i.e. Vue is that components are not in the site on the load time but are downloaded later. So you can register hundreds of components but if they are not used on this page they will not be downloaded which helps with keeping the website slim.
+Main purpose of this library is to have reusable Front End components with their own scope (both CSS and JS) without need for any large framework to make it work.
+
+The main difference between this and i.e. Vue is that components are not on the site but are downloaded later. So you can register hundreds of components but if they are not used on current page they will not be downloaded which helps with keeping the website slim.
+
 To use any of the library features you have to create component and point Dito instance where to look for it:
 ```js
 const container = new Dito({
@@ -116,6 +119,7 @@ When you've had created all required file and made sure to follow all the instru
     url: 'http://localhost/components/',
   });
   container.register('element-one', 1);
+  container.load();
 </script>
 ```
 
@@ -123,7 +127,8 @@ When you've had created all required file and made sure to follow all the instru
 Any variable you would use in HTML or CSS must be defined in **Main Observables** - `$` and `$css`.
 
 Any class created from `DitoElement` has access to these variables inside their instance (as well as other functionality). Anything defined in `$` will be available in template and anything defined in `$css` will be available in styles _(separation of those file was made to avoid re-renders without any change)_.
-Try to save in `$` and `$css` only variables that appear in files as any change which results in different value assigned to the attribute will call for re-render of the component's template or styles.
+
+Templates can only access attributes defined in `$` and methods, styles can access attributes defined in `$css` and methods. Any change to `$` will make template re-render, any change in `$css` will make styles to re-render.
 
 #### Functionality:
 ```js
@@ -151,7 +156,7 @@ In the previous example, you can see, that I've used method called `init` inside
 - **prepare** - called before any preparation of the `DitoElement` constructor but after `HTMLElement` constructor was called
 - **init** - called only once per component instance, before its first render
 - **beforeRender** - called each time before render of component was started
-- **afterRender** - called each time render finished (successfully or not), as first argument it accepts result for the render
+- **afterRender** - called each time render finishes (successfully or not), as first argument it accepts result for the render
 
 # Template language
 Quick and easy way to build HTML without need for additional JS. In template inline call you have access to all values inside `$` and methods defined on the class.
@@ -223,7 +228,7 @@ You can attach any kind of event to the element that will be resolved with funct
 Variable changed inside `event` will be replaced in real `$` - see "Weird behaviour" for more info.
 
 ## Attributes
-Binding attributes to observables is similar to the `events` - prefix your attribute with `@a:` then name of your attribute used in JS:
+Binding attributes to observables is similar to the `events` - prefix your attribute with `@a:` then add name of chosen attribute:
 #### before:
 ```html
 <p class="quote">
@@ -239,7 +244,7 @@ Binding attributes to observables is similar to the `events` - prefix your attri
 Class will be updated each time `pClass` changes.
 
 ## Communication between components
-All the components are downloaded asynchronously and can't really see each other without some setup to fix this problem library presents similar solution to Angular: `inputs`, `outputs` and `binds`.
+All the components are downloaded asynchronously and can't really see each other without some setup, so to fix this problem library presents similar solution to Angular: `inputs`, `outputs` and `binds`.
 
 ### Inputs
 To pass values into the instance and severe connection to it, you would use `input` - start with `@i:` then add the name of the chosen attribute (it can exist or not):
@@ -249,7 +254,7 @@ To pass values into the instance and severe connection to it, you would use `inp
 Now this element will have two additional value `list` and `name` which will replace or create new values inside of it.
 
 ### Outputs
-Outputs are used when you want to dispatch an event without the need to create custom events. When you emit this value the parent element will run its updating script. Inside the call you are able to pass value up to the parent which can later use it for its own purposes. Similarly to `input` start with `@o:` and add name of existing or not attribute in `$outputs` variable in the child element:
+Outputs are used when you want to dispatch an event without the need to create custom events. When you emit this value the parent element will run its updating script. Inside the call you are able to pass value up to the parent which can later use it for its own purposes. Similarly to `input` start with `@o:` and than you add the name of (existing or not) attribute in `$outputs` variable in the child element:
 ```html
 <element-two @o:change="childChanged($event)"></element-two>
 ```
@@ -270,7 +275,7 @@ As you can see we are checking if `$output` variable has attribute to call emit 
 Variable changed inside `output` will be replaced in real `$` - see "Weird behaviour" for more info.
 
 ### Binds
-Value when changed updates across all bound parents and children. It will always have the same value across all bound instances and will appear the same in all templates. It syntax is similar but completely different from other special actions: start with `@b:` then name of attribute to bind in child and in value only place name of variable you want to bind in parent - nothing else:
+Value when changed updates across all bound parents and children. It will always have the same value across all bound instances and will appear the same in all templates. It syntax is similar but completely different from other special actions: start with `@b:` then name of attribute to bind in child and in value place only the name of variable you want to bind and nothing else:
 ```js
 <element-two @b:twoBind="oneBind"></element-two>
 ```
@@ -322,7 +327,7 @@ p {
   background-color: {{ color }};
 }
 ```
-Re-renders of the template doesn't actually update CSS, so you need to specifically change the value in `$css` to make it update.
+Re-render of the template doesn't actually update CSS, so you need to specifically change the value in `$css` to make it update.
 
 ### Currently CSS file supports only executables
 
