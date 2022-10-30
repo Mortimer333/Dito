@@ -1,6 +1,6 @@
-import { JMonkeyElement } from '../../root.js';
+import { DitoElement } from '../../root.js';
 
-class Second extends JMonkeyElement {
+class Second extends DitoElement {
   init() {
     this.$css.color = 'blue';
     this.$.pass = 'second war pass';

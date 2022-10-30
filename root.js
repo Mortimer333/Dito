@@ -1,4 +1,4 @@
-class JMonkeyElement extends HTMLElement {
+class DitoElement extends HTMLElement {
   injectName = '$inject';
   keyName = "$key";
   valueName = "$value";
@@ -9,8 +9,8 @@ class JMonkeyElement extends HTMLElement {
 
   constructor() {
     super();
-    if (this.constructor === JMonkeyElement) {
-      throw new Error("JMonkeyElement is an abstract and cannot be instantiated as separate class");
+    if (this.constructor === DitoElement) {
+      throw new Error("DitoElement is an abstract and cannot be instantiated as separate class");
     }
     this.prepare();
     this.defineObservable();
@@ -784,4 +784,4 @@ class JMonkeyElement extends HTMLElement {
   }
 }
 
-export { JMonkeyElement };
+export { DitoElement };

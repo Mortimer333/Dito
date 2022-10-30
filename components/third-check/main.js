@@ -1,6 +1,6 @@
-import { JMonkeyElement } from '../../root.js';
+import { DitoElement } from '../../root.js';
 
-class ThirdCheck extends JMonkeyElement {
+class ThirdCheck extends DitoElement {
 }
 
 export { ThirdCheck as default };

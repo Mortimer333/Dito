@@ -1,5 +1,207 @@
-# jMonkey
-Light weight library to allow separating frontend into reusable components
+# Dito
+Light weight library with components, template syntax, bindings and dynamic CSS.
+
+### JS:
+```js
+import { DitoElement } from 'ditoelement.js';
+class EarthElement extends DitoElement {
+  init() {
+    this.$.icon = '🌎';
+    this.$.name = 'earth';
+    this.$.className = 'earth-class';
+  }
+}
+export { EarthElement as default };
+```
+
+### HTML:
+```html
+<h1 @a:class="className">Planet: {{name}} {{icon}}</h1>
+```
+
+### Output:
+
+```html
+<h1 class="earth-class">Planet: earth 🌎</h1>
+```
+
+# Components
+Main purpose of this library is to have reusable Front End components with their own scope in CSS and JS without need for any large frame to make it work. So the main difference between this and ie. Vue is that components are not in the site on the load time but are downloaded later. So you can register hundrends on components but if they are not used on this page they will not be downloaded which helps with keeping website slim.
+To use any of the library features you have to create component and point Dito instance where to look for it:
+```js
+const container = new Dito({
+  url: 'http://localhost/components/',
+});
+```
+## Settings
+You can pass into Dito instance few settings to customize behaviour of the library:
+- **[Required] url** - url to the folder with components
+- **[Optional] filename** - default name of the component files
+  - Default: `main`
+- **[Optional] headers** - what headers should be sent with requests for components' files (except  for js file request as this is done with native `import` method)
+  - Default: `<empty object>`
+- **[Optional] params** - what parameters should be sent in `uri` when requesting `CSS` and `HTML`
+  - Default: `<empty object>`
+- **[Optional] localStorage** - should your components be saved into `localStorage` for later use or retrieved each time user requests you site from server
+  - Default: `true`
+
+## Register component
+
+```js
+container.register('earth-element', 1);
+```
+
+`register` method accepts 4 arguments:
+1. **[Required]** Components tag name
+   - Tags' name must contain `-` (hypen), it's a requirment forced by `HTMLElement` native API
+2. **[Required]** Version, used when deciding if to request files from server or use components saved in `localStorage` (also `cache bursting`)
+3. **[Optional]** Additional path to the component (in case it was nested).
+   - **Default**: `<empty string>`
+   - For example you've create component inside other components folder (`element-one/element-two`) then you need to tell library to search for the component inside `element-one` folder by passing `element-one/` into 3rd argument. It will then check folder `http://localhost/components/element-one/` in search of component `element-two`.
+4. **[Optional]** Force request -  it will retrieve component even if it's not on the page
+   - **Default**: `false`
+
+```js
+container.register('element-two', 1, 'element-one/', true);
+```
+With this you are good to go and create your first component.
+
+## Create component
+
+### Structure
+Dito expects you to create specific structure of files, so script knows where to search for specific data:
+```
+components/
+-- element-one/
+---- main.js
+---- main.css
+---- main.html
+---- element-two/
+------ main.js
+------ main.css
+------ main.html
+-- element-three/
+---- main.js
+---- main.css
+---- main.html
+```
+As you can see on the example above, components' files have to be put inside the folder with the same name as elements' tag name. Components can be nested (in case of nesting you have to specify path to the nested element) and each of them must have three files:
+- **main.js** - Module with you component classs extending imported `DitoElement` class and exporting created class as default
+- **main.html** - Your components template, here you can use all the feature presented you by this library
+- **main.css** - you component scoped styles. Each rule will be prefixed in a way that will make styles there be only applied to this component
+  - **!IMPORTANT** Even if there will be two components with the same name their styles might differ due to Dynamic CSS feature so if you have css that matches all components and doesn't change it is recommendet to not include it in components' css file
+
+#### `main.js` bare minimum:
+
+```js
+import { DitoElement } from 'ditoelement.js';
+class ElementOne extends DitoElement {}
+export { ElementOne as default };
+```
+`main.html` and `main.css` can be empty
+
+### Usage
+When you've had create all required file and made sure to follow all the instruction than you can register you component and use it on the site:
+```html
+<element-one></element-one>
+<script type="text/javascript">
+  const container = new Dito({
+    url: 'http://localhost/components/',
+  });
+  container.register('element-one', 1);
+</script>
+```
+
+# Observables
+Any variable you would use in HTML or CSS must be defined in **Main Observables** - `$` and `$css`.
+
+Any class created from `DitoElement` has access to this variables inside their instance (as well as other functionality). Anything defined in `$` will be available in template and anything defined in `$css` will be available in styles _(seperation of those file was made to avoid rerenders without any change)_.
+Try to save in `$` and `$css` only variables that appear in files as any change which results in different value assigned to the attribute will call for rerender of the components template or styles.
+
+#### Functionality:
+```js
+class ElementOne extends DitoElement {
+  init() {
+    this.$.value = 'value';
+    this.$css.url = 'http://localhost';
+  }
+}
+```
+
+#### Styles:
+```css
+div {
+  background-image: url("{{ url }}/image.png");
+}
+```
+#### Template:
+```html
+<p>{{ value }}</p>
+```
+
+# Events
+In previous example you can see that I used method `init` inside the `ElementOne` class. It's one of the few "event" calls during the life cycle of the components:
+- **prepare** - called before any preparation of the `DitoElement` constructor but after `HTMLElement` constructor was called
+- **init** - called only once per component instance, before its first render
+- **beforeRender** - called each time before render of component was started
+- **afterRender** - called each time render finished (successfully or not), as first argument it accepts result fo ther render
+
+# Template language
+To help with creation of html a lot of frameworks (also this one) introduced template language - syntax which allows you to dynamically change the content of your template without need for custom js.
+Inside them you can
+
+## Executables
+
+Similarly to other frameworks with template language (Twig, Vue, Angluar etc.) for injecting values into template we are using mustache syntax: `{{ value }}`.
+```html
+Your value: {{value}}
+```
+## If and For
+
+Library also supports `for` and `if` features. Like all special actions you have to prefix them with `@`:
+```html
+<div @if="display">
+  I am shown!
+<div>
+<div @if="!display">
+  I am hidden!
+<div>
+<p @for="3">
+  I will be shown 3 times
+</p>
+```
+anything inside `if` and `for` have to be wrapped in string and is executed similarly to `executables`. As `if` is pretty self explanatory we will move to the `for`
+
+### `for`
+`for` accepts:
+- numbers
+- arrays
+- objects
+
+It will iterate over all those 3 types but each will behave slithly different:
+- When `number` was passed, `for` will iterate the amount of time number is equal or bigger then zero. It will also create key for it but not value will available.
+- When `array` was passed, `for` will iterate the same amount of time as is arrays length. It will create kew and value.
+- When `object` wass passed, `for` will iterate the numer of time that equals length of array from `Object.key` method. It will create kew and value.
+
+#### `$key` and `$value`
+Inside `for` you have access to two additional values `$key` and `$value`:
+- `$key` - iteration counter
+- `$value` - current item (in case of number it will be `null`)
+
+```html
+<p @for="3">
+  {{ $key }}   // 0, 1, 2
+  {{ $value }} // null, null, null
+</p>
+<p @for="['a', 'b', 'c']">
+  {{ $key }}   // 0, 1, 2
+  {{ $value }} // 'a', 'b', 'c'
+</p>
+<p @for="{aKey: 'a', bKey: 'b', cKey: 'c'}">
+  {{ $key }}   // 'aKey', 'bKey', 'cKey'
+  {{ $value }} // 'a', 'b', 'c'
+</p>
+```
 
 # Features:
 - [DONE] bind default attributes

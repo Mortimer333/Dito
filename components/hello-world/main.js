@@ -1,6 +1,6 @@
-import { JMonkeyElement } from '../../root.js';
+import { DitoElement } from '../../root.js';
 
-class HelloWorld extends JMonkeyElement {
+class HelloWorld extends DitoElement {
 
   init() {
     console.log("hello");

@@ -1,4 +1,4 @@
-class JMonkey {
+class Dito {
   url;
   localStorage = true;
   filename = 'main';
@@ -285,4 +285,4 @@ class JMonkey {
     }
   }
 }
-export { JMonkey };
+export { Dito };

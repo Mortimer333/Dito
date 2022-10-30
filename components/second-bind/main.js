@@ -1,6 +1,6 @@
-import { JMonkeyElement } from '../../root.js';
+import { DitoElement } from '../../root.js';
 
-class SecondBind extends JMonkeyElement {
+class SecondBind extends DitoElement {
   init() {
     this.$.change = false;
   }
