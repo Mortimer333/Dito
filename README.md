@@ -2,6 +2,7 @@
 Light weight library to allow separating frontend into reusable components
 
 # Features:
+- [DONE] bind default attributes
 - [DONE] have only one style tag
 - [DONE] dynamic CSS variables?
 - [DONE] Setting to allow use of local storage

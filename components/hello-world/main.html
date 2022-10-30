@@ -1,9 +1,14 @@
 <p>
   hello world {{ typeof pass != 'undefined' ? pass : 'no pass'}}
 </p>
+<p>
+  Twoje hasło: {{ password }}
+</p>
 <button type="button" name="button" @e:click='changeColor()'>Change color!</button>
 <button type="button" name="button" @e:click='changePass()'>Change pass!</button>
+<button type="button" name="button" @e:click='changeClass()'>Change class!</button>
 <second-bind @b:pass2="pass" @o:out="console.log('out', $event)"></second-bind>
-<p @for="iter" @a:style="'background-color:black;padding:5px;'">
+<input type="text" name="" @b:value="password">
+<p @for="iter" @a:style="'background-color:black;padding:5px;'" @a:class="className">
   #{{ $key }}
 </p>

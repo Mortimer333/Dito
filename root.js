@@ -158,6 +158,7 @@ class JMonkeyElement extends HTMLElement {
         toBind: [],
         parent: null,
         children: null,
+        nativeChildren: null,
         path: null,
         cssIndices: [],
         cssPath: null,
@@ -295,6 +296,20 @@ class JMonkeyElement extends HTMLElement {
           component.parentElement.insertBefore(rendered, component);
           component.remove();
         }.bind(this));
+
+        const cached = {};
+        Object.keys(this.$self.nativeChildren).forEach(alias => {
+          tmp.querySelectorAll('[' + alias + ']').forEach((node, i) => {
+            const item = this.$self.nativeChildren[alias][i];
+            if (!item) {
+              console.error("Couldn't find native child for `" + alias + "` at index: `" + i + "`");
+            } else {
+              item.node[item.name] = this.$[item.value];
+              node.parentElement.insertBefore(item.node, node);
+              node.remove();
+            }
+          });
+        });
       }
 
       this.resolveAttrs(tmp);
@@ -335,6 +350,7 @@ class JMonkeyElement extends HTMLElement {
 
   assignChildren(tmp) {
     this.$self.children = {};
+    this.$self.nativeChildren = {};
     if (!this.$self.path) {
       const index = Array.prototype.indexOf.call(this.parentElement.children, this);
       this.setAttribute(this.indexAttrName, index);
@@ -383,16 +399,34 @@ class JMonkeyElement extends HTMLElement {
       parent,
       'binds',
       (alias, obj, item, node, skip) => {
-        if (!skip) {
-          if (!node.$) {
+        if (skip) {
+          return;
+        }
+        if (!node.$) {
+          if (window.__jmonkey.registered[node.localName]) {
             this.$self.toBind.push({bind: item, node});
-          } else {
-            this.setBind(item, node);
+          } else if (typeof node[item.name] != undefined) {
+            node[item.name] = this.$[item.value];
+            node.addEventListener("change", function (e) {
+              this.$[item.value] = node[item.name];
+            }.bind(this))
+            const native = this.$self.nativeChildren;
+            if (!native[alias]) {
+              native[alias] = {};
+            }
+            native[alias][Object.keys(native[alias]).length] = {
+              node,
+              name: item.name,
+              value: item.value
+            };
+            console.log("Add native node binding", item.name);
           }
+        } else {
+          this.setBind(item, node);
         }
       },
       (alias, obj, item) => {
-        if (!this.$[item.value]) {
+        if (typeof this.$[item.value] == 'undefined') {
           console.error(
             'Observable in `' + this.constructor.name + '` doesn\'t have `'
             + item.value + '` variable, skipping binding...'

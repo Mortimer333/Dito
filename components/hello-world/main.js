@@ -4,6 +4,8 @@ class HelloWorld extends JMonkeyElement {
 
   init() {
     console.log("hello");
+    this.$.password = '';
+    this.$.className = 'class test';
     this.$css.color = 'violet';
     this.$.pass = 'hello world pass';
     this.$.planet = 'earth';
@@ -24,6 +26,14 @@ class HelloWorld extends JMonkeyElement {
       this.$.pass = 'hello world pass 2';
     } else {
       this.$.pass = 'hello world pass';
+    }
+  }
+
+  changeClass() {
+    if (this.$.className == 'class test') {
+      this.$.className = 'class test 2';
+    } else {
+      this.$.className = 'class test';
     }
   }
 
