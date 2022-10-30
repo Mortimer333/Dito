@@ -38,7 +38,7 @@ class Dito {
 
   register(name, version, path = '', force = false) {
     if (name.indexOf('-') === -1) {
-      throw new Error('Custom elements name must contain hypen (-)');
+      throw new Error('Custom elements name must contain hyphen (-)');
     }
 
     // If it's not force and there is currently no instance of this component on site - don't retrieve it
