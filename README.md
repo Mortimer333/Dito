@@ -64,6 +64,13 @@ container.register('earth-element', 1);
 ```js
 container.register('element-two', 1, 'element-one/', true);
 ```
+
+## Loading components
+When you have registered all your components you have to call `load` method. It is an `asyn` method which will load components behind the scene but if you want to wait until top components are loaded you can `await` its end:
+```js
+await container.load();
+```
+
 With this you are good to go and create your first component.
 
 ## Create component

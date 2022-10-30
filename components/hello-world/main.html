@@ -13,5 +13,5 @@
 <second-bind @b:pass2="pass" @o:out="console.log('out', $event)"></second-bind>
 <input type="text" name="" @b:value="password">
 <p @for="iter" @a:style="'background-color:black;padding:5px;'" @a:class="className">
-  #{{ $key }}
+  #{{ $key }} {{ $value }}
 </p>
