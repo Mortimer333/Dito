@@ -16,6 +16,10 @@ class Dito {
       throw new Error('CSP restriction');
     }
 
+    if (window.__dito) {
+      throw new Error('There can be only one instance of Dito');
+    }
+
     this.url = settings.url || window.location.origin;
     if (this.url[this.url.length - 1] != '/') {
       this.url += '/';
@@ -27,7 +31,7 @@ class Dito {
     this.styleNode = document.createElement('style');
     document.head.appendChild(this.styleNode);
 
-    Object.defineProperty(window, "__jmonkey", {
+    Object.defineProperty(window, "__dito", {
         value: {
           main: this,
           registered: {}
@@ -81,7 +85,7 @@ class Dito {
     const js = import(path + 'js?v=' + version + this.getQuery());
     const html = skip ? Promise.resolve(this._SKIP) : this.fetch(path + 'html?v=' + version);
     const css = skip ? Promise.resolve(this._SKIP) : this.fetch(path + 'css?v=' + version);
-    window.__jmonkey.registered[name] = true;
+    window.__dito.registered[name] = true;
     return [
       Promise.resolve(name + '_' + version),
       html.catch((error) => error),
@@ -91,7 +95,9 @@ class Dito {
   }
 
   async load(registered = null) {
+    let usedThisRegistered = false;
     if (!registered) {
+      usedThisRegistered = true;
       registered = this.registered;
     }
 
@@ -176,12 +182,12 @@ class Dito {
           }
 
           ({ default: js } = js);
-          Object.defineProperty(js.prototype, "__jmonkey", {
+          Object.defineProperty(js.prototype, "__dito", {
               value: {},
               writable: false
           });
-          js.prototype.__jmonkey.html = html;
-          js.prototype.__jmonkey.css = css;
+          js.prototype.__dito.html = html;
+          js.prototype.__dito.css = css;
           this.components[component] = {name: component, js, html, css, cssInjected: false, _cssSkipped: cssSkipped };
           i += skipSize;
           delete this.notDownloaded[component];
@@ -191,7 +197,9 @@ class Dito {
       }
 
       this.defineElements(document);
-      registered = [];
+      if (usedThisRegistered) {
+        this.registered = [];
+      }
     }).catch(err => console.error(err));
   }
 

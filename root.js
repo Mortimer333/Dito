@@ -177,12 +177,12 @@ class DitoElement extends HTMLElement {
   }
 
   compileCSS() {
-    this.__jmonkey.css = this.compileCSSExecutables(this.__jmonkey.css);
-    this.__jmonkey.compiledCSS = true;
+    this.__dito.css = this.compileCSSExecutables(this.__dito.css);
+    this.__dito.compiledCSS = true;
   }
 
   compileCSSExecutables(css) {
-    this.__jmonkey.cssExecutables = {};
+    this.__dito.cssExecutables = {};
     let start = css.indexOf('{{');
     while (start !== -1) {
       let end = css.indexOf('}}', start);
@@ -190,7 +190,7 @@ class DitoElement extends HTMLElement {
         break;
       }
       const name = 'cssExec_' + start + '_' + end;
-      this.__jmonkey.cssExecutables[name] = css.substr(start + 2, end - (start + 2));
+      this.__dito.cssExecutables[name] = css.substr(start + 2, end - (start + 2));
       css = css.replaceAll(css.substr(start, end + 2 - start), name);
       start = css.indexOf('{{', start + name.length);
     }
@@ -202,11 +202,11 @@ class DitoElement extends HTMLElement {
       return;
     }
 
-    if (!this.__jmonkey.compiledCSS) {
+    if (!this.__dito.compiledCSS) {
       this.compileCSS();
     }
 
-    let css = this.__jmonkey.css;
+    let css = this.__dito.css;
     css = this.resolveCssExecutables(css)
     const stylesheet = new CSSStyleSheet();
     await stylesheet.replace(css).catch(err => {
@@ -214,7 +214,7 @@ class DitoElement extends HTMLElement {
     });
 
     const styles = [];
-    const sheet = window.__jmonkey.main.styleNode.sheet;
+    const sheet = window.__dito.main.styleNode.sheet;
     Object.values(stylesheet.cssRules).forEach((rule, i) => {
       let index = sheet.cssRules.length;
       if (this.$self.cssIndices[i]) {
@@ -241,7 +241,7 @@ class DitoElement extends HTMLElement {
   }
 
   resolveCssExecutables(css) {
-    const exe = this.__jmonkey.cssExecutables;
+    const exe = this.__dito.cssExecutables;
     Object.keys(exe).forEach(alias => {
       css = css.replaceAll(alias, this.getCSSExecuteable(exe[alias])(...this.getCSSObservablesValues()));
     });
@@ -260,13 +260,13 @@ class DitoElement extends HTMLElement {
 
     this.beforeRender();
     try {
-      if (!this.__jmonkey.compiledHTML) {
+      if (!this.__dito.compiledHTML) {
         this.compile();
       }
 
       this.innerHTML = '';
       const tmp = document.createElement('div');
-      tmp.innerHTML = this.__jmonkey.html;
+      tmp.innerHTML = this.__dito.html;
       let firstRender = false;
       if (!this.$self.children) {
         firstRender = true;
@@ -328,7 +328,7 @@ class DitoElement extends HTMLElement {
   }
 
   iterateOverRegistrated(node, callableAction, reverse = false) {
-    let components = node.querySelectorAll(Object.keys(window.__jmonkey.registered).join(','));
+    let components = node.querySelectorAll(Object.keys(window.__dito.registered).join(','));
     if (reverse) {
       components = Object.values(components).reverse();
     }
@@ -478,7 +478,7 @@ class DitoElement extends HTMLElement {
       this.$self.path = this.localName + '@' + index;
       this.$self.cssPath = this.pathToCss(this.$self.path);
     }
-    tmp.querySelectorAll(Object.keys(window.__jmonkey.registered).join(',')).forEach((node, i) => {
+    tmp.querySelectorAll(Object.keys(window.__dito.registered).join(',')).forEach((node, i) => {
       if (!node.$self) {
         this.defineSelf(node);
       }
@@ -492,7 +492,7 @@ class DitoElement extends HTMLElement {
   }
 
   searchForNotDownloaded(parent) {
-    const notDownloaded = window.__jmonkey.main.notDownloaded;
+    const notDownloaded = window.__dito.main.notDownloaded;
     const keys = Object.keys(notDownloaded);
     if (keys.length == 0) {
       return;
@@ -500,10 +500,10 @@ class DitoElement extends HTMLElement {
 
     let promises = [];
     parent.querySelectorAll(keys.join(',')).forEach((node, i) => {
-      if (!window.__jmonkey.registered[node.localName]) {
+      if (!window.__dito.registered[node.localName]) {
         const component = notDownloaded[node.localName];
         promises.push(
-          ...window.__jmonkey.main.createRegisterPromise(component.path, component.name, component.version)
+          ...window.__dito.main.createRegisterPromise(component.path, component.name, component.version)
         );
         delete notDownloaded[node.localName];
       }
@@ -511,7 +511,7 @@ class DitoElement extends HTMLElement {
 
     if (promises.length > 0) {
       (async function() {
-        await window.__jmonkey.main.load(promises);
+        await window.__dito.main.load(promises);
       }).bind(this)()
     }
   }
@@ -525,7 +525,7 @@ class DitoElement extends HTMLElement {
           return;
         }
         if (!node.$) {
-          if (window.__jmonkey.registered[node.localName]) {
+          if (window.__dito.registered[node.localName]) {
             this.$self.toBind.push({bind: item, node});
           } else if (typeof node[item.name] != undefined) {
             node[item.name] = this.$[item.value];
@@ -582,7 +582,7 @@ class DitoElement extends HTMLElement {
   resolveInputs(parent) {
     this.resolve(parent, 'inputs', (alias, obj, item, node) => {
       if (!node.$) {
-        if (window.__jmonkey.registered[node.localName]) {
+        if (window.__dito.registered[node.localName]) {
           this.$self.toInput.push({input: item, node});
         } else {
           console.error("Selected node was not made with JMokey library and can't have assigned input");
@@ -681,7 +681,7 @@ class DitoElement extends HTMLElement {
   }
 
   resolve(parent, attr, mainCallback, beforeCallback = null, afterCallback = null) {
-    const obj = this.__jmonkey[attr];
+    const obj = this.__dito[attr];
     for (var alias in obj) {
       if (!obj.hasOwnProperty(alias)) {
         continue;
@@ -717,7 +717,7 @@ class DitoElement extends HTMLElement {
   }
 
   compile() {
-    let html = this.__jmonkey.html;
+    let html = this.__dito.html;
 
     html = this.compileBinds(html);
     html = this.compileInputs(html);
@@ -726,24 +726,24 @@ class DitoElement extends HTMLElement {
     html = this.compileExecutables(html);
     html = this.compileEvents(html);
     html = this.compileIfs(html);
-    this.__jmonkey.html = this.compileFors(html);
+    this.__dito.html = this.compileFors(html);
 
-    this.__jmonkey.compiledHTML = true;
+    this.__dito.compiledHTML = true;
   }
 
   compileFindAndReplace(html, lm, prefix, attrName, hasName = false) {
     let attr, start = 0;
-    this.__jmonkey[attrName] = {};
+    this.__dito[attrName] = {};
     while (attr = this.getAttribute(html, lm, start)) {
       const { name, value } = attr;
       const plc = prefix + name.start + '-' + value.end;
       if (hasName) {
-        this.__jmonkey[attrName][plc] = {
+        this.__dito[attrName][plc] = {
           name: html.substr(name.start + lm.length, name.end - (name.start + lm.length)).trim(),
           value: html.substr(value.start + 1, value.end - 1 - value.start),
         };
       } else {
-        this.__jmonkey[attrName][plc] = html.substr(value.start + 1, value.end - 1 - value.start);
+        this.__dito[attrName][plc] = html.substr(value.start + 1, value.end - 1 - value.start);
       }
       html = html.replaceAll(html.substr(name.start + 1, value.end + 1 - (name.start + 1)), plc);
     }
@@ -827,7 +827,7 @@ class DitoElement extends HTMLElement {
   }
 
   compileExecutables(html) {
-    this.__jmonkey.executables = {};
+    this.__dito.executables = {};
     let start = html.indexOf('{{');
     while (start !== -1) {
       let end = html.indexOf('}}', start);
@@ -835,7 +835,7 @@ class DitoElement extends HTMLElement {
         break;
       }
       const name = 'exec_' + start + '_' + end;
-      this.__jmonkey.executables[name] = html.substr(start + 2, end - (start + 2));
+      this.__dito.executables[name] = html.substr(start + 2, end - (start + 2));
       html = html.replaceAll(html.substr(start, end + 2 - start), '<span ' + name + '></span>');
       start = html.indexOf('{{', start + name.length);
     }

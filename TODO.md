@@ -1,4 +1,8 @@
 Test:
+- Main instance
+  - url
+  - params
+  - headers
 - Input
   - injected input
   - native (error expected)
@@ -20,6 +24,9 @@ Test:
 - Registering
   - tags present on site are downloaded
   - tags from downloaded content are also being imported
+  - localStorage on/off
+  - force
+  - nested
 - Dynamic CSS
   - executables (two same components different styles)
 - Observables
@@ -47,3 +54,7 @@ Test:
   - packing
   - no packing
   - mix
+- Kamikaze
+  - If
+  - for
+  - inject
