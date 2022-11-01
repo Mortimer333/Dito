@@ -8,6 +8,7 @@ class SecondBind extends DitoElement {
 
   moreGreetings2() {
     this.$.iter++;
+    console.log("abc", this.$.iter);
   }
 }
 

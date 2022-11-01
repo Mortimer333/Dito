@@ -1,6 +1,7 @@
 <button type="button" @e:click="moreGreetings2()">MORE</button>
-<third-check>
+<third-check @b:parentIter="iter">
   <p @for="iter">
     {{ greetings }}
   </p>
+  <hello-world></hello-world>
 </third-check>

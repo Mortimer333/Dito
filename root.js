@@ -17,7 +17,6 @@ class DitoElement extends HTMLElement {
     this.saveMethods();
     this.$self.cssRenderInProgress = false;
     this.$self.renderInProgress = false;
-    this.$self[this.injectName] = this.innerHTML;
     this.$self.debounceRender = this.debounce(e => {
       this.$self.renderInProgress = false;
       this.render();
@@ -93,7 +92,12 @@ class DitoElement extends HTMLElement {
             }
 
             if (this.tag.$binded[prop] && this.tag.$binded[prop][prop] !== value) {
-              this.tag.$binded[prop][prop] = value;
+              const binder = this.tag.$binded[prop].$binder.get(this.tag);
+              if (binder) {
+                binder.forEach(item => {
+                  this.tag.$binded[item.receiver].$[item.provider] = value;
+                });
+              }
             }
 
             return Reflect.set(...arguments);
@@ -162,7 +166,8 @@ class DitoElement extends HTMLElement {
         path: null,
         cssIndices: [],
         cssPath: null,
-        rendered: false
+        rendered: false,
+        default: {}
       },
       writable: false
     });
@@ -266,18 +271,16 @@ class DitoElement extends HTMLElement {
       this.innerHTML = '';
       const tmp = document.createElement('div');
       tmp.innerHTML = this.__jmonkey.html;
-
+      let firstRender = false;
       if (!this.$self.children) {
+        firstRender = true;
         this.cssRender();
         this.retrieveBindedValues();
         this.searchForNotDownloaded(tmp);
         this.assignChildren(tmp);
-        // Those 3 should only be resolved once
-        this.resolveBinds(tmp);
-        this.resolveInputs(tmp);
-        this.resolveOutputs(tmp);
       } else {
-        tmp.querySelectorAll(Object.keys(window.__jmonkey.registered).join(',')).forEach(function (component, i) {
+        const binded = tmp.querySelectorAll(Object.keys(window.__jmonkey.registered).join(','));
+        binded.forEach(function (component, i) {
           if (!component.$) {
             return;
           }
@@ -285,7 +288,6 @@ class DitoElement extends HTMLElement {
           if (!rendered) {
             return;
           }
-
           // Updating binded values manually to avoid infinite loop
           const binded = this.$binder.get(rendered);
           if (binded) {
@@ -293,6 +295,7 @@ class DitoElement extends HTMLElement {
               rendered.$[name.receiver] = this.$[name.provider];
             });
           }
+          rendered.innerHTML = rendered.$self.default[this.injectName];
           component.parentElement.insertBefore(rendered, component);
           component.remove();
         }.bind(this));
@@ -313,10 +316,21 @@ class DitoElement extends HTMLElement {
       }
 
       this.renderFors(tmp); // For must be resolved first
+      if (firstRender) {
+        this.resolveInputs(tmp);
+        this.resolveOutputs(tmp);
+        this.resolveBinds(tmp);
+      }
       this.resolveIfs(tmp);
       this.resolveEvents(tmp);
       this.resolveAttrs(tmp);
       this.resolveExecutables(tmp);
+
+      if (this.$self.children) {
+        Object.values(this.$self.children).forEach(child => {
+          child.$self[this.injectName] = child.innerHTML;
+        });
+      }
 
       while (tmp.childNodes.length > 0) {
         this.appendChild(tmp.childNodes[0]);
@@ -365,6 +379,7 @@ class DitoElement extends HTMLElement {
       node.setAttribute(this.indexAttrName, i);
       node.$self.path = this.$self.path + '.' + node.localName + '@' + i;
       node.$self.cssPath = this.pathToCss(node.$self.path);
+      node.$self.default[this.injectName] = node.innerHTML;
       this.$self.children[node.$self.path] = node;
     });
   }
@@ -379,11 +394,12 @@ class DitoElement extends HTMLElement {
     let promises = [];
     parent.querySelectorAll(keys.join(',')).forEach((node, i) => {
       if (!window.__jmonkey.registered[node.localName]) {
+        console.log(notDownloaded, node.localName, notDownloaded[node.localName]);
         const component = notDownloaded[node.localName];
         promises.push(
           ...window.__jmonkey.main.createRegisterPromise(component.path, component.name, component.version)
         );
-        delete notDownloaded[keys[i]];
+        delete notDownloaded[node.localName];
       }
     });
 
@@ -439,7 +455,7 @@ class DitoElement extends HTMLElement {
 
   setBind(bind, node) {
     node.$[bind.name] = this.$[bind.value];
-    node.$binded[bind.name] = this.$;
+    node.$binded[bind.name] = this;
     const item = {receiver: bind.name, provider: bind.value};
     const binded = this.$binder.get(node);
     if (binded) {

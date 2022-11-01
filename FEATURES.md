@@ -2,7 +2,8 @@
 - [IN PROGRESS] let injected html use features on library and make it so its connected with parent and not child that html is injected into
 - allow to bind values in object (this.$.settings.password)
 - create `this` variable in events and outputs so we can pass reference to the node
-- allow injected html to be separate int different packages that can be used in few places
+- allow injected html to be separate int different packages that can be used in few places\
+- change name of files from `main` to name of component so debuging is easier
 - [DONE] bind default attributes
 - [DONE] have only one style tag
 - [DONE] dynamic CSS variables?
