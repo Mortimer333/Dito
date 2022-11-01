@@ -1,0 +1,49 @@
+Test:
+- Input
+  - injected input
+  - native (error expected)
+- Outputs
+  - injected output
+  - native (error expected)
+- Binds
+  - native
+  - ladder binding (one <-> two <-> three)
+  - injected binding
+- Events
+  - injected
+  - functions
+  - inline
+- Attributes
+  - injected
+  - native
+  - custom
+- Registering
+  - tags present on site are downloaded
+  - tags from downloaded content are also being imported
+- Dynamic CSS
+  - executables (two same components different styles)
+- Observables
+  - one render per multiple changes if possible
+    - css
+    - html
+- Rendering
+  - First render should happen only once per component
+  - reusing components
+- Lify cycle
+  - prepare
+  - init
+  - beforeRender
+  - afterRender
+- executables
+  - functions and operations
+  - injected
+- For
+  - injected
+  - $key and value
+- If
+  - injected
+  - functions and operations
+- injected
+  - packing
+  - no packing
+  - mix
