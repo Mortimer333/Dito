@@ -30,17 +30,17 @@ Main purpose of this library is to have reusable Front End components with their
 
 The main difference between this and i.e. Vue is that components are not on the site but are downloaded later. So you can register hundreds of components but if they are not used on current page they will not be downloaded which helps with keeping the website slim.
 
-To use any of the library features you have to create component and point Dito instance where to look for it:
+**!IMPORTANT** - To use any of the library features you have to create component and point Dito instance where to look for it. You cannot use any of it functionality inside the plain html file even if you've included library. Script is forcing the use of components.
+
+To start whole process create new instance of `Dito` and set URL path to the folder containing your components:
 ```js
 const container = new Dito({
   url: 'http://localhost/components/',
 });
 ```
 ## Settings
-You can pass into Dito instance few settings to customize the behaviour of the library:
+You can pass into the instance few settings to customize the behaviour of the library:
 - **[Required] url** - url to the folder with components
-- **[Optional] filename** - default name of the component files
-  - Default: `main`
 - **[Optional] headers** - what headers should be sent with requests for components' files (except for JS file request as this is done with native `import` method)
   - Default: `<empty object>`
 - **[Optional] params** - what parameters should be sent in `uri` when requesting `CSS` and `HTML`
@@ -55,7 +55,7 @@ container.register('earth-element', 1);
 ```
 
 `register` method accepts 4 arguments:
-1. **[Required]** Components tag name
+1. **[Required]** Components tag name (which is also name of the files).
    - Tags' name must contain `-` (hyphen), it's a requirement forced by `HTMLElement` native API
 2. **[Required]** Version, used when deciding if to request files from server or use components saved in `localStorage` (also `cache bursting`)
 3. **[Optional]** Additional path to the component (in case it was nested).
@@ -69,7 +69,7 @@ container.register('element-two', 1, 'element-one/', true);
 ```
 
 ## Loading components
-When you have registered all your components you have to call `load` method. It is an `asyn` method which will load components behind the scene but if you want to wait until top components are loaded you can `await` its end:
+When you have registered all your components you have to call `load` method. It's an `async` method which will load components behind the scene but if you want to wait until top components are loaded you can `await` its end:
 ```js
 await container.load();
 ```
@@ -83,35 +83,36 @@ Dito expects you to create specific structure of files, so the script knows wher
 ```
 components/
 -- element-one/
----- main.js
----- main.css
----- main.html
+---- element-one.js
+---- element-one.css
+---- element-one.html
 ---- element-two/
------- main.js
------- main.css
------- main.html
+------ element-two.js
+------ element-two.css
+------ element-two.html
 -- element-three/
----- main.js
----- main.css
----- main.html
+---- element-three.js
+---- element-three.css
+---- element-three.html
 ```
-As you can see on the example above, components' files have to be put inside the folder with the same name as elements' tag name. Components can be nested (in case of nesting you have to specify path to the nested element) and each of them must have three files:
-- **main.js** - Module with your component class extending imported `DitoElement` class and exporting created class as default
-- **main.html** - Your components' template, here you can use all the feature presented you by this library
-- **main.css** - Your component scoped styles. Each rule will be prefixed in a way that will make styles there be only applied to this component
-  - **!IMPORTANT** Even if there will be two components with the same name their styles might differ due to Dynamic CSS feature so if you have CSS that matches all components and doesn't change it is recommended to not include it in components' CSS file
+As you can see on the example above, components' files have to be put inside the folder with the same name as elements' tag name and even have the name as the tag (this helps with debugging). Components can be nested (in case of nesting you have to specify path to the nested element) and each of them must have three files:
+- **.js** - Module with your component class extending imported `DitoElement` class and exporting created class as default
+- **.html** - Your components' template, here you can use all the feature presented you by this library
+- **.css** - Your component scoped styles. Each rule will be prefixed in a way that will make styles there be only applied to this component
+  - **!IMPORTANT** Even if there will be two components with the same name their styles might differ due to Dynamic CSS feature, so if you have CSS that matches all components and doesn't change it is recommended to not include it in components' CSS file
 
-#### `main.js` bare minimum:
+#### Bare minimum:
 
+`main.js`
 ```js
-import { DitoElement } from 'ditoelement.js';
+import { DitoElement } from './ditoelement.js';
 class ElementOne extends DitoElement {}
 export { ElementOne as default };
 ```
 `main.html` and `main.css` can be empty.
 
 ### Usage
-When you've had created all required file and made sure to follow all the instruction than you can register your component and use it on the site:
+When you've had created all required file and made sure to follow all the instruction then you can register your component and use it on the site:
 ```html
 <element-one></element-one>
 <script type="text/javascript">
@@ -128,7 +129,7 @@ Any variable you would use in HTML or CSS must be defined in **Main Observables*
 
 Any class created from `DitoElement` has access to these variables inside their instance (as well as other functionality). Anything defined in `$` will be available in template and anything defined in `$css` will be available in styles _(separation of those file was made to avoid re-renders without any change)_.
 
-Templates can only access attributes defined in `$` and methods, styles can access attributes defined in `$css` and methods. Any change to `$` will make template re-render, any change in `$css` will make styles to re-render.
+Templates can only access attributes defined in `$` and methods. Styles can access attributes defined in `$css` and methods. Any change to `$` will make template re-render, any change in `$css` will make styles re-render. It is pretty straight forward ;D.
 
 #### Functionality:
 ```js
@@ -152,10 +153,10 @@ div {
 ```
 
 ## Lify cycle
-In the previous example, you can see, that I've used method called `init` inside the `ElementOne` class. It's one of the few "event" calls during the life cycle of the components:
+In the previous example, you can see, that I've used method called `init` inside the `ElementOne` class. It's one of the few "event calls" during the life cycle of the components:
 - **prepare** - called before any preparation of the `DitoElement` constructor but after `HTMLElement` constructor was called
-- **init** - called only once per component instance, before its first render
-- **beforeRender** - called each time before render of component was started
+- **init** - called only once per component instance - before its first render
+- **beforeRender** - called each time the render of component is about to start
 - **afterRender** - called each time render finishes (successfully or not), as first argument it accepts result for the render
 
 # Template language
@@ -169,7 +170,7 @@ Your value: {{value}}
 ```
 ## If and For
 
-The library also supports `for` and `if` features. Like all special actions you have to prefix them with `@`:
+The library also supports `if` and `for` features. Like all special actions you have to prefix them with `@`:
 ```html
 <div @if="display">
   I am shown!
@@ -189,8 +190,8 @@ Anything inside `if` and `for` have to be wrapped in string symbols and is resol
 - arrays
 - objects
 
-It will iterate over all those 3 types but each of them will behave slightly different:
-- When `number` was passed, `for` will iterate the amount of time the `number` is equal or bigger than zero. It will also create key for it, but no value will available.
+It will iterate over all 3 of those but each of them will behave slightly differently:
+- When `number` was passed, `for` will iterate the amount of time the `number` is equal or bigger than zero. It will also create key for it, but no value will be available.
 - When `array` was passed, `for` will iterate the same amount of time as its array's length. It will create key and value.
 - When `object` was passed, `for` will iterate the number of time that equals length of array from `Object.key` method. It will create key and value.
 
@@ -225,10 +226,16 @@ You can attach any kind of event to the element that will be resolved with funct
 <button type="button" name="button" @e:click='changeColor()'>Change color!</button>
 ```
 
-Variable changed inside `event` will be replaced in real `$` - see "Weird behaviour" for more info.
+Variables changed inside the `event` will be replaced in real `$` - see "Weird behaviour" for more info.
+
+#### `$event`
+Event variable passed normaly to the function call is now available under new name `$event`. Use it like you would with normal variable:
+```html
+<button type="button" name="button" @e:click='console.log($event); changeColor($event)'>Change color!</button>
+```
 
 ## Attributes
-Binding attributes to observables is similar to the `events` - prefix your attribute with `@a:` then add name of chosen attribute:
+Binding attributes to observables is similar to the `events` - prefix your attribute with `@a:` then add name of chosen attribute (remember to use JS names):
 #### before:
 ```html
 <p class="quote">
@@ -251,15 +258,15 @@ To pass values into the instance and severe connection to it, you would use `inp
 ```html
 <element-two @i:list="[1,2,3]" @i:name="customName"></element-two>
 ```
-Now this element will have two additional value `list` and `name` which will replace or create new values inside of it.
+Now this element will have two additional values `list` and `name` which will replace or create new value inside of the component.
 
 ### Outputs
-Outputs are used when you want to dispatch an event without the need to create custom events. When you emit this value the parent element will run its updating script. Inside the call you are able to pass value up to the parent which can later use it for its own purposes. Similarly to `input` start with `@o:` and than you add the name of (existing or not) attribute in `$outputs` variable in the child element:
+Outputs are used when you want to dispatch an event without the need to create custom one. When you emit this value the parent element will run its assigned script which provides an option to sent data from child to parent. Similarly to `input` start with `@o:` and than you add the name of (existing or not) attribute in `$output` variable, in the child element:
 ```html
 <element-two @o:change="childChanged($event)"></element-two>
 ```
 #### `$event`
-Outputs have their own special variable, called `$event`, which holds the value passed from the emitter (from the child which dispatched this output).
+Outputs have their own special variable, called `$event` (like `events`), which holds the value passed from the emiter (from the child which dispatched this output).
 
 #### Child setup
 To set up `outputs` you don't have to do anything special, the only thing to remember is to actually call the `emit` on `output`:
@@ -270,12 +277,12 @@ To set up `outputs` you don't have to do anything special, the only thing to rem
   }
 ```
 
-As you can see we are checking if `$output` variable has attribute to call emit on (`$output?.change`). The script automatically detects when output was set and creates/replace attribute to the one containing emit method. So creation of output actually comes from parent and not from child.
+As you can see we are checking if `$output` variable has attribute before calling emit on it (`$output?.change`). The script automatically detects when output was set and creates/replace attribute to the one containing `emit` method. So creation of output actually comes from parent and not from child.
 
 Variable changed inside `output` will be replaced in real `$` - see "Weird behaviour" for more info.
 
 ### Binds
-Value when changed updates across all bound parents and children. It will always have the same value across all bound instances and will appear the same in all templates. It syntax is similar but completely different from other special actions: start with `@b:` then name of attribute to bind in child and in value place only the name of variable you want to bind and nothing else:
+Bound value when changed is updated across all bound parents and children. It will always have the same value across all bound instances and will appear the same in all templates. It syntax is similar but completely different from other special actions: start with `@b:` then name of attribute to bind in child and in value place only the name of variable you want to bind (nothing else):
 ```js
 <element-two @b:twoBind="oneBind"></element-two>
 ```
@@ -289,7 +296,7 @@ You can bind values to native tags like `input`. It is extremely useful when use
 **!IMPORTANT**: update happens on `change` event which is triggered mostly on `focusout` when using inputs.
 
 ## Injected HTML
-You can inject HTML to the components and decide where to use it inside the template with `$inject` special variable:
+You can inject HTML to the component and decide where to use it inside the template with `dito-inject` tag:
 ```html
 <element-two>
   <h1>Hello, its ElementOne</h1>
@@ -299,9 +306,9 @@ You can inject HTML to the components and decide where to use it inside the temp
 And `element-two` template:
 ```html
 Our parent:
-{{ $inject }}
+<dito-inject></dito-inject>
 ```
-This will result in all HTML between `element-two` tags being rendered in place of `$inject` variable:
+This will result in all HTML between `element-two` tags being rendered in place of `dito-inject` tag:
 
 ```html
 Our parent:
@@ -309,7 +316,62 @@ Our parent:
 <h3>Just simple Dito component</h3>
 ```
 
-**!IMPORTANT** Currently injected HTML doesn't benefit from any functionality presented by library (executables, for, if etc.). Only simple HTML is accepted.
+### Packing
+You can pack injected nodes in packages and use them in different places inside template with `dito-pack` attribute:
+```html
+<element-two>
+  <h1 dito-pack="helloPackage">Hello, its ElementOne</h1>
+  <h3 dito-pack="bio">Just simple Dito component</h3>
+</element-two>
+```
+`element-two` template:
+```html
+Our parent:
+<dito-inject dito-pack="helloPackage"></dito-inject>
+Bio:
+<dito-inject dito-pack="bio"></dito-inject>
+```
+This will seperate injected HTML and render it in two different places:
+```html
+Our parent:
+<h1 dito-pack="helloPackage">Hello, its ElementOne</h1>
+Bio:
+<h3 dito-pack="bio">Just simple Dito component</h3>
+```
+Injected HTML benefits from all special actions this library offers but this also means that injection cannot be multiplied. What does this mean?
+If we were to put the same package twice but in different place:
+```html
+Our parent:
+<dito-inject dito-pack="helloPackage"></dito-inject>
+Bio:
+<dito-inject dito-pack="bio"></dito-inject>
+Other Bio:
+<dito-inject dito-pack="bio"></dito-inject>
+```
+Only the last one will be rendered:
+```html
+Our parent:
+<h1 dito-pack="helloPackage">Hello, its ElementOne</h1>
+Bio:
+Other Bio:
+<h3 dito-pack="bio">Just simple Dito component</h3>
+```
+This is because we are reusing generated components with all their attributes and special actions. But, the other way around, injected HTML with the same name of package will be bundled and rendered altogether:
+```html
+<element-two>
+  <h1 dito-pack="helloPackage">Hello, its ElementOne</h1>
+  <h3 dito-pack="bio">Just simple Dito component</h3>
+  <p dito-pack="bio">Trying to live my best life</p>
+</element-two>
+```
+Rendered:
+```html
+Our parent:
+<h1 dito-pack="helloPackage">Hello, its ElementOne</h1>
+Bio:
+<h3 dito-pack="bio">Just simple Dito component</h3>
+<p dito-pack="bio">Trying to live my best life</p>
+```
 
 # Dynamic CSS
 CSS is also being downloaded and assigned to the component, so why not allow using variables inside of it? Anything set in `$css` will be available inside your components CSS file:
