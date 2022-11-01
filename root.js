@@ -322,6 +322,9 @@ class DitoElement extends HTMLElement {
 
       this.renderFors(tmp); // For must be resolved first
       if (firstRender) {
+        Object.values(this.$self.children).forEach(child => {
+          this.assignPacks(child);
+        });
         this.resolveInputs(tmp);
         this.resolveOutputs(tmp);
         this.resolveBinds(tmp);
@@ -360,7 +363,11 @@ class DitoElement extends HTMLElement {
       if (packName) {
         const pack = this.$self.injectedPacks[packName];
         if (pack) {
-          node.parentElement.insertBefore(pack, node);
+          let current = node;
+          pack.forEach(packNode => {
+            current.parentElement.insertBefore(packNode, current);
+            current = packNode;
+          });
         }
       } else {
         this.$self.injected.forEach(child => {
@@ -373,8 +380,13 @@ class DitoElement extends HTMLElement {
 
   assignPacks(parent) {
     parent.querySelectorAll('[' + this.packAttrName + ']').forEach(node => {
+      const name = node.getAttribute(this.packAttrName);
+      if (parent.$self.injectedPacks[name]) {
+        parent.$self.injectedPacks[name].push(node);
+      } else {
+        parent.$self.injectedPacks[name] = [node];
+      }
       node.removeAttribute(this.packAttrName);
-      parent.$self.injectedPacks[node.getAttribute(this.packAttrName)] = node;
     });
   }
 
@@ -408,7 +420,6 @@ class DitoElement extends HTMLElement {
       if (!node.$self) {
         this.defineSelf(node);
       }
-      this.assignPacks(node);
       node.$self.parent = this;
       node.setAttribute(this.indexAttrName, i);
       node.$self.path = this.$self.path + '.' + node.localName + '@' + i;
