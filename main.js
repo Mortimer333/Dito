@@ -20,7 +20,6 @@ class Dito {
       this.url += '/';
     }
 
-    this.filename = settings.filename || this.filename;
     this.headers = settings.headers || this.headers;
     this.params = settings.params || this.params;
     this.localStorage = typeof settings.localStorage != 'undefined' ? settings.localStorage : this.localStorage;
@@ -59,7 +58,7 @@ class Dito {
       }
     }
 
-    path = this.url + path + name + '/' + this.filename + '.';
+    path = this.url + path + name + '/' + name + '.';
     const js = import(path + 'js?v=' + version + this.getQuery());
     const html = skip ? Promise.resolve(this._SKIP) : this.fetch(path + 'html?v=' + version);
     const css = skip ? Promise.resolve(this._SKIP) : this.fetch(path + 'css?v=' + version);
