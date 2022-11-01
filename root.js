@@ -379,7 +379,7 @@ class DitoElement extends HTMLElement {
     let promises = [];
     parent.querySelectorAll(keys.join(',')).forEach((node, i) => {
       if (!window.__jmonkey.registered[node.localName]) {
-        const component = notDownloaded[keys[i]];
+        const component = notDownloaded[node.localName];
         promises.push(
           ...window.__jmonkey.main.createRegisterPromise(component.path, component.name, component.version)
         );
@@ -460,7 +460,7 @@ class DitoElement extends HTMLElement {
         const observableKeys = this.getObservablesKeys();
         const valuesBefore = this.getObservablesValues();
         try {
-          const res = this.getFunction(item.value, [this.eventName]).bind(this)(e, ...valuesBefore);
+          const res = this.getFunction(item.value).bind(this)(e, ...valuesBefore);
           this.updatedChangedValues(res, observableKeys, valuesBefore);
         } catch (e) {
           console.error("Error on output", e);
@@ -552,14 +552,15 @@ class DitoElement extends HTMLElement {
   }
 
   resolveEvents(parent) {
-    this.resolve(parent, 'events', (alias, obj, item, node) => {
+    this.resolve(parent, 'events', (alias, obj, item, node, key, value) => {
       node.addEventListener(item.name, (e) => {
         const observableKeys = this.getObservablesKeys();
-        const valuesBefore = this.getObservablesValues();
-        const res = this.getFunction(item.value, ['e'])(e, ...valuesBefore);
+        const valuesBefore = this.getObservablesValues(key, value);
+        const res = this.getFunction(item.value, [this.eventName])(e, ...valuesBefore);
         this.updatedChangedValues(res, observableKeys, valuesBefore);
       });
-    });
+    },
+    () => [this.key, this.value]);
   }
 
   resolveExecutables(parent) {
@@ -755,13 +756,20 @@ class DitoElement extends HTMLElement {
     ];
   }
 
-  getObservablesValues() {
+  getObservablesValues(key = null, value = null) {
+    if (key === null) {
+      key = this.key;
+    }
+
+    if (value === null) {
+      value = this.value;
+    }
     return [
       ...Object.values(this.methods),
       ...Object.values(this.$),
       this.$self[this.injectName],
-      this.key,
-      this.value,
+      key,
+      value,
     ];
   }
 

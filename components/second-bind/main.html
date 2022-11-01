@@ -1,8 +1,6 @@
-<p>
-  second bind {{ typeof pass2 != 'undefined' ? pass2 : 'no pass2'}}
-</p>
-<button type="button" @e:click="outFn()">Out</button>
-<button type="button" @e:click="change = !change">Toggle</button>
-<div @if="change">
-  If check
-</div>
+<button type="button" @e:click="moreGreetings2()">MORE</button>
+<third-check>
+  <p @for="iter">
+    {{ greetings }}
+  </p>
+</third-check>

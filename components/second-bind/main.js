@@ -2,11 +2,12 @@ import { DitoElement } from '../../root.js';
 
 class SecondBind extends DitoElement {
   init() {
-    this.$.change = false;
+    this.$.greetings = 'HI!';
+    this.$.iter = 2;
   }
 
-  outFn() {
-    this.$output?.out.emit('Hello its me mario');
+  moreGreetings2() {
+    this.$.iter++;
   }
 }
 

@@ -2,10 +2,12 @@ import { DitoElement } from '../../root.js';
 
 class ThirdCheck extends DitoElement {
   init() {
-    this.$.settings = {
-      a: "a",
-      b: "b"
-    }
+    this.$.iterParent = 1;
+    console.log("a");
+  }
+
+  moreGreetings() {
+    this.$.iterParent++;
   }
 }
 
