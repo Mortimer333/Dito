@@ -9,6 +9,7 @@ class Dito {
   notDownloaded = {};
   _SKIP = '_skip';
   styleNode;
+  kamikazeTagName = 'dito-kamikaze';
 
   constructor(settings = {}) {
     if (this.detectCSPRestriction()) {
@@ -33,6 +34,24 @@ class Dito {
         },
         writable: false
     });
+
+    this.defineKamikaze();
+  }
+
+  defineKamikaze() {
+    const element = class extends HTMLElement {
+      connectedCallback() {
+        if (document.body.contains(this)) {
+          while (this.childNodes.length > 0) {
+            this.parentElement.insertBefore(this.childNodes[0], this);
+          }
+          this.remove();
+        }
+      }
+    };
+    if (!customElements.get(this.kamikazeTagName)) {
+      customElements.define(this.kamikazeTagName, element);
+    }
   }
 
   register(name, version, path = '', force = false) {

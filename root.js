@@ -101,15 +101,6 @@ class DitoElement extends HTMLElement {
             }
 
             return Reflect.set(...arguments);
-          },
-          get (target, prop, receiver) {
-            let value = target[prop];
-
-            if (typeof value == 'function') {
-              return value.bind(this.tag)();
-            }
-
-            return Reflect.get(...arguments);
           }
         }),
         writable: false

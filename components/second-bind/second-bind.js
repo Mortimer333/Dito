@@ -2,6 +2,8 @@ import { DitoElement } from '../../root.js';
 
 class SecondBind extends DitoElement {
   init() {
+    this.$.set = {};
+    this.$.set.a = 'bv';
     this.$.greetings = 'HI!';
     this.$.iter = 2;
   }

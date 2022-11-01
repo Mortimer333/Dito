@@ -3,8 +3,7 @@
   - reusable in component
   - have their own scope
   - are defined like this : <dito-template @n="template1"> <h1>Lalala</h1> </dito-template> nad used like this <dito-render @t="template1"></dito-render>
-- container tag - like ng-container which will just this.outerHTML = this.innerHTML, probably gonna call him dito-kamikaze
-- allow to bind values in object (this.$.settings.password)
+- [DONE] container tag - like ng-container which will just this.outerHTML = this.innerHTML, probably gonna call him dito-kamikaze
 - [DONE] allow injected html to be separate int different packages that can be used in few places
 - [DONE] change name of files from `main` to name of component so debuging is easier
 - [DONE] let injected html use features on library and make it so its connected with parent and not child that html is injected into
@@ -27,6 +26,7 @@
 - [DONE] events and {{}}
 - [DONE] passing html to the inside of element will result in rendering it inside of it
 - [DONE] allow choosing where to put injected html
+- [REMOVED] allow to bind values in object (this.$.settings.password) - provides to complication which outweight benefits
 - [REMOVE] create `this` variable in events and outputs so we can pass reference to the node - not really needed but slows script o fair amount
 - [REMOVED] Event when first render finishes and every component is downloaded - not really doable with all those asyncs, and removing that creates pretty long waiting time
 - [REMOVED] Add jmonkey-spinner class - if someone wants to have loaders they will add them
