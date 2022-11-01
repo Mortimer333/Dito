@@ -5,7 +5,7 @@
   - are defined like this : <dito-template @n="template1"> <h1>Lalala</h1> </dito-template> nad used like this <dito-render @t="template1"></dito-render>
 - container tag - like ng-container which will just this.outerHTML = this.innerHTML, probably gonna call him dito-kamikaze
 - allow to bind values in object (this.$.settings.password)
-- allow injected html to be separate int different packages that can be used in few places
+- [DONE] allow injected html to be separate int different packages that can be used in few places
 - [DONE] change name of files from `main` to name of component so debuging is easier
 - [DONE] let injected html use features on library and make it so its connected with parent and not child that html is injected into
 - [DONE] bind default attributes

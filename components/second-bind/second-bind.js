@@ -10,6 +10,10 @@ class SecondBind extends DitoElement {
     this.$.iter++;
     console.log("abc", this.$.iter);
   }
+
+  emitCheck(e) {
+    console.log(e);
+  }
 }
 
 export { SecondBind as default };

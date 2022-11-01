@@ -3,6 +3,7 @@ import { DitoElement } from '../../root.js';
 class HelloWorld extends DitoElement {
 
   init() {
+    this.$.display = false;
     this.$.password = '';
     this.$.className = 'class test';
     this.$css.color = 'violet';
@@ -17,7 +18,8 @@ class HelloWorld extends DitoElement {
     };
   }
 
-  afterRender() {
+  emit() {
+    this.$output?.test.emit('ola!');
   }
 
   changePass() {

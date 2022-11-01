@@ -160,6 +160,7 @@ class DitoElement extends HTMLElement {
     Object.defineProperty(obj, "$self", {
       value: {
         toBind: [],
+        toInput: [],
         parent: null,
         children: null,
         nativeChildren: null,
@@ -280,60 +281,25 @@ class DitoElement extends HTMLElement {
         firstRender = true;
         this.cssRender();
         this.retrieveBindedValues();
+        this.retrieveInputs();
         this.searchForNotDownloaded(tmp);
         this.assignChildren(tmp);
       } else {
-        const binded = tmp.querySelectorAll(Object.keys(window.__jmonkey.registered).join(','));
-        binded.forEach(function (component, i) {
-          if (!component.$) {
-            return;
-          }
-          const rendered = this.$self.children[this.$self.path + '.' + component.localName + '@' + i];
-          if (!rendered) {
-            return;
-          }
-          // Updating binded values manually to avoid infinite loop
-          const binded = this.$binder.get(rendered);
-          if (binded) {
-            binded.forEach(name => {
-              rendered.$[name.receiver] = this.$[name.provider];
-            });
-          }
-          rendered.innerHTML = rendered.$self.default.injected;
-          this.assignPacks(rendered);
-          component.parentElement.insertBefore(rendered, component);
-          component.remove();
-        }.bind(this));
-
-        const cached = {};
-        Object.keys(this.$self.nativeChildren).forEach(alias => {
-          tmp.querySelectorAll('[' + alias + ']').forEach((node, i) => {
-            const item = this.$self.nativeChildren[alias][i];
-            if (!item) {
-              console.error("Couldn't find native child for `" + alias + "` at index: `" + i + "`");
-            } else {
-              item.node[item.name] = this.$[item.value];
-              node.parentElement.insertBefore(item.node, node);
-              node.remove();
-            }
-          });
-        });
+        this.injectCustomElements(tmp);
+        this.injectNativeElements(tmp);
       }
 
       this.renderFors(tmp); // For must be resolved first
+      Object.values(this.$self.children).forEach(child => {
+        this.assignPacks(child);
+      });
+
       if (firstRender) {
-        Object.values(this.$self.children).forEach(child => {
-          this.assignPacks(child);
-        });
         this.resolveInputs(tmp);
         this.resolveOutputs(tmp);
         this.resolveBinds(tmp);
       }
-      this.resolveIfs(tmp);
-      this.resolveEvents(tmp);
-      this.resolveAttrs(tmp);
-      this.resolveExecutables(tmp);
-      this.resolveInjected(tmp);
+      this.resolveRepeatable(tmp);
 
       if (this.$self.children) {
         Object.values(this.$self.children).forEach(child => {
@@ -352,6 +318,78 @@ class DitoElement extends HTMLElement {
       this.afterRender({success: false, error: e});
       return false;
     }
+  }
+
+  injectNativeElements(node) {
+    const cached = {};
+    Object.keys(this.$self.nativeChildren).forEach(alias => {
+      node.querySelectorAll('[' + alias + ']').forEach((node, i) => {
+        const item = this.$self.nativeChildren[alias][i];
+        if (!item) {
+          console.error("Couldn't find native child for `" + alias + "` at index: `" + i + "`");
+        } else {
+          item.node[item.name] = this.$[item.value];
+          node.parentElement.insertBefore(item.node, node);
+          node.remove();
+        }
+      });
+    });
+  }
+
+  iterateOverRegistrated(node, callableAction, reverse = false) {
+    let components = node.querySelectorAll(Object.keys(window.__jmonkey.registered).join(','));
+    if (reverse) {
+      components = Object.values(components).reverse();
+    }
+
+    components.forEach(function (component, i) {
+      if (!component.$) {
+        return;
+      }
+
+      const index = reverse ? components.length - i - 1 : i;
+      const rendered = this.$self.children[this.$self.path + '.' + component.localName + '@' + index];
+      if (!rendered) {
+        return;
+      }
+
+      callableAction(component, i, rendered);
+    }.bind(this));
+  }
+
+  replaceInnerHtml(node) {
+    this.iterateOverRegistrated(node, (component, i, rendered) => {
+      component.innerHTML = rendered.$self.default.injected;
+      this.replaceInnerHtml(component);
+    });
+  }
+
+  injectCustomElements(node) {
+    this.replaceInnerHtml(node);
+    this.iterateOverRegistrated(node, (component, i, rendered) => {
+      // Updating binded values manually to avoid infinite loop
+      const binded = this.$binder.get(rendered);
+      if (binded) {
+        binded.forEach(name => {
+          rendered.$[name.receiver] = this.$[name.provider];
+        });
+      }
+      rendered.innerHTML = '';
+      while (component.childNodes.length > 0) {
+        rendered.appendChild(component.childNodes[0]);
+      }
+
+      component.parentElement.insertBefore(rendered, component);
+      component.remove();
+    }, true);
+  }
+
+  resolveRepeatable(node) {
+    this.resolveIfs(node);
+    this.resolveEvents(node);
+    this.resolveAttrs(node);
+    this.resolveExecutables(node);
+    this.resolveInjected(node);
   }
 
   resolveInjected(parent) {
@@ -379,14 +417,14 @@ class DitoElement extends HTMLElement {
   }
 
   assignPacks(parent) {
+    parent.$self.injectedPacks = {};
     parent.querySelectorAll('[' + this.packAttrName + ']').forEach(node => {
-      const name = node.getAttribute(this.packAttrName);
+      const name = node.attributes[this.packAttrName]?.value;
       if (parent.$self.injectedPacks[name]) {
         parent.$self.injectedPacks[name].push(node);
       } else {
         parent.$self.injectedPacks[name] = [node];
       }
-      node.removeAttribute(this.packAttrName);
     });
   }
 
@@ -405,6 +443,39 @@ class DitoElement extends HTMLElement {
         i--;
       }
     }
+  }
+
+  setBind(bind, node) {
+    node.$[bind.name] = this.$[bind.value];
+    node.$binded[bind.name] = this;
+    const item = {receiver: bind.name, provider: bind.value};
+    const binded = this.$binder.get(node);
+    if (binded) {
+      this.$binder.set(node, [...binded, item]);
+    } else {
+      this.$binder.set(node, [item]);
+    }
+  }
+
+  retrieveInputs(){
+    if (this.$self.parent) {
+      this.checkInputs.bind(this.$self.parent)()
+    }
+  }
+
+  checkInputs() {
+    for (var i = 0; i < this.$self.toInput.length; i++) {
+      const item = this.$self.toInput[i];
+      if (item.node.$) {
+        this.setInput(item.input, item.node);
+        this.$self.toInput.splice(i, 1);
+        i--;
+      }
+    }
+  }
+
+  setInput(input, node) {
+    node.$[input.name] = this.getExecuteable(input.value)(...this.getObservablesValues());
   }
 
   assignChildren(tmp) {
@@ -497,19 +568,6 @@ class DitoElement extends HTMLElement {
     );
   }
 
-  setBind(bind, node) {
-    node.$[bind.name] = this.$[bind.value];
-    node.clearRenderQueue(); // Preventing rerendering template
-    node.$binded[bind.name] = this;
-    const item = {receiver: bind.name, provider: bind.value};
-    const binded = this.$binder.get(node);
-    if (binded) {
-      this.$binder.set(node, [...binded, item]);
-    } else {
-      this.$binder.set(node, [item]);
-    }
-  }
-
   resolveOutputs(parent) {
     this.resolve(parent, 'outputs', (alias, obj, item, node) => {
       if (!node.$output) {
@@ -521,7 +579,7 @@ class DitoElement extends HTMLElement {
         const observableKeys = this.getObservablesKeys();
         const valuesBefore = this.getObservablesValues();
         try {
-          const res = this.getFunction(item.value).bind(this)(e, ...valuesBefore);
+          const res = this.getFunction(item.value, [this.eventName]).bind(this)(e, ...valuesBefore);
           this.updatedChangedValues(res, observableKeys, valuesBefore);
         } catch (e) {
           console.error("Error on output", e);
@@ -533,9 +591,13 @@ class DitoElement extends HTMLElement {
   resolveInputs(parent) {
     this.resolve(parent, 'inputs', (alias, obj, item, node) => {
       if (!node.$) {
-        console.error("Selected node was not made with JMokey library and can't have assigned input");
+        if (window.__jmonkey.registered[node.localName]) {
+          this.$self.toInput.push({input: item, node});
+        } else {
+          console.error("Selected node was not made with JMokey library and can't have assigned input");
+        }
       } else {
-        node.$[item.name] = this.getExecuteable(item.value)(...this.getObservablesValues());
+        this.setInput(item, node);
       }
     });
   }
@@ -562,10 +624,7 @@ class DitoElement extends HTMLElement {
           this.key = keys[i];
           this.value = values[i];
           const clone = node.cloneNode(true);
-          this.resolveIfs(clone);
-          this.resolveEvents(clone);
-          this.resolveAttrs(clone);
-          this.resolveExecutables(clone);
+          this.resolveRepeatable(clone);
           node.parentElement.insertBefore(clone, current.nextSibling);
           current = clone;
         }
@@ -580,7 +639,7 @@ class DitoElement extends HTMLElement {
         }
 
         let keys, values, skip = false;
-        if (type != 'number' && type != 'object') {
+        if (isNaN(res) || (type != 'number' && type != 'object')) {
           console.error('For in `' + this.constructor.name + '` doesn\'t have iterable value, removing node...');
           skip = true;
         } else {
@@ -651,10 +710,16 @@ class DitoElement extends HTMLElement {
     const skipTypes = {
       'function': true,
       'undefined': true,
+      'NaN': true,
     };
 
     observableKeys.forEach((key, i) => {
-      if (key[0] !== '$' && !skipTypes[typeof this.$[key]] && valuesBefore[i] !== res[i]) {
+      if (
+        key[0] !== '$'
+        && !skipTypes[typeof this.$[key]]
+        && !skipTypes[typeof res[i]]
+        && valuesBefore[i] !== res[i]
+      ) {
         this.$[key] = res[i];
       }
     });
