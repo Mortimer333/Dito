@@ -1,7 +1,7 @@
 <button type="button" @e:click="moreGreetings2()">MORE</button>
-<third-check @b:parentIter="iter">
+<third-check @b:parentIter="iter" @e:click="console.log('hello third')">
   <p @for="iter">
     {{ greetings }}
   </p>
-  <hello-world></hello-world>
+  <hello-world dito-pack="package1" @e:click="console.log('hello world')"></hello-world>
 </third-check>

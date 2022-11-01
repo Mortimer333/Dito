@@ -13,10 +13,10 @@
         url: 'http://jsmonkey.local/components/',
         localStorage: false
       });
-      container.register('hello-world', 7);
-      container.register('second-war', 4);
-      container.register('second-bind', 3);
-      container.register('third-check', 2);
+      container.register('hello-world', Math.random());
+      container.register('second-war', Math.random());
+      container.register('second-bind', Math.random());
+      container.register('third-check', Math.random());
       await container.load();
     </script>
   </body>

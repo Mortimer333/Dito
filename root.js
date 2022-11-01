@@ -1,9 +1,9 @@
 class DitoElement extends HTMLElement {
-  injectName = '$inject';
   keyName = "$key";
   valueName = "$value";
   eventName = "$event";
-  indexAttrName = 'jmi';
+  indexAttrName = 'dito-i';
+  packAttrName = 'dito-pack';
   key = null;
   value = null;
 
@@ -29,7 +29,7 @@ class DitoElement extends HTMLElement {
 
   /* EVENTS */
   prepare(){}            // Before constructor starts but after HTMLElement constructor
-  init(){}          // After constructor finishes
+  init(){}               // After constructor finishes
   beforeRender(){}       // Before render
   afterRender(result){}  // After render
 
@@ -167,7 +167,11 @@ class DitoElement extends HTMLElement {
         cssIndices: [],
         cssPath: null,
         rendered: false,
-        default: {}
+        injected: '',
+        injectedPacks: {},
+        default: {
+          injected: null,
+        }
       },
       writable: false
     });
@@ -295,7 +299,8 @@ class DitoElement extends HTMLElement {
               rendered.$[name.receiver] = this.$[name.provider];
             });
           }
-          rendered.innerHTML = rendered.$self.default[this.injectName];
+          rendered.innerHTML = rendered.$self.default.injected;
+          this.assignPacks(rendered);
           component.parentElement.insertBefore(rendered, component);
           component.remove();
         }.bind(this));
@@ -325,10 +330,11 @@ class DitoElement extends HTMLElement {
       this.resolveEvents(tmp);
       this.resolveAttrs(tmp);
       this.resolveExecutables(tmp);
+      this.resolveInjected(tmp);
 
       if (this.$self.children) {
         Object.values(this.$self.children).forEach(child => {
-          child.$self[this.injectName] = child.innerHTML;
+          child.$self.injected = Object.values(child.childNodes);
         });
       }
 
@@ -343,6 +349,33 @@ class DitoElement extends HTMLElement {
       this.afterRender({success: false, error: e});
       return false;
     }
+  }
+
+  resolveInjected(parent) {
+    parent.querySelectorAll('dito-inject').forEach(node => {
+      if (node.innerHTML.trim().length != 0) {
+        console.error('Inject tag is not empty, everything inside of him will be removed:', node.innerHTML.trim());
+      }
+      const packName = node.getAttribute(this.packAttrName);
+      if (packName) {
+        const pack = this.$self.injectedPacks[packName];
+        if (pack) {
+          node.parentElement.insertBefore(pack, node);
+        }
+      } else {
+        this.$self.injected.forEach(child => {
+          node.parentElement.insertBefore(child, node);
+        });
+      }
+      node.remove();
+    });
+  }
+
+  assignPacks(parent) {
+    parent.querySelectorAll('[' + this.packAttrName + ']').forEach(node => {
+      node.removeAttribute(this.packAttrName);
+      parent.$self.injectedPacks[node.getAttribute(this.packAttrName)] = node;
+    });
   }
 
   retrieveBindedValues() {
@@ -375,11 +408,12 @@ class DitoElement extends HTMLElement {
       if (!node.$self) {
         this.defineSelf(node);
       }
+      this.assignPacks(node);
       node.$self.parent = this;
       node.setAttribute(this.indexAttrName, i);
       node.$self.path = this.$self.path + '.' + node.localName + '@' + i;
       node.$self.cssPath = this.pathToCss(node.$self.path);
-      node.$self.default[this.injectName] = node.innerHTML;
+      node.$self.default.injected = node.innerHTML;
       this.$self.children[node.$self.path] = node;
     });
   }
@@ -394,7 +428,6 @@ class DitoElement extends HTMLElement {
     let promises = [];
     parent.querySelectorAll(keys.join(',')).forEach((node, i) => {
       if (!window.__jmonkey.registered[node.localName]) {
-        console.log(notDownloaded, node.localName, notDownloaded[node.localName]);
         const component = notDownloaded[node.localName];
         promises.push(
           ...window.__jmonkey.main.createRegisterPromise(component.path, component.name, component.version)
@@ -455,6 +488,7 @@ class DitoElement extends HTMLElement {
 
   setBind(bind, node) {
     node.$[bind.name] = this.$[bind.value];
+    node.clearRenderQueue(); // Preventing rerendering template
     node.$binded[bind.name] = this;
     const item = {receiver: bind.name, provider: bind.value};
     const binded = this.$binder.get(node);
@@ -759,7 +793,6 @@ class DitoElement extends HTMLElement {
     return [
       ...Object.keys(this.methods),
       ...Object.keys(this.$),
-      this.injectName,
       this.keyName,
       this.valueName,
     ];
@@ -783,7 +816,6 @@ class DitoElement extends HTMLElement {
     return [
       ...Object.values(this.methods),
       ...Object.values(this.$),
-      this.$self[this.injectName],
       key,
       value,
     ];

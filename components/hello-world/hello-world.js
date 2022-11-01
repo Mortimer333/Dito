@@ -3,7 +3,6 @@ import { DitoElement } from '../../root.js';
 class HelloWorld extends DitoElement {
 
   init() {
-    console.log("hello");
     this.$.password = '';
     this.$.className = 'class test';
     this.$css.color = 'violet';
