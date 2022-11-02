@@ -22,10 +22,10 @@ Test:
   - native
   - custom
 - Registering
-  - tags present on site are downloaded
+  - [DONE] tags present on site are downloaded
   - tags from downloaded content are also being imported
-  - localStorage on/off
-  - force
+  - [DONE] localStorage on/off
+  - [DONE] force
   - nested
 - Dynamic CSS
   - executables (two same components different styles)

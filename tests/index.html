@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>Joint test</title>
+  </head>
+  <body>
+    <test-empty></test-empty>
+    <test-empty-4></test-empty-4>
+    <script type="text/javascript">
+      localStorage.clear();
+    </script>
+    <script type="module">
+      import { DitoElement } from "../../root.js";
+      import { Dito } from "../../main.js";
+      const tests = {};
+      const success = 'SUCCESS';
+      const failure = 'FAILURE';
+      const container = new Dito({
+        url: 'http://dito.local/tests/components/',
+        callback: function () {
+
+        }
+      });
+      container.register('test-empty', Math.random());
+      container.register('test-empty-2', Math.random());
+      container.register('test-empty-3', Math.random());
+      container.register('test-empty-4', Math.random());
+      container.register('test-empty-5', Math.random());
+      await container.load();
+      console.log("All downloaded");
+
+    </script>
+  </body>
+</html>

@@ -47,6 +47,8 @@ You can pass into the instance few settings to customize the behaviour of the li
   - Default: `<empty object>`
 - **[Optional] localStorage** - should your components be saved into `localStorage` for later use or retrieved each time user requests your site from server
   - Default: `true`
+- **[Optional] callback** - function which will be fired when all components are downloaded and rendered
+- **[Optional] arguments** - arguments to pass into callback function
 
 ## Register component
 
@@ -374,7 +376,7 @@ Bio:
 ```
 
 ## Containers
-To aviod unnecessary HTML nesting, library presents element which will remove itself by comitting something similar to node suicide by removing all his internal elements and removing itself. It's called "dit`-kamikaze`:
+To aviod unnecessary HTML nesting, library presents element which will remove itself by comitting something similar to node suicide by removing all his internal elements and removing itself. It's called `dito-kamikaze`:
 ```html
 <dito-kamikaze @for="['First', 'Second']">
   <h1>#{{ $key + 1 }}</h1>

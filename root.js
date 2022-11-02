@@ -39,6 +39,7 @@ class DitoElement extends HTMLElement {
     }
 
     if (!this.$self.rendered) {
+      delete window.__dito.main.downloadCheck[this.localName];
       this.$self.rendered = true;
       this.init();
     }
@@ -303,6 +304,7 @@ class DitoElement extends HTMLElement {
       }
 
       this.afterRender({success: true});
+      window.__dito.main.allDownloaded();
       return true;
     } catch (e) {
       console.error('There was an error during rendering', e);
@@ -505,14 +507,16 @@ class DitoElement extends HTMLElement {
         promises.push(
           ...window.__dito.main.createRegisterPromise(component.path, component.name, component.version)
         );
-        delete notDownloaded[node.localName];
       }
     });
 
     if (promises.length > 0) {
       (async function() {
         await window.__dito.main.load(promises);
+        delete notDownloaded[this.localName];
       }).bind(this)()
+    } else {
+      delete notDownloaded[this.localName];
     }
   }
 

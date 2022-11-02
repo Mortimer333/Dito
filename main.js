@@ -7,9 +7,11 @@ class Dito {
   components = {};
   registered = [];
   notDownloaded = {};
+  downloadCheck = {};
   _SKIP = '_skip';
   styleNode;
   kamikazeTagName = 'dito-kamikaze';
+  downloadFinished = false;
 
   constructor(settings = {}) {
     if (this.detectCSPRestriction()) {
@@ -27,6 +29,8 @@ class Dito {
 
     this.headers = settings.headers || this.headers;
     this.params = settings.params || this.params;
+    this.callback = settings.callback || (() => {});
+    this.arguments = settings.arguments || [];
     this.localStorage = typeof settings.localStorage != 'undefined' ? settings.localStorage : this.localStorage;
     this.styleNode = document.createElement('style');
     document.head.appendChild(this.styleNode);
@@ -40,6 +44,14 @@ class Dito {
     });
 
     this.defineKamikaze();
+  }
+
+  allDownloaded() {
+    if (this.downloadFinished || Object.values(window.__dito.main.downloadCheck).length > 0) {
+      return;
+    }
+    this.downloadFinished = true;
+    this.callback(...this.arguments);
   }
 
   defineKamikaze() {
@@ -80,6 +92,8 @@ class Dito {
         skip = true;
       }
     }
+
+    this.downloadCheck[name] = true;
 
     path = this.url + path + name + '/' + name + '.';
     const js = import(path + 'js?v=' + version + this.getQuery());
@@ -188,7 +202,7 @@ class Dito {
           });
           js.prototype.__dito.html = html;
           js.prototype.__dito.css = css;
-          this.components[component] = {name: component, js, html, css, cssInjected: false, _cssSkipped: cssSkipped };
+          this.components[component] = {name: component, js, html, css};
           i += skipSize;
           delete this.notDownloaded[component];
 
