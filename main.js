@@ -288,7 +288,12 @@ class Dito {
   }
 
   fetch(url) {
-    return fetch(url + this.getQuery(), {
+    let query = this.getQuery();
+    if (url.indexOf('?') === -1) {
+      url += '?';
+      query = query.substr(1);
+    }
+    return fetch(url + query, {
       method: 'GET',
       headers: this.headers,
     });

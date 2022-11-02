@@ -8,7 +8,9 @@
     <test-empty></test-empty>
     <test-empty-4></test-empty-4>
     <script type="text/javascript">
-      localStorage.clear();
+      if (new URLSearchParams(window.location.search).get('integration')) {
+        window.location.href = window.location.origin + '/tests/integration';
+      }
     </script>
     <script type="module">
       import { DitoElement } from "../../root.js";

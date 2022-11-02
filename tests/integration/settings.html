@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>Test</title>
+  </head>
+  <body>
+    <test-empty></test-empty>
+    <script type="module">
+      import * as TH from "../test.js";
+
+      const container = TH.getContainer({
+        params: {dito: 'dito', test: 'test', test2: 'test2'},
+        headers: {'CUSTOM-DITO': 'dito', 'HEADER-TEST': 'test'},
+        arguments: [1, 2],
+        callback: (arg, arg2) => {
+          TH.tests['Callback and arguments in callback are working'] =
+            (arg === 1 && arg2 === 2) ? TH.success : TH.failure;
+          TH.validateTestAndMoveToNext();
+        }
+      });
+      let headersSuccess = false;
+      let response = await container.fetch(TH.URL + 'tests/integration/callbacks/properheadersandquery.php');
+      if (response.ok) {
+        response = await response.text();
+        try {
+          response = JSON.parse(response);
+          if (response.success) {
+            headersSuccess = true;
+          }
+        } catch(e){
+          console.error(e, response);
+        }
+      }
+      TH.tests['Proper header and query is sent'] = headersSuccess ? TH.success : TH.failure;
+      container.register('test-empty', Math.random());
+      await container.load();
+
+    </script>
+  </body>
+</html>

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>Joint test</title>
+  </head>
+  <body>
+    <test-empty></test-empty>
+    <test-empty-2></test-empty-2>
+    <script type="module">
+      import * as TH from "../test.js";
+
+      const container = TH.getContainer();
+      container.register('test-empty', 1);
+      await container.load();
+      TH.tests['Empty saved in localStorage'] = localStorage.getItem('test-empty') ? TH.success : TH.failure;
+
+      container.localStorage = false;
+      container.register('test-empty-2', 1);
+      await container.load();
+      TH.tests['Empty 2 is not saved in localStorage'] = localStorage.getItem('test-empty-2') ? TH.failure : TH.success;
+
+      container.localStorage = true;
+      container.register('test-empty-3', 1, '', true);
+      await container.load();
+      TH.tests['Empty 3 saved in localStorage with force'] = localStorage.getItem('test-empty-3') ? TH.success : TH.failure;
+
+      TH.validateTestAndMoveToNext();
+    </script>
+  </body>
+</html>

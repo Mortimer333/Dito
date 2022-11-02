@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>Joint test</title>
+  </head>
+  <body>
+    <test-empty></test-empty>
+    <test-empty-4></test-empty-4>
+    <script type="module">
+      import * as TH from "../test.js";
+
+      const container = TH.getContainer();
+      container.callback = function () {
+        const custom = document.body.querySelectorAll(
+          'test-empty, test-empty-2, test-empty-3, test-empty-4, test-empty-5'
+        );
+        TH.tests['All components were downloaded before calling callback'] =
+          custom.length == 5 ? TH.success : TH.failure;
+
+        TH.validateTestAndMoveToNext();
+      };
+      container.register('test-empty', Math.random());
+      container.register('test-empty-2', Math.random());
+      container.register('test-empty-3', Math.random());
+      container.register('test-empty-4', Math.random());
+      container.register('test-empty-5', Math.random());
+      await container.load();
+    </script>
+  </body>
+</html>

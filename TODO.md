@@ -1,14 +1,14 @@
 Test:
-- Main instance
-  - url
-  - params
-  - headers
-- Input
-  - injected input
-  - native (error expected)
-- Outputs
-  - injected output
-  - native (error expected)
+- [DONE] Main instance
+  - [DONE] url
+  - [DONE] params
+  - [DONE] headers
+- [DONE] Input
+  - [DONE] injected input
+  - [DONE] native (error expected)
+- [DONE] Outputs
+  - [DONE] injected output
+  - [DONE] native (error expected)
 - Binds
   - native
   - ladder binding (one <-> two <-> three)

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>All is well that end well</title>
+    <style media="screen">
+      body {
+        background-color: black;
+        background-image: radial-gradient(
+          rgba(0, 150, 0, 0.75), black 120%
+        );
+        display:flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        color: white;
+        font: 1.3rem Inconsolata, monospace;
+        text-shadow: 0 0 5px #C8C8C8;
+      }
+
+      body::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.15) 1px, transparent 1px, transparent 2px);
+      }
+
+      .hero {
+        text-transform: uppercase;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="hero">
+      <h1>Integration tests were successful_</h1>
+    </div>
+    <script type="module">
+      import * as TH from "../test.js";
+      TH.clearOrder();
+    </script>
+  </body>
+</html>
