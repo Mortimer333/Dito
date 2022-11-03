@@ -106,6 +106,8 @@ class Dito {
       throw new Error('Custom elements name must contain hyphen (-)');
     }
 
+    window.__dito.registered[name] = true;
+
     // If it's not force and there is currently no instance of this component on site - don't retrieve it
     if (!force && !document.querySelector(name)) {
       this.notDownloaded[name] = { name, version, path };
@@ -130,7 +132,6 @@ class Dito {
     const js = import(path + 'js?v=' + version + this.getQuery());
     const html = skip ? Promise.resolve(this._SKIP) : this.fetch(path + 'html?v=' + version);
     const css = skip ? Promise.resolve(this._SKIP) : this.fetch(path + 'css?v=' + version);
-    window.__dito.registered[name] = true;
     return [
       Promise.resolve(name + '_' + version),
       html.catch((error) => error),

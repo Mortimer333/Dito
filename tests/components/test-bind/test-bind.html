@@ -1,10 +1,10 @@
 <p>
   Bind {{ bind }}
 </p>
-<test-bound @b:bound="bind"></test-bound>
+<test-bound @for='iter'></test-bound>
 <div class="">
   <p>
-    <input type="text" name="" value="">
+    <input type="text" name="" @b:value="iter">
   </p>
   <p>
     <input type="text" @b:value="bind" @b:class="bind" id="div-test">

@@ -3,6 +3,7 @@ class DitoElement extends HTMLElement {
   valueName = "$value";
   eventName = "$event";
   indexAttrName = 'dito-i';
+  indexForAttrName = 'dito-for-i';
   packAttrName = 'dito-pack';
   key = null;
   value = null;
@@ -235,8 +236,12 @@ class DitoElement extends HTMLElement {
     let cssRule = '';
 
     path.split('.').forEach(link => {
-      const [name, index] = link.split('@');
-      cssRule += name + '[' + this.indexAttrName + '="' + index + '"' + ']' + ' ';
+      const [name, index, forIndex] = link.split('@');
+      cssRule += name + '[' + this.indexAttrName + '="' + index + '"' + ']';
+      if (forIndex) {
+        cssRule += '[' + this.indexForAttrName + '="' + forIndex + '"' + ']';
+      }
+      cssRule += ' ';
     });
     return cssRule.trim();
   }
@@ -277,9 +282,9 @@ class DitoElement extends HTMLElement {
         this.compile();
       }
 
-      this.innerHTML = this.innerHTML;
       const tmp = document.createElement('div');
       tmp.innerHTML = this.__dito.html;
+      this.renderFors(tmp); // For must be resolved first
       let firstRender = false;
       if (!this.$self.children) {
         firstRender = true;
@@ -291,9 +296,9 @@ class DitoElement extends HTMLElement {
       } else {
         this.injectCustomElements(tmp);
         this.resolveNativeBinds(tmp);
+        this.removeNotAssignedChildren(tmp);
       }
 
-      this.renderFors(tmp); // For must be resolved first
       Object.values(this.$self.children).forEach(child => {
         this.assignPacks(child);
       });
@@ -312,14 +317,9 @@ class DitoElement extends HTMLElement {
         }
       });
 
-      let injected = 0;
+      this.innerHTML = '';
       while (tmp.childNodes.length > 0) {
-        if (this.childNodes[injected]) {
-          this.replaceChild(tmp.childNodes[0], this.childNodes[injected]);
-        } else {
-          this.appendChild(tmp.childNodes[0]);
-        }
-        injected++;
+        this.appendChild(tmp.childNodes[0]);
       }
 
       Object.values(this.$self.children || {}).forEach(child => {
@@ -338,6 +338,16 @@ class DitoElement extends HTMLElement {
       console.error('There was an error during rendering', e);
       this.afterRender({success: false, error: e});
       return false;
+    }
+  }
+
+  removeNotAssignedChildren(parent) {
+    const keys = Object.keys(this.$self.children);
+    for (var i = 0; i < keys.length; i++) {
+      const path = keys[i];
+      if (!parent.contains(this.$self.children[path])) {
+        delete this.$self.children[path];
+      }
     }
   }
 
@@ -362,7 +372,8 @@ class DitoElement extends HTMLElement {
 
       let replace = null;
       similar.forEach(alias => {
-        const item = native[alias][i];
+
+        const item = native[alias];
         item.node.setAttribute(item.name, this.$[item.value]);
         replace = item.node;
       });
@@ -385,8 +396,7 @@ class DitoElement extends HTMLElement {
         return;
       }
 
-      const index = reverse ? components.length - i - 1 : i;
-      const rendered = this.$self.children[this.$self.path + '.' + component.localName + '@' + index];
+      const rendered = this.$self.children[this.getPath(component, false)];
       if (!rendered) {
         return;
       }
@@ -412,13 +422,15 @@ class DitoElement extends HTMLElement {
           rendered.$[name.receiver] = this.$[name.provider];
         });
       }
+      if (component == rendered) {
+        return;
+      }
       rendered.innerHTML = '';
       while (component.childNodes.length > 0) {
         rendered.appendChild(component.childNodes[0]);
       }
 
-      component.parentElement.insertBefore(rendered, component);
-      component.remove();
+      component.parentElement.replaceChild(rendered, component);
     }, true);
   }
 
@@ -517,13 +529,26 @@ class DitoElement extends HTMLElement {
     node.$[input.name] = this.getExecuteable(input.value)(...this.getObservablesValues());
   }
 
+  getPath(node, setAttr = true) {
+    let forIndex = '';
+    if (node.attributes[this.indexForAttrName]) {
+      forIndex = '@' + node.attributes[this.indexForAttrName].value;
+    }
+    const index = Array.prototype.indexOf.call(node.parentElement.children, node);
+    if (setAttr) {
+      node.setAttribute(this.indexAttrName, index);
+    }
+    if (node === this) {
+      return node.localName + '@' + index + forIndex;
+    }
+    return this.$self.path + '.' + node.localName + '@' + index + forIndex;
+  }
+
   assignChildren(tmp) {
     this.$self.children = {};
     this.$self.nativeChildren = {};
     if (!this.$self.path) {
-      const index = Array.prototype.indexOf.call(this.parentElement.children, this);
-      this.setAttribute(this.indexAttrName, index);
-      this.$self.path = this.localName + '@' + index;
+      this.$self.path = this.getPath(this);
       this.$self.cssPath = this.pathToCss(this.$self.path);
     }
     tmp.querySelectorAll(Object.keys(window.__dito.registered).join(',')).forEach((node, i) => {
@@ -531,8 +556,7 @@ class DitoElement extends HTMLElement {
         this.defineSelf(node);
       }
       node.$self.parent = this;
-      node.setAttribute(this.indexAttrName, i);
-      node.$self.path = this.$self.path + '.' + node.localName + '@' + i;
+      node.$self.path = this.getPath(node);
       node.$self.cssPath = this.pathToCss(node.$self.path);
       node.$self.default.injected = node.innerHTML;
       this.$self.children[node.$self.path] = node;
@@ -548,8 +572,9 @@ class DitoElement extends HTMLElement {
 
     let promises = [];
     parent.querySelectorAll(keys.join(',')).forEach((node, i) => {
-      if (!window.__dito.registered[node.localName]) {
+      if (notDownloaded[node.localName]) {
         const component = notDownloaded[node.localName];
+        delete notDownloaded[node.localName];
         promises.push(
           ...window.__dito.main.createRegisterPromise(component.path, component.name, component.version)
         );
@@ -559,10 +584,7 @@ class DitoElement extends HTMLElement {
     if (promises.length > 0) {
       (async function() {
         await window.__dito.main.load(promises);
-        delete notDownloaded[this.localName];
       }).bind(this)()
-    } else {
-      delete notDownloaded[this.localName];
     }
   }
 
@@ -616,10 +638,7 @@ class DitoElement extends HTMLElement {
               }
             }.bind(this))
             const native = this.$self.nativeChildren;
-            if (!native[alias]) {
-              native[alias] = {};
-            }
-            native[alias][Object.keys(native[alias]).length] = {
+            native[alias] = {
               node,
               name: item.name,
               value: item.value
@@ -697,12 +716,36 @@ class DitoElement extends HTMLElement {
         for (var i = 0; i < keys.length; i++) {
           this.key = keys[i];
           this.value = values[i];
-          const clone = node.cloneNode(true);
+          const clone = current.cloneNode(true);
           this.resolveRepeatable(clone);
-          node.parentElement.insertBefore(clone, current.nextSibling);
+          current.parentElement.insertBefore(clone, current.nextSibling);
+          if (i == 0) {
+            node.remove();
+          }
           current = clone;
+          if (window.__dito.registered[current.localName]) {
+            current.setAttribute(this.indexForAttrName, i);
+            const path = this.getPath(current);
+            if (this.$self?.children && !this.$self?.children[path]) {
+              if (current.$self?.default?.injected) {
+                current.$self.default.injected = current.innerHTML;
+              }
+              this.$self.children[path] = current;
+              current.init();
+            }
+          }
+          current.querySelectorAll(Object.keys(window.__dito.registered).join(',')).forEach(nodeIter => {
+            nodeIter.setAttribute(this.indexForAttrName, i);
+            const path = this.getPath(nodeIter);
+            if (this.$self?.children && !this.$self.children[path]) {
+              if (!nodeIter.$self?.default?.injected) {
+                nodeIter.$self.default.injected = nodeIter.innerHTML;
+              }
+              this.$self.children[path] = nodeIter;
+              nodeIter.init();
+            }
+          });
         }
-        node.remove();
       },
       (alias, obj) => {
         let res = this.getExecuteable(obj[alias])(...this.getObservablesValues());
