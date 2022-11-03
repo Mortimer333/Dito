@@ -9,6 +9,7 @@ Test:
 - [DONE] Outputs
   - [DONE] injected output
   - [DONE] native (error expected)
+- Focus
 - Binds
   - native
   - ladder binding (one <-> two <-> three)
@@ -23,7 +24,7 @@ Test:
   - custom
 - Registering
   - [DONE] tags present on site are downloaded
-  - tags from downloaded content are also being imported
+  - [DONE] tags from downloaded content are also being imported
   - [DONE] localStorage on/off
   - [DONE] force
   - nested

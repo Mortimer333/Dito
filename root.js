@@ -249,8 +249,16 @@ class DitoElement extends HTMLElement {
     return css;
   }
 
-  render() {
-    if (this.$self.renderInProgress || !document.body.contains(this)) {
+  createQueryUp(element, parent) {
+    if (element == parent) {
+      return '';
+    }
+    const index = Array.prototype.indexOf.call(element.parentElement.children, element) + 1;
+    return this.createQueryUp(element.parentElement, parent) + ' ' + element.localName + ':nth-child(' + index + ')';
+  }
+
+  render(force = false) {
+    if (!force && (this.$self.renderInProgress || !document.body.contains(this))) {
       return;
     }
 
@@ -261,11 +269,15 @@ class DitoElement extends HTMLElement {
 
     this.beforeRender();
     try {
+      let activeQuery = false;
+      if (this.contains(document.activeElement)) {
+        activeQuery = this.createQueryUp(document.activeElement, this);
+      }
       if (!this.__dito.compiledHTML) {
         this.compile();
       }
 
-      this.innerHTML = '';
+      this.innerHTML = this.innerHTML;
       const tmp = document.createElement('div');
       tmp.innerHTML = this.__dito.html;
       let firstRender = false;
@@ -278,7 +290,7 @@ class DitoElement extends HTMLElement {
         this.assignChildren(tmp);
       } else {
         this.injectCustomElements(tmp);
-        this.injectNativeElements(tmp);
+        this.resolveNativeBinds(tmp);
       }
 
       this.renderFors(tmp); // For must be resolved first
@@ -293,16 +305,32 @@ class DitoElement extends HTMLElement {
       }
       this.resolveRepeatable(tmp);
 
-      if (this.$self.children) {
-        Object.values(this.$self.children).forEach(child => {
-          child.$self.injected = Object.values(child.childNodes);
-        });
-      }
+      Object.values(this.$self.children || {}).forEach(child => {
+        child.$self.injected = Object.values(child.childNodes);
+        if (child.render) {
+          child.render(true);
+        }
+      });
 
+      let injected = 0;
       while (tmp.childNodes.length > 0) {
-        this.appendChild(tmp.childNodes[0]);
+        if (this.childNodes[injected]) {
+          this.replaceChild(tmp.childNodes[0], this.childNodes[injected]);
+        } else {
+          this.appendChild(tmp.childNodes[0]);
+        }
+        injected++;
       }
 
+      Object.values(this.$self.children || {}).forEach(child => {
+        if (child.clearRenderQueue) {
+          child.clearRenderQueue();
+        }
+      });
+
+      if (activeQuery) {
+        this.querySelector(activeQuery)?.focus();
+      }
       this.afterRender({success: true});
       window.__dito.main.allDownloaded();
       return true;
@@ -313,20 +341,37 @@ class DitoElement extends HTMLElement {
     }
   }
 
-  injectNativeElements(node) {
-    const cached = {};
-    Object.keys(this.$self.nativeChildren).forEach(alias => {
-      node.querySelectorAll('[' + alias + ']').forEach((node, i) => {
-        const item = this.$self.nativeChildren[alias][i];
-        if (!item) {
-          console.error("Couldn't find native child for `" + alias + "` at index: `" + i + "`");
-        } else {
-          item.node[item.name] = this.$[item.value];
-          node.parentElement.insertBefore(item.node, node);
-          node.remove();
+  resolveNativeBinds(parent) {
+    const nodesIter = [];
+    const native = this.$self.nativeChildren;
+    const keys = Object.keys(native);
+    if (keys == 0) {
+      return;
+    }
+    const toRemove = new WeakMap();
+    const nodes = parent.querySelectorAll('[' + keys.join('], [') + ']');
+
+    for (let i = nodes.length - 1; i >= 0 ; i--) {
+      const node = nodes[i];
+      const similar = [];
+      node.getAttributeNames().forEach(name => {
+        if (native[name]) {
+          similar.push(name);
         }
       });
-    });
+
+      let replace = null;
+      similar.forEach(alias => {
+        const item = native[alias][i];
+        item.node.setAttribute(item.name, this.$[item.value]);
+        replace = item.node;
+      });
+
+      if (replace) {
+        node.parentElement.insertBefore(replace, node);
+        node.remove();
+      }
+    }
   }
 
   iterateOverRegistrated(node, callableAction, reverse = false) {
@@ -440,6 +485,7 @@ class DitoElement extends HTMLElement {
 
   setBind(bind, node) {
     node.$[bind.name] = this.$[bind.value];
+    node.clearRenderQueue();
     node.$binded[bind.name] = this;
     const item = {receiver: bind.name, provider: bind.value};
     const binded = this.$binder.get(node);
@@ -520,6 +566,15 @@ class DitoElement extends HTMLElement {
     }
   }
 
+  setNativeDitoAttribute(node) {
+    Object.defineProperty(node, "__dito", {
+      value: {
+        binds: {}
+      },
+      writable: false
+    });
+  }
+
   resolveBinds(parent) {
     this.resolve(
       parent,
@@ -532,9 +587,33 @@ class DitoElement extends HTMLElement {
           if (window.__dito.registered[node.localName]) {
             this.$self.toBind.push({bind: item, node});
           } else if (typeof node[item.name] != undefined) {
-            node[item.name] = this.$[item.value];
+            node.setAttribute(item.name, this.$[item.value]);
+            if (!node.__dito) {
+              this.setNativeDitoAttribute(node);
+            }
+
+            node.__dito.binds[item.name] = {
+              provider: {
+                target: this,
+                name: item.value
+              },
+              receiver: {
+                target: node,
+                name: item.name
+              }
+            };
+            // Mutation for attributes like class (outside) and change for like value (inside)
+            this.setMutationObserver(node);
             node.addEventListener("change", function (e) {
-              this.$[item.value] = node[item.name];
+              if (this.$[item.value] === node[item.name]) {
+                return;
+              }
+
+              if (typeof node[item.name] != 'undefined') {
+                this.$[item.value] = node[item.name];
+              } else if (typeof node.getAttribute(item.name) != 'undefined') {
+                // this.$[item.value] = node[item.name];
+              }
             }.bind(this))
             const native = this.$self.nativeChildren;
             if (!native[alias]) {
@@ -897,6 +976,10 @@ class DitoElement extends HTMLElement {
       ...Object.values(this.methods),
       ...Object.values(this.$css)
     ];
+  }
+
+  setMutationObserver(node) {
+    window.__dito.mutationObserve(node);
   }
 
   debounce (func, timeout = 10) {

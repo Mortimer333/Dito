@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>Test</title>
+  </head>
+  <body>
+    <test-bind></test-bind>
+    <script type="module">
+      import * as TH from "../test.js";
+
+      const container = TH.getContainer({
+        callback: () => {
+          const bind = document.body.querySelector('test-bind');
+          const bound = bind.querySelector('test-bound');
+          const div = bind.querySelector('#div-test');
+          TH.tests['Bound custom element'] =
+            typeof bound.$?.bound != 'undefined'
+            && bind.$?.bind === bound.$?.bound
+              ? TH.success : TH.failure;
+          TH.tests['Bound native element'] = div.className == bind.$?.bind ? TH.success : TH.failure;
+          div.className = 'test change';
+          setTimeout(function() {
+            TH.tests['Change on native element'] = div.className == bind.$?.bind ? TH.success : TH.failure;
+            TH.tests['Change from native to custom bound'] = div.className == bound.$?.bound ? TH.success : TH.failure;
+            // TH.validateTestAndMoveToNext();
+          }, 100)
+        }
+      });
+      container.register('test-bind', Math.random());
+      container.register('test-bound', Math.random(), 'test-bind/');
+      await container.load();
+    </script>
+  </body>
+</html>

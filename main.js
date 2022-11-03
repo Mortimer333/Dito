@@ -44,6 +44,37 @@ class Dito {
     });
 
     this.defineKamikaze();
+    this.defineMutationObserver();
+  }
+
+  defineMutationObserver() {
+
+    // Callback function to execute when mutations are observed
+    const callback = (mutationList, observer) => {
+      for (const mutation of mutationList) {
+        if (mutation.type === 'attributes') {
+          if (
+            !mutation?.target?.__dito?.binds
+            || !mutation.target.__dito.binds[mutation.attributeName]
+          ) {
+            return;
+          }
+          const receiver = mutation.target.__dito.binds[mutation.attributeName].receiver;
+          const provider = mutation.target.__dito.binds[mutation.attributeName].provider;
+          if (mutation.target.getAttribute(receiver.name) === provider.target.$[provider.name]) {
+            return;
+          }
+          provider.target.$[provider.name] = mutation.target.getAttribute(receiver.name);
+        }
+      }
+    };
+
+    const mutationObserve = new MutationObserver(callback);
+
+    const config = { attributes: true };
+    window.__dito.mutationObserve = node => {
+      mutationObserve.observe(node, config)
+    }
   }
 
   allDownloaded() {
