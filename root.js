@@ -289,8 +289,7 @@ class DitoElement extends HTMLElement {
       if (!this.$self.children) {
         firstRender = true;
         this.cssRender();
-        this.retrieveBindedValues();
-        this.retrieveInputs();
+        this.retrieveAssigned();
         this.searchForNotDownloaded(tmp);
         this.assignChildren(tmp);
       } else {
@@ -303,10 +302,8 @@ class DitoElement extends HTMLElement {
         this.assignPacks(child);
       });
 
+      this.resolveUnique(tmp);
       if (firstRender) {
-        this.resolveInputs(tmp);
-        this.resolveOutputs(tmp);
-        this.resolveBinds(tmp);
       }
       this.resolveRepeatable(tmp);
 
@@ -339,6 +336,17 @@ class DitoElement extends HTMLElement {
       this.afterRender({success: false, error: e});
       return false;
     }
+  }
+
+  retrieveAssigned() {
+    this.retrieveBindedValues();
+    this.retrieveInputs();
+  }
+
+  resolveUnique(parent) {
+    this.resolveInputs(parent);
+    this.resolveOutputs(parent);
+    this.resolveBinds(parent);
   }
 
   removeNotAssignedChildren(parent) {
@@ -552,15 +560,19 @@ class DitoElement extends HTMLElement {
       this.$self.cssPath = this.pathToCss(this.$self.path);
     }
     tmp.querySelectorAll(Object.keys(window.__dito.registered).join(',')).forEach((node, i) => {
-      if (!node.$self) {
-        this.defineSelf(node);
-      }
-      node.$self.parent = this;
-      node.$self.path = this.getPath(node);
-      node.$self.cssPath = this.pathToCss(node.$self.path);
-      node.$self.default.injected = node.innerHTML;
-      this.$self.children[node.$self.path] = node;
+      this.defineChild(node);
     });
+  }
+
+  defineChild(node) {
+    if (!node.$self) {
+      this.defineSelf(node);
+    }
+    node.$self.parent = this;
+    node.$self.path = this.getPath(node);
+    node.$self.cssPath = this.pathToCss(node.$self.path);
+    node.$self.default.injected = node.innerHTML;
+    this.$self.children[node.$self.path] = node;
   }
 
   searchForNotDownloaded(parent) {
@@ -724,26 +736,10 @@ class DitoElement extends HTMLElement {
           }
           current = clone;
           if (window.__dito.registered[current.localName]) {
-            current.setAttribute(this.indexForAttrName, i);
-            const path = this.getPath(current);
-            if (this.$self?.children && !this.$self?.children[path]) {
-              if (current.$self?.default?.injected) {
-                current.$self.default.injected = current.innerHTML;
-              }
-              this.$self.children[path] = current;
-              current.init();
-            }
+            this.setNewCustomElement(current, i);
           }
           current.querySelectorAll(Object.keys(window.__dito.registered).join(',')).forEach(nodeIter => {
-            nodeIter.setAttribute(this.indexForAttrName, i);
-            const path = this.getPath(nodeIter);
-            if (this.$self?.children && !this.$self.children[path]) {
-              if (!nodeIter.$self?.default?.injected) {
-                nodeIter.$self.default.injected = nodeIter.innerHTML;
-              }
-              this.$self.children[path] = nodeIter;
-              nodeIter.init();
-            }
+            this.setNewCustomElement(nodeIter, i);
           });
         }
       },
@@ -773,6 +769,19 @@ class DitoElement extends HTMLElement {
     );
     this.key = null;
     this.value = null;
+  }
+
+  setNewCustomElement(node, i) {
+    node.setAttribute(this.indexForAttrName, i);
+    const path = this.getPath(node);
+    if (this.$self?.children && !this.$self?.children[path]) {
+      node.$self.parent = this;
+      if (typeof node.$self?.default?.injected != 'undefined') {
+        node.$self.default.injected = node.innerHTML;
+      }
+      this.$self.children[path] = node;
+      node.init();
+    }
   }
 
   resolveIfs(parent) {
