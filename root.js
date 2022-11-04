@@ -161,10 +161,14 @@ class DitoElement extends HTMLElement {
         cssIndices: [],
         cssPath: null,
         rendered: false,
-        injected: '',
+        injected: [],
         injectedPacks: {},
         default: {
           injected: null,
+        },
+        for: {
+          key: null,
+          value: null
         }
       },
       writable: false
@@ -534,7 +538,11 @@ class DitoElement extends HTMLElement {
   }
 
   setInput(input, node) {
+    this.value = node.$self.for.value;
+    this.key = node.$self.for.key;
     node.$[input.name] = this.getExecuteable(input.value)(...this.getObservablesValues());
+    this.value = null;
+    this.key = null;
   }
 
   getPath(node, setAttr = true) {
@@ -684,12 +692,16 @@ class DitoElement extends HTMLElement {
         const observableKeys = this.getObservablesKeys();
         const valuesBefore = this.getObservablesValues();
         try {
+          this.value = this.$self.for.value;
+          this.key = this.$self.for.key;
           const res = this.getFunction(item.value, [this.eventName]).bind(this)(e, ...valuesBefore);
           this.updatedChangedValues(res, observableKeys, valuesBefore);
+          this.value = null;
+          this.key = null;
         } catch (e) {
           console.error("Error on output", e);
         }
-      }.bind(this);
+      }.bind(node);
     });
   }
 
@@ -725,11 +737,14 @@ class DitoElement extends HTMLElement {
 
         node.removeAttribute(alias);
         let current = node;
+        const tmpParent = document.createElement('div');
         for (var i = 0; i < keys.length; i++) {
           this.key = keys[i];
           this.value = values[i];
-          const clone = current.cloneNode(true);
-          this.resolveRepeatable(clone);
+          const clone = node.cloneNode(true);
+          tmpParent.appendChild(clone);
+          this.resolveRepeatable(tmpParent);
+
           current.parentElement.insertBefore(clone, current.nextSibling);
           if (i == 0) {
             node.remove();
@@ -766,6 +781,7 @@ class DitoElement extends HTMLElement {
 
         return [skip, keys, values];
       },
+      null,
     );
     this.key = null;
     this.value = null;
@@ -774,11 +790,17 @@ class DitoElement extends HTMLElement {
   setNewCustomElement(node, i) {
     node.setAttribute(this.indexForAttrName, i);
     const path = this.getPath(node);
-    if (this.$self?.children && !this.$self?.children[path]) {
-      node.$self.parent = this;
-      if (typeof node.$self?.default?.injected != 'undefined') {
-        node.$self.default.injected = node.innerHTML;
-      }
+    if (!node.$self) {
+      this.defineSelf(node);
+    }
+    node.$self.for.key = this.key;
+    node.$self.for.value = this.value;
+    node.$self.parent = this;
+    if (typeof node.$self?.default?.injected != 'undefined') {
+      node.$self.default.injected = node.innerHTML;
+    }
+
+    if (this.$self?.children && !this.$self.children[path]) {
       this.$self.children[path] = node;
       node.init();
     }
@@ -815,13 +837,13 @@ class DitoElement extends HTMLElement {
     });
   }
 
-  resolve(parent, attr, mainCallback, beforeCallback = null, afterCallback = null) {
+  resolve(parent, attr, mainCallback, beforeCallback = null, afterCallback = null, reverse = false) {
     const obj = this.__dito[attr];
-    for (var alias in obj) {
-      if (!obj.hasOwnProperty(alias)) {
-        continue;
-      }
-
+    let keys = Object.keys(obj);
+    if (reverse) {
+      keys = keys.reverse();
+    }
+    keys.forEach(alias => {
       const item = obj[alias];
       const args = beforeCallback ? beforeCallback.bind(this)(alias, obj, item) : [];
       parent.querySelectorAll('[' + alias + ']').forEach(node => {
@@ -829,7 +851,7 @@ class DitoElement extends HTMLElement {
         node.removeAttribute(alias);
       });
       afterCallback ? afterCallback.bind(this)(alias, obj, item) : [];
-    }
+    });
   }
 
   updatedChangedValues(res, observableKeys, valuesBefore) {

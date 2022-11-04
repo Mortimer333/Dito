@@ -1,7 +1,15 @@
 <p>
   Bind {{ bind }}
 </p>
-<test-bound @for='iter' @b:bound="bind"></test-bound>
+<p @for="iter">
+    Ha - {{ $key }}
+</p>
+<test-bound @for='iter' bound="bind" @o:output="console.log($key)" @i:i="$key">
+    {{ $key }}
+    <p @for="3">
+      {{ $key}}
+    </p>
+</test-bound>
 <div class="">
   <p>
     <input type="text" name="" @b:value="iter">
