@@ -232,6 +232,8 @@ class Dito {
               value: {
                 actions: {
                   fors: {},
+                  for_keys: {},
+                  for_values: {},
                   ifs: {},
                   outputs: {},
                   inputs: {},

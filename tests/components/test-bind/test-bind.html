@@ -1,6 +1,10 @@
-<p @if="display">
-  Bind {{ bind }}
-</p>
+<div @for="iter">
+  Bind {{ bind + ' - ' + $key }}
+  <p @for="iter">
+    A{{ $key }}
+    <button type="button" name="button" onclick="this.innerHTML = 'Changed'">Change me!</button>
+  </p>
+</div>
 <!-- <p @for="iter">
     Ha - {{ $key }}
 </p>
