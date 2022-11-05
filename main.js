@@ -229,7 +229,18 @@ class Dito {
 
           ({ default: js } = js);
           Object.defineProperty(js.prototype, "__dito", {
-              value: {},
+              value: {
+                actions: {
+                  fors: {},
+                  ifs: {},
+                  outputs: {},
+                  inputs: {},
+                  attrs: {},
+                  binds: {},
+                  events: {},
+                  executables: {}
+                }
+              },
               writable: false
           });
           js.prototype.__dito.html = html;
