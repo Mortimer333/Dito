@@ -163,7 +163,9 @@ class DitoElement extends HTMLElement {
         for: {},
         forBox: {
           key: null,
-          value: null
+          value: null,
+          keyName: null,
+          valueName: null
         },
         forNodes: [],
         injected: [],
@@ -171,6 +173,7 @@ class DitoElement extends HTMLElement {
         parent: null,
         path: null,
         rendered: false,
+        scope: {},
         toBind: [],
         toInput: [],
         uniqueChildren: new WeakMap(),
@@ -383,32 +386,31 @@ class DitoElement extends HTMLElement {
 
 
     Object.keys(actions).forEach(actionName => {
-      if (actionName !== 'fors') {
+      if (actionName !== 'fors' && actionName !== 'for_keys' && actionName !== 'for_values') {
         (actionsSwitch[actionName] || actionsSwitch['default']).bind(this)(item, actions[actionName], actionName);
       }
     });
   }
 
   actionFor(node) {
-    console.log("new For!", node);
     if (!node.$self.for) {
       throw new Error("Node marked as for doesn't have required values");
     }
     const {condition, anchors} = node.$self.for;
 
-    console.log("condition", condition, "and anchors:");
-    console.log(anchors);
     let res = this.getExecuteable(condition, node)(...this.getObservablesValues(node));
     let type = typeof res;
     if (type == 'string') {
       res = res * 1;
       type = typeof res;
     }
+    console.log(res, type);
 
     let keys, values;
-    if (isNaN(res) || (type != 'number' && type != 'object')) {
+    if (type != 'number' && type != 'object' || (isNaN(res) && type != 'object')) {
       console.error('For in `' + this.constructor.name + '` doesn\'t have iterable value, removing node...');
       node.remove();
+      return;
     } else {
       if (type == 'number') {
         res = new Array(res).fill(null);
@@ -446,6 +448,9 @@ class DitoElement extends HTMLElement {
         child = this.defineChild(child, action, alias, actions[action][alias]);
         child.$self.forBox.key = key;
         child.$self.forBox.value = value;
+        child.$self.forBox.keyName = node.$self.forBox.keyName;
+        child.$self.forBox.valueName = node.$self.forBox.valueName;
+        child.$self.scope = Object.assign({}, node.$self.scope, child.$self.scope);
       });
 
       anchor.parentElement.insertBefore(clone, anchor);
@@ -455,10 +460,20 @@ class DitoElement extends HTMLElement {
         const newAnchor = clone.querySelector(path);
         const realAnchor = node.querySelector(path);
         if (!newAnchor || !realAnchor) {
-          console.error('Nested for `' + path + '` was not found', node.outerHTML);
         } else {
           const newTextA = this.reconstructForAnchor(newAnchor, realAnchor)
           newTextA.$self.children = [];
+          const nested = newTextA.$self.parent;
+          nested.$self.scope = Object.assign({}, node.$self.scope, nested.$self.scope);
+
+          if (node.$self.forBox.keyName) {
+            nested.$self.scope[node.$self.forBox.keyName] = key;
+          }
+
+          if (node.$self.forBox.valueName) {
+            nested.$self.scope[node.$self.forBox.valueName] = value;
+          }
+
           this.actionFor(newTextA.$self.parent);
         }
       });
@@ -749,22 +764,46 @@ class DitoElement extends HTMLElement {
     // (O(m + n) instead of O(m * n))
     Object.values(tmp.querySelectorAll('[' + Object.keys(actions.fors).join('],[') + ']')).reverse().forEach(node => {
         const aliases = [];
+        const keys = [];
+        const values = [];
         node.getAttributeNames().forEach(name => {
           if (actions.fors[name]) {
             aliases.push(name);
           }
+          if (actions.for_keys[name]) {
+            keys.push(actions.for_keys[name]);
+          }
+          if (actions.for_values[name]) {
+            values.push(actions.for_values[name]);
+          }
         });
 
         if (aliases.length > 1) {
-          throw new Error('There can only be one for on single node');
+          throw new Error('There can only be one `for` on single node');
         }
 
+        if (keys.length > 1) {
+          throw new Error('There can only be one `key` on single node');
+        }
+
+        if (values.length > 1) {
+          throw new Error('There can only be one `value` on single node');
+        }
 
         const alias = aliases[0], anchor = document.createElement('a');
         anchor.setAttribute('dito-anchor', 1);
         this.defineSelf(node);
         this.defineSelf(anchor);
         node.removeAttribute(alias);
+
+        if (keys.length > 0) {
+          node.$self.forBox.keyName = keys[0];
+        }
+
+        if (values.length > 0) {
+          node.$self.forBox.valueName = values[0];
+        }
+
         node.$self.forBox.anchors = this.getAnchorPaths(node);
         this.$self.forNodes.push(node);
         anchor.$self.parent = node;
@@ -1152,14 +1191,16 @@ class DitoElement extends HTMLElement {
   compile() {
     let html = this.__dito.html;
 
-    html = this.compileBinds(html);
-    html = this.compileInputs(html);
-    html = this.compileOutputs(html);
-    html = this.compileAttributes(html);
+    html = this.compileFindAndReplace(html, ' @b:', 'b', 'binds', true);
+    html = this.compileFindAndReplace(html, ' @i:', 'i', 'inputs', true);
+    html = this.compileFindAndReplace(html, ' @o:', 'o', 'outputs', true);
+    html = this.compileFindAndReplace(html, ' @a:', 'a', 'attrs', true);
     html = this.compileExecutables(html);
-    html = this.compileEvents(html);
-    html = this.compileIfs(html);
-    this.__dito.html = this.compileFors(html);
+    html = this.compileFindAndReplace(html, ' @e:', 'e', 'events', true);
+    html = this.compileFindAndReplace(html, ' @if', 'if', 'ifs');
+    html = this.compileFindAndReplace(html, ' @value', 'v', 'for_values');
+    html = this.compileFindAndReplace(html, ' @key', 'k', 'for_keys');
+    this.__dito.html = this.compileFindAndReplace(html, ' @for', 'for', 'fors');
 
     this.__dito.compiledHTML = true;
   }
@@ -1182,42 +1223,6 @@ class DitoElement extends HTMLElement {
     }
 
     return html;
-  }
-
-  compileValues(html) {
-    return this.compileFindAndReplace(html, ' @value', 'v', 'for_values');
-  }
-
-  compileKeys(html) {
-    return this.compileFindAndReplace(html, ' @key', 'k', 'for_keys');
-  }
-
-  compileOutputs(html) {
-    return this.compileFindAndReplace(html, ' @o:', 'o', 'outputs', true);
-  }
-
-  compileInputs(html) {
-    return this.compileFindAndReplace(html, ' @i:', 'i', 'inputs', true);
-  }
-
-  compileAttributes(html) {
-    return this.compileFindAndReplace(html, ' @a:', 'a', 'attrs', true);
-  }
-
-  compileBinds(html) {
-    return this.compileFindAndReplace(html, ' @b:', 'b', 'binds', true);
-  }
-
-  compileFors(html) {
-    return this.compileFindAndReplace(html, ' @for', 'for', 'fors');
-  }
-
-  compileIfs(html) {
-    return this.compileFindAndReplace(html, ' @if', 'if', 'ifs');
-  }
-
-  compileEvents(html) {
-    return this.compileFindAndReplace(html, ' @e:', 'e', 'events', true);
   }
 
   getAttribute(text, lm, start = 0) {
@@ -1299,15 +1304,16 @@ class DitoElement extends HTMLElement {
   getObservablesKeys(node) {
     const keys = [
       ...Object.keys(this.methods),
-      ...Object.keys(this.$)
+      ...Object.keys(this.$),
+      ...Object.keys(node.$self.scope)
     ];
 
     if (node.$self.forBox.key) {
-      keys.push(this.keyName);
+      keys.push(node.$self.forBox.keyName || this.keyName);
     }
 
     if (node.$self.forBox.value) {
-      keys.push(this.valueName);
+      keys.push(node.$self.forBox.valueName || this.valueName);
     }
 
     return keys;
@@ -1324,6 +1330,7 @@ class DitoElement extends HTMLElement {
     const values = [
       ...Object.values(this.methods),
       ...Object.values(this.$),
+      ...Object.values(node.$self.scope)
     ];
 
     if (node.$self.forBox.key) {

@@ -1,7 +1,7 @@
-<div @for="iter">
-  Bind {{ bind + ' - ' + $key }}
+<div @for="['a','v']" @key="index" @value="letter">
+  Bind {{ bind + ' - ' + index }} = {{ letter }}
   <p @for="iter">
-    A{{ $key }}
+    A - {{ $key }} = {{ index }} - {{ letter }}
     <button type="button" name="button" onclick="this.innerHTML = 'Changed'">Change me!</button>
   </p>
 </div>
