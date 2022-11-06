@@ -51,18 +51,22 @@ class Dito {
     // Callback function to execute when mutations are observed
     const callback = (mutationList, observer) => {
       for (const mutation of mutationList) {
-        console.log("new mutation", mutation);
         const binds = mutation?.target?.$self?.binds;
         if (mutation.type === 'attributes') {
-          if (!binds || !binds[mutation.attributeName]) {
-            return;
-          }
-          const {receiver, provider} = binds[mutation.attributeName];
-          if (mutation.target.getAttribute(receiver.name) === provider.target.$[provider.name]) {
-            return;
-          }
-          provider.target.$[provider.name] = mutation.target.getAttribute(receiver.name);
+          return;
         }
+
+        if (!binds || !binds[mutation.attributeName]) {
+          return;
+        }
+
+        const {receiver, provider} = binds[mutation.attributeName];
+
+        if (mutation.target.getAttribute(receiver.name) === provider.target.$[provider.name]) {
+          return;
+        }
+
+        provider.target.$[provider.name] = mutation.target.getAttribute(receiver.name);
       }
     };
 
@@ -237,7 +241,8 @@ class Dito {
                   attrs: {},
                   binds: {},
                   events: {},
-                  executables: {}
+                  executables: {},
+                  packs: {}
                 }
               },
               writable: false

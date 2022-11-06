@@ -1,13 +1,24 @@
 <button type="button" name="button" @e:click="console.log('ola!')">Ola!</button>
-<div @for="['a','v']" @key="index" @value="letter">
-  Bind {{ bind + ' - ' + index }} = {{ letter }}
+<div @for="iter" @key="index" @value="letter">
+  Bind {{ bind + ' - ' + index }}
   <p @for="iter">
-    A - {{ $key }} = {{ index }} - {{ letter }}
+    A - {{ $key }} = {{ index }}
     <button type="button" name="button" onclick="this.innerHTML = 'Changed'">Change me!</button>
   </p>
+  <test-bound @b:bound="bind">
+    {{ index + ' dif' }}
+  </test-bound>
 </div>
-<input type="text" name="" @b:class="bind">
-<test-bound @b:bound="bind" @i:inputed="bind" @o:output="console.log($event)"></test-bound>
+<input type="text" name="" @b:value="bind">
+<test-bound @b:bound="bind" @i:inputed="bind" @o:output="console.log($event)">
+  <div @pack="pack1">
+  asd
+  </div>
+  <div @pack="pack1">
+  asd2
+  </div>
+  <h1>{{ iter }}</h1>
+</test-bound>
 <!-- <p @for="iter">
     Ha - {{ $key }}
 </p>

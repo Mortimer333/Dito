@@ -48,6 +48,7 @@ Test:
 - For
   - injected
   - $key and value
+  - combine with if
 - If
   - injected
   - functions and operations

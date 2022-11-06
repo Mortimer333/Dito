@@ -27,6 +27,7 @@ class DitoElement extends HTMLElement {
       this.$self.cssRenderInProgress = false;
       this.cssRender();
     });
+    this.$self.default.injected = Object.values(this.childNodes);
   }
 
   /* EVENTS */
@@ -170,7 +171,7 @@ class DitoElement extends HTMLElement {
         cssIndices: [],
         cssPath: null,
         default: {
-          injected: null,
+          injected: [],
         },
         for: {},
         forBox: {
@@ -296,17 +297,19 @@ class DitoElement extends HTMLElement {
       throw new Error('Custom element ' + this.localName + ' is recursively called. Stopping the render....');
     }
 
+
     this.beforeRender();
     try {
       if (!this.__dito.compiledHTML) {
         this.compile();
-        this.innerHTML = this.__dito.html;
-        this.searchForNotDownloaded(this);
-        this.assignChildren(this);
-        this.retrieveBindedValues();
       }
 
       if (!this.$self.rendered) {
+        this.innerHTML = this.__dito.html;
+        this.assignChildren(this);
+        this.retrieveBindedValues();
+        this.renderInjected(this);
+        this.searchForNotDownloaded(this);
         this.cssRender();
       }
 
@@ -333,6 +336,35 @@ class DitoElement extends HTMLElement {
       this.afterRender({success: false, error: e});
       return false;
     }
+  }
+
+  renderInjected(item) {
+    this.querySelectorAll('dito-inject').forEach(inject => {
+      if (inject.$self?.actions?.packs?.length > 0) {
+        inject.$self.actions.packs.forEach(pack => {
+          this.$self.default.injected.forEach(function (node) {
+            if (node.nodeType === 3) {
+              return;
+            }
+            const packName = node.getAttribute(this.packAttrName);
+            if (packName == pack) {
+              this.insertBefore(node, inject);
+              node.removeAttribute(this.packAttrName);
+            } else {
+              node.querySelectorAll('[' + this.packAttrName + '="' + pack + '"]').forEach(subnode => {
+                this.insertBefore(subnode, inject);
+                subnode.removeAttribute(this.packAttrName);
+              });
+            }
+          }.bind(this));
+        });
+      } else {
+        this.$self.default.injected.forEach(node => {
+          this.insertBefore(node, inject);
+        });
+      }
+      inject.remove();
+    });
   }
 
   setupUnique(item) {
@@ -483,7 +515,7 @@ class DitoElement extends HTMLElement {
   setBind(bind, node) {
     const {name, value} = bind;
     node.$[name] = this.$[value];
-    node.clearRenderQueue();
+    // node.clearRenderQueue();
     node.$binded[name] = this;
     const item = {receiver: name, provider: value};
     const binded = this.$binder.get(node);
@@ -889,6 +921,8 @@ class DitoElement extends HTMLElement {
       const text = document.createTextNode('');
       node.parentElement.replaceChild(text, node);
       node = text;
+    } else if (actionName === 'packs') {
+      node.setAttribute(this.packAttrName, action);
     }
 
     if (!node.$self) {
@@ -933,7 +967,6 @@ class DitoElement extends HTMLElement {
 
     node.$self.path = this.getPath(node);
     node.$self.cssPath = this.pathToCss(node.$self.path);
-    node.$self.default.injected = [].concat(node.childNodes);
     return node;
   }
 
@@ -993,6 +1026,7 @@ class DitoElement extends HTMLElement {
     html = this.compileFindAndReplace(html, ' @if', 'if', 'ifs');
     html = this.compileFindAndReplace(html, ' @value', 'v', 'for_values');
     html = this.compileFindAndReplace(html, ' @key', 'k', 'for_keys');
+    html = this.compileFindAndReplace(html, ' @pack', 'p', 'packs');
     this.__dito.html = this.compileFindAndReplace(html, ' @for', 'for', 'fors');
 
     this.__dito.compiledHTML = true;
