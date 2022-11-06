@@ -4,12 +4,15 @@
   <p @for="iter">
     A - {{ $key }} = {{ index }}
     <button type="button" name="button" onclick="this.innerHTML = 'Changed'">Change me!</button>
+    <span @for="iter" style="display:block;">
+      B - {{ $key }} = {{ index }}
+    </span>
   </p>
   <test-bound @b:bound="bind">
-    <p @for="iter">
-      {{ index + ' dif' }}
-    </p>
     <p>3</p>
+    <p @for="iter">
+      Grzyb #{{ $key }}
+    </p>
   </test-bound>
 </div>
 <input type="text" name="" @b:value="bind">

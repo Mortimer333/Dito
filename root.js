@@ -581,7 +581,7 @@ class DitoElement extends HTMLElement {
     this.actionExecutables(item, actions.executables || [], 'executables');
   }
 
-  actionFor(node) {
+  actionFor(node, indent = ' ') {
     if (!node.$self.for) {
       throw new Error("Node marked as for doesn't have required values");
     }
@@ -616,11 +616,11 @@ class DitoElement extends HTMLElement {
         continue;
       }
 
-      this.renderFor(node, anchor, values, keys);
+      this.renderFor(node, anchor, values, keys, indent);
     }
   }
 
-  renderFor(node, anchor, values, keys) {
+  renderFor(node, anchor, values, keys, indent) {
     if (keys.length < anchor.$self.children.length) {
       anchor.$self.children.splice(keys.length).forEach(child => {
         child.remove();
@@ -632,7 +632,6 @@ class DitoElement extends HTMLElement {
     for (var i = anchor.$self.children.length; i < keys.length; i++) {
       const key = keys[i], value = values[i], clone = node.cloneNode(true);
       tmpParent.appendChild(clone);
-
       this.iterateOverActions(tmpParent, (action, alias, child) => {
         child = this.defineChild(child, action, alias, actions[action][alias]);
         child.$self.forBox.key = key;
@@ -649,13 +648,11 @@ class DitoElement extends HTMLElement {
         const newAnchor = clone.querySelector(path);
         const realAnchor = node.querySelector(path);
         if (!newAnchor || !realAnchor) {
-          console.error('No anchors found!')
         } else {
           const newTextA = this.reconstructForAnchor(newAnchor, realAnchor)
           newTextA.$self.children = [];
           const nested = newTextA.$self.parent;
-          newTextA.$self.scope = Object.assign({}, node.$self.scope, nested.$self.scope);
-
+          newTextA.$self.scope = Object.assign({}, anchor.$self.scope, nested.$self.scope);
           if (node.$self.forBox.keyName) {
             newTextA.$self.scope[node.$self.forBox.keyName] = key;
           }
@@ -664,7 +661,7 @@ class DitoElement extends HTMLElement {
             newTextA.$self.scope[node.$self.forBox.valueName] = value;
           }
 
-          this.actionFor(newTextA.$self.parent);
+          this.actionFor(newTextA.$self.parent, indent + '  ');
         }
       });
 
