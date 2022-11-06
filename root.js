@@ -27,7 +27,6 @@ class DitoElement extends HTMLElement {
       this.$self.cssRenderInProgress = false;
       this.cssRender();
     });
-    this.$self.default.injected = Object.values(this.childNodes);
   }
 
   /* EVENTS */
@@ -43,7 +42,7 @@ class DitoElement extends HTMLElement {
 
     if (!this.$self.rendered) {
       delete window.__dito.main.downloadCheck[this.localName];
-
+      this.$self.default.injected = Object.values(this.childNodes);
       this.firstRenderBeforeActions();
       this.init();
     }
