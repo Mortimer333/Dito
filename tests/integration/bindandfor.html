@@ -26,7 +26,14 @@
           TH.tests['Proper key renaming'] = innerBind === innerText ? TH.success : TH.failure;
           const firstChange = 'changed';
           bind.$.bind = firstChange;
+
+          // Prepare tests
           TH.tests['True provider bind change changes all binded'] = TH.failure;
+          TH.tests['Bound custom change changes all binded'] = TH.failure;
+          TH.tests['Bound native change changes all binded'] = TH.failure;
+          TH.tests['For with if, hidden'] = TH.failure;
+          TH.tests['For with if, visible again'] = TH.failure;
+
           bind.afterRender = function (res) {
             if (!res.success) {
               return;
@@ -38,13 +45,10 @@
                 return;
               }
             });
-            if (sameBound) {
-            }
 
             TH.tests['True provider bind change changes all binded'] = sameBound ? TH.success : TH.failure;
             const secondChange = 'second changed';
             bounds[bounds.length - 1].$.bound = secondChange;
-            TH.tests['Bound custom change changes all binded'] = TH.failure;
             bind.afterRender = function (res) {
               if (!res.success) {
                 return;
@@ -68,7 +72,6 @@
               event.eventName = "change";
               native.dispatchEvent(event);
 
-              TH.tests['Bound native change changes all binded'] = TH.failure;
               bind.afterRender = function (res) {
                 if (!res.success) {
                   return;
@@ -81,7 +84,27 @@
                   }
                 });
                 TH.tests['Bound native change changes all binded'] = sameBound ? TH.success : TH.failure;
-                TH.validateTestAndMoveToNext();
+
+                const ifCheck = bind.querySelectorAll('[name="ifForCheck"]');
+                TH.tests['For with if, displayed at start'] = ifCheck.length == 2 ? TH.success : TH.failure;
+                bind.$.display = false;
+                bind.afterRender = function (res) {
+                  if (!res.success) {
+                    return;
+                  }
+                  const ifCheck = bind.querySelectorAll('[name="ifForCheck"]');
+                  TH.tests['For with if, hidden'] = ifCheck.length == 0 ? TH.success : TH.failure;
+                  bind.$.display = true;
+                  bind.afterRender = function (res) {
+                    if (!res.success) {
+                      return;
+                    }
+
+                    const ifCheck = bind.querySelectorAll('[name="ifForCheck"]');
+                    TH.tests['For with if, visible again'] = ifCheck.length == 2 ? TH.success : TH.failure;
+                    TH.validateTestAndMoveToNext();
+                  }
+                }
               }
             }
           }
