@@ -1,3 +1,4 @@
+<button type="button" name="button" @e:click="console.log('ola!')">Ola!</button>
 <div @for="['a','v']" @key="index" @value="letter">
   Bind {{ bind + ' - ' + index }} = {{ letter }}
   <p @for="iter">
@@ -5,6 +6,8 @@
     <button type="button" name="button" onclick="this.innerHTML = 'Changed'">Change me!</button>
   </p>
 </div>
+<input type="text" name="" @b:class="bind">
+<test-bound @b:bound="bind" @i:inputed="bind" @o:output="console.log($event)"></test-bound>
 <!-- <p @for="iter">
     Ha - {{ $key }}
 </p>

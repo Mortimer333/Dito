@@ -11,20 +11,20 @@
 
       const container = TH.getContainer({
         callback: () => {
-          const bind = document.body.querySelector('test-bind');
-          const bound = bind.querySelector('test-bound');
-          const div = bind.querySelector('#div-test');
-          TH.tests['Bound custom element'] =
-            typeof bound.$?.bound != 'undefined'
-            && bind.$?.bind === bound.$?.bound
-              ? TH.success : TH.failure;
-          TH.tests['Bound native element'] = div.className == bind.$?.bind ? TH.success : TH.failure;
-          div.className = 'test change';
-          setTimeout(function() {
-            TH.tests['Change on native element'] = div.className == bind.$?.bind ? TH.success : TH.failure;
-            TH.tests['Change from native to custom bound'] = div.className == bound.$?.bound ? TH.success : TH.failure;
-            // TH.validateTestAndMoveToNext();
-          }, 100)
+          // const bind = document.body.querySelector('test-bind');
+          // const bound = bind.querySelector('test-bound');
+          // const div = bind.querySelector('#div-test');
+          // TH.tests['Bound custom element'] =
+          //   typeof bound.$?.bound != 'undefined'
+          //   && bind.$?.bind === bound.$?.bound
+          //     ? TH.success : TH.failure;
+          // TH.tests['Bound native element'] = div.className == bind.$?.bind ? TH.success : TH.failure;
+          // div.className = 'test change';
+          // setTimeout(function() {
+          //   TH.tests['Change on native element'] = div.className == bind.$?.bind ? TH.success : TH.failure;
+          //   TH.tests['Change from native to custom bound'] = div.className == bound.$?.bound ? TH.success : TH.failure;
+          //   // TH.validateTestAndMoveToNext();
+          // }, 100)
         }
       });
       container.register('test-bind', Math.random());
