@@ -2,12 +2,10 @@ class DitoElement extends HTMLElement {
   keyName = "$key";
   valueName = "$value";
   eventName = "$event";
-  indexAttrName = 'dito-i';
+  indexAtr = 'dito-i';
   indexForAttrName = 'dito-for-i';
   packAttrName = 'dito-pack';
-  skipAttr = 'dito-skip';
-  key = null;
-  value = null;
+  timeAtr = 'dito-t';
 
   constructor() {
     super();
@@ -42,7 +40,6 @@ class DitoElement extends HTMLElement {
 
     if (!this.$self.rendered) {
       delete window.__dito.main.downloadCheck[this.localName];
-      this.$self.default.injected = Object.values(this.childNodes);
       this.firstRenderBeforeActions();
       this.init();
     }
@@ -58,6 +55,15 @@ class DitoElement extends HTMLElement {
         this.setInput.bind(parent)(input, this);
       });
     }
+
+    this.setCssScope();
+  }
+
+  setCssScope() {
+    this.setAttribute(this.timeAtr, +new Date());
+    this.setAttribute(this.indexAtr, Array.prototype.indexOf.call(this.parentElement.children, this));
+    this.$self.path = this.getPath(this);
+    this.$self.cssPath = this.pathToCss(this.$self.path);
   }
 
   saveMethods() {
@@ -185,6 +191,7 @@ class DitoElement extends HTMLElement {
         parent: null,
         path: null,
         rendered: false,
+        rendering: false,
         scope: {},
         toBind: [],
         toInput: new WeakMap(),
@@ -256,20 +263,6 @@ class DitoElement extends HTMLElement {
     });
   }
 
-  pathToCss(path) {
-    let cssRule = '';
-
-    path.split('.').forEach(link => {
-      const [name, index, forIndex] = link.split('@');
-      cssRule += name + '[' + this.indexAttrName + '="' + index + '"' + ']';
-      if (forIndex) {
-        cssRule += '[' + this.indexForAttrName + '="' + forIndex + '"' + ']';
-      }
-      cssRule += ' ';
-    });
-    return cssRule.trim();
-  }
-
   resolveCssExecutables(css) {
     const exe = this.__dito.cssExecutables;
     Object.keys(exe).forEach(alias => {
@@ -291,12 +284,18 @@ class DitoElement extends HTMLElement {
       return;
     }
 
+    if (this.$self.parent && this.$self.parent.$self.rendering) {
+      this.queueRender();
+      return;
+    }
+
     this.clearRenderQueue();
+    this.$self.rendering = true;
     if (document.body.querySelector(this.localName + ' ' + this.localName)) {
       throw new Error('Custom element ' + this.localName + ' is recursively called. Stopping the render....');
     }
 
-
+    let res = false;
     this.beforeRender();
     try {
       if (!this.__dito.compiledHTML) {
@@ -304,16 +303,24 @@ class DitoElement extends HTMLElement {
       }
 
       if (!this.$self.rendered) {
+        this.$self.default.injected = Object.values(this.childNodes);
         this.innerHTML = this.__dito.html;
         this.assignChildren(this);
         this.retrieveBindedValues();
         this.renderInjected(this);
         this.searchForNotDownloaded(this);
-        this.cssRender();
+        this.queueCssRender();
       }
 
       this.$self.forNodes.forEach(child => {
         this.actionFor(child);
+      });
+
+      this.querySelectorAll(Object.keys(window.__dito.registered).join(', ')).forEach(custom => {
+        if (!custom.$self) {
+          this.defineSelf(custom);
+        }
+        custom.$self.parent = this;
       });
 
       while (this.$self.uniqueChildren.length > 0) {
@@ -329,12 +336,13 @@ class DitoElement extends HTMLElement {
       this.$self.rendered = true;
       this.afterRender({success: true});
       window.__dito.main.allDownloaded();
-      return true;
+      res = true;
     } catch (e) {
       console.error('There was an error during rendering', e);
       this.afterRender({success: false, error: e});
-      return false;
     }
+    this.$self.rendering = false;
+    return res;
   }
 
   renderInjected(item) {
@@ -624,6 +632,7 @@ class DitoElement extends HTMLElement {
     for (var i = anchor.$self.children.length; i < keys.length; i++) {
       const key = keys[i], value = values[i], clone = node.cloneNode(true);
       tmpParent.appendChild(clone);
+
       this.iterateOverActions(tmpParent, (action, alias, child) => {
         child = this.defineChild(child, action, alias, actions[action][alias]);
         child.$self.forBox.key = key;
@@ -640,6 +649,7 @@ class DitoElement extends HTMLElement {
         const newAnchor = clone.querySelector(path);
         const realAnchor = node.querySelector(path);
         if (!newAnchor || !realAnchor) {
+          console.error('No anchors found!')
         } else {
           const newTextA = this.reconstructForAnchor(newAnchor, realAnchor)
           newTextA.$self.children = [];
@@ -798,36 +808,37 @@ class DitoElement extends HTMLElement {
     });
   }
 
-  getPath(node, setAttr = true) {
-    let forIndex = '';
-    if (node.$self.attributes[this.indexForAttrName]) {
-      forIndex = '@' + node.$self.attributes[this.indexForAttrName].value;
+  getPath(node) {
+    const index = this.attributes[this.indexAtr].value,
+      time = this.attributes[this.timeAtr].value,
+      path = node.localName + '@' + index + '@' + time;
+    if (!this.$self.parent) {
+      return path;
     }
-    const index = Array.prototype.indexOf.call(node.parentElement.children, node);
-    if (setAttr) {
-      node.$self.attributes[this.indexAttrName] = index;
-    }
-    if (node === this) {
-      return node.localName + '@' + index + forIndex;
-    }
-    return this.$self.path + '.' + node.localName + '@' + index + forIndex;
+    return this.$self.parent.$self.path + '.' + path;
+  }
+
+  pathToCss(path) {
+    let cssRule = '';
+
+    path.split('.').forEach(link => {
+      const [name, index, time] = link.split('@');
+      cssRule += name + '[' + this.indexAtr + '="' + index + '"' + ']';
+      cssRule += '[' + this.timeAtr + '="' + time + '"' + ']';
+      cssRule += ' ';
+    });
+    return cssRule.trim();
   }
 
   assignChildren(tmp) {
-    if (!this.$self.path) {
-      this.$self.path = this.getPath(this);
-      this.$self.cssPath = this.pathToCss(this.$self.path);
-    }
-
     const actions = this.__dito.actions;
     const forKeys = Object.keys(actions.fors);
     if (forKeys.length > 0) {
-      Object.values(tmp.querySelectorAll('[' + forKeys.join('],[') + ']')).reverse().forEach(node => {
+      Object.values(tmp.querySelectorAll('[' + forKeys.join('], [') + ']')).reverse().forEach(node => {
         this.defineFor(node);
       });
       this.$self.forNodes = this.$self.forNodes.reverse();
     }
-
     this.iterateOverActions(tmp, (action, alias, node) => {
       this.defineChild(node, action, alias, actions[action][alias]);
     });
@@ -862,6 +873,7 @@ class DitoElement extends HTMLElement {
 
     const alias = aliases[0], anchor = document.createElement('a');
     anchor.setAttribute('dito-anchor', 1);
+    anchor.setAttribute('dito-anchor-alias', alias);
     this.defineSelf(node);
     this.defineSelf(anchor);
     node.removeAttribute(alias);
@@ -964,8 +976,6 @@ class DitoElement extends HTMLElement {
       return node;
     }
 
-    node.$self.path = this.getPath(node);
-    node.$self.cssPath = this.pathToCss(node.$self.path);
     return node;
   }
 

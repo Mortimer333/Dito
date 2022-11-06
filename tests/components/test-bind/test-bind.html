@@ -6,7 +6,10 @@
     <button type="button" name="button" onclick="this.innerHTML = 'Changed'">Change me!</button>
   </p>
   <test-bound @b:bound="bind">
-    {{ index + ' dif' }}
+    <p @for="iter">
+      {{ index + ' dif' }}
+    </p>
+    <p>3</p>
   </test-bound>
 </div>
 <input type="text" name="" @b:value="bind">
