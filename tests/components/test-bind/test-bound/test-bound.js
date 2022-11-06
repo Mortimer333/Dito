@@ -7,7 +7,6 @@ class TestBound extends DitoElement {
 
   output() {
     this.$css.color = 'blue';
-    console.log("a");
     this.$output?.output?.emit('a')
   }
 }

@@ -1,7 +1,7 @@
 import { DitoElement } from "../../root.js";
 import { Dito } from "../../main.js";
 const URL = 'http://dito.local/';
-const order = ['localstorage', 'callback', 'settings', 'input', 'output', 'bind'];
+const order = ['localstorage', 'callback', 'settings', 'input', 'output', 'bindandfor'];
 const tests = {};
 const success = 'SUCCESS';
 const failure = 'FAILURE';

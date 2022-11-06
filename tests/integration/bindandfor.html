@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>Test</title>
+  </head>
+  <body>
+    <test-bind></test-bind>
+    <script type="module">
+      import * as TH from "../test.js";
+
+      const container = TH.getContainer({
+        callback: () => {
+          let bind = document.body.querySelector('test-bind');
+          const bounds = bind.querySelectorAll('test-bound');
+          const innerText = '0@a0@a=>0@a0@a=>0@a=>0@a0@a=>0@a=>1@v0@a=>1@v0@a=>1@v=>0@a0@a=>1@v=>1@v1@v1@v=>0@a1@v=>0@a'
+          + '=>0@a1@v=>0@a=>1@v1@v=>1@v1@v=>1@v=>0@a1@v=>1@v=>1@v';
+          const firsts = bind.querySelectorAll('[name="first"]');
+          const seconds = bind.querySelectorAll('[name="second"]');
+          const native = bind.querySelector('#native');
+          // innerText of bind is not updated yet who knows when the cycle will update it, so we just force it to
+          // create new text by creating new element and cloning all the nodes
+          const tmp = document.createElement('div');
+          tmp.innerHTML = bind.innerHTML;
+          const innerBind = tmp.innerText.replaceAll(' ', '').replaceAll("\n", '');
+          TH.tests['Proper key renaming'] = innerBind === innerText ? TH.success : TH.failure;
+          const firstChange = 'changed';
+          bind.$.bind = firstChange;
+          TH.tests['True provider bind change changes all binded'] = TH.failure;
+          bind.afterRender = function (res) {
+            if (!res.success) {
+              return;
+            }
+            let sameBound = native.value === firstChange;
+            bounds.forEach(function (bound) {
+              if (bound.$.bound != firstChange) {
+                sameBound = false;
+                return;
+              }
+            });
+            if (sameBound) {
+            }
+
+            TH.tests['True provider bind change changes all binded'] = sameBound ? TH.success : TH.failure;
+            const secondChange = 'second changed';
+            bounds[bounds.length - 1].$.bound = secondChange;
+            TH.tests['Bound custom change changes all binded'] = TH.failure;
+            bind.afterRender = function (res) {
+              if (!res.success) {
+                return;
+              }
+
+              let sameBound = native.value === secondChange;
+              if (sameBound) {
+                sameBound = bind.$.bind === secondChange;
+              }
+              bounds.forEach(function (bound) {
+                if (bound.$.bound != secondChange) {
+                  sameBound = false;
+                  return;
+                }
+              });
+              TH.tests['Bound custom change changes all binded'] = sameBound ? TH.success : TH.failure;
+              const thirdChange = 'third changed';
+              native.value = thirdChange;
+              const event = document.createEvent("HTMLEvents");
+              event.initEvent("change", true, true);
+              event.eventName = "change";
+              native.dispatchEvent(event);
+
+              TH.tests['Bound native change changes all binded'] = TH.failure;
+              bind.afterRender = function (res) {
+                if (!res.success) {
+                  return;
+                }
+                let sameBound = bind.$.bind === thirdChange;
+                bounds.forEach(function (bound) {
+                  if (bound.$.bound != thirdChange) {
+                    sameBound = false;
+                    return;
+                  }
+                });
+                TH.tests['Bound native change changes all binded'] = sameBound ? TH.success : TH.failure;
+                TH.validateTestAndMoveToNext();
+              }
+            }
+          }
+
+          setTimeout(function () {
+            console.table(TH.tests);
+          }, 1000)
+        }
+      });
+      container.register('test-bind', Math.random());
+      container.register('test-bound', Math.random(), 'test-bind/');
+      await container.load();
+    </script>
+  </body>
+</html>

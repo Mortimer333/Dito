@@ -1,44 +1,12 @@
-<button type="button" name="button" @e:click="console.log('ola!')">Ola!</button>
-<div @for="iter" @key="index" @value="letter">
-  Bind {{ bind + ' - ' + index }}
-  <p @for="iter">
-    A - {{ $key }} = {{ index }}
-    <button type="button" name="button" onclick="this.innerHTML = 'Changed'">Change me!</button>
-    <span @for="iter" style="display:block;">
-      B - {{ $key }} = {{ index }}
-    </span>
-  </p>
-  <test-bound @b:bound="bind">
-    <p>3</p>
-    <p @for="iter">
-      Grzyb #{{ $key }}
-    </p>
-  </test-bound>
+<div @for="iter" @key="index" @value="letter" name="first">
+  {{ index }}@{{ letter }}
+  <div @for="iter" @key="index2" @value="letter2" name="second">
+    {{ index }}@{{ letter }} => {{ index2 }}@{{ letter2 }}
+    <test-bound @b:bound="bind">
+      <p @for="iter">
+        {{ index }}@{{ letter }} => {{ index2 }}@{{ letter2 }} => {{ $key }}@{{ $value }}
+      </p>
+    </test-bound>
+  </div>
 </div>
-<input type="text" name="" @b:value="bind">
-<test-bound @b:bound="bind" @i:inputed="bind" @o:output="console.log($event)">
-  <div @pack="pack1">
-  asd
-  </div>
-  <div @pack="pack1">
-  asd2
-  </div>
-  <h1>{{ iter }}</h1>
-</test-bound>
-<!-- <p @for="iter">
-    Ha - {{ $key }}
-</p>
-<test-bound @for='iter' bound="bind" @o:output="console.log($key)" @i:i="$key">
-    {{ $key }}
-    <p @for="3">
-      {{ $key}}
-    </p>
-</test-bound>
-<div class="">
-  <p>
-    <input type="text" name="" @b:value="iter">
-  </p>
-  <p>
-    <input type="text" @b:value="bind" @b:class="bind" id="div-test">
-  </p>
-</div> -->
+<input type="text" name="" @b:value="bind" id="native">

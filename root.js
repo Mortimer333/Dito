@@ -39,6 +39,7 @@ class DitoElement extends HTMLElement {
     }
 
     if (!this.$self.rendered) {
+      window.__dito.main.firstRendered.set(this);
       delete window.__dito.main.downloadCheck[this.localName];
       this.firstRenderBeforeActions();
       this.init();
@@ -308,7 +309,6 @@ class DitoElement extends HTMLElement {
         this.assignChildren(this);
         this.retrieveBindedValues();
         this.renderInjected(this);
-        this.searchForNotDownloaded(this);
         this.queueCssRender();
       }
 
@@ -316,6 +316,7 @@ class DitoElement extends HTMLElement {
         this.actionFor(child);
       });
 
+      this.searchForNotDownloaded(this);
       this.querySelectorAll(Object.keys(window.__dito.registered).join(', ')).forEach(custom => {
         if (!custom.$self) {
           this.defineSelf(custom);
@@ -333,9 +334,12 @@ class DitoElement extends HTMLElement {
         this.updateBinds(child);
       });
 
-      this.$self.rendered = true;
+      if (!this.$self.rendered) {
+        window.__dito.main.firstRendered.delete(this);
+        this.$self.rendered = true;
+        window.__dito.main.allDownloaded();
+      }
       this.afterRender({success: true});
-      window.__dito.main.allDownloaded();
       res = true;
     } catch (e) {
       console.error('There was an error during rendering', e);

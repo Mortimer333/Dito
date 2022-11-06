@@ -6,6 +6,7 @@ class Dito {
   params = {};
   components = {};
   registered = [];
+  firstRendered = new Map();
   notDownloaded = {};
   downloadCheck = {};
   _SKIP = '_skip';
@@ -79,7 +80,11 @@ class Dito {
   }
 
   allDownloaded() {
-    if (this.downloadFinished || Object.values(window.__dito.main.downloadCheck).length > 0) {
+    if (
+      this.downloadFinished
+      || Object.values(window.__dito.main.downloadCheck).length > 0
+      || !this.firstRendered.keys().next().done
+    ) {
       return;
     }
     this.downloadFinished = true;
