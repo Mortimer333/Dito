@@ -44,9 +44,9 @@ Test:
   - [DONE] injected
   - [DONE] $key and value
   - [done] combine with if
-- If
-  - injected
-  - functions and operations
+- [DONE] If
+  - [DONE] injected
+  - [DONE] functions and operations
 - injected
   - packing
   - no packing

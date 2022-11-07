@@ -36,7 +36,7 @@
         }
       });
       container.register('test-events', Math.random());
-      container.register('test-event-injected', Math.random(), 'test-events/');
+      container.register('test-injected', Math.random());
       await container.load();
     </script>
   </body>

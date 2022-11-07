@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>Test</title>
+  </head>
+  <body>
+    <test-if></test-if>
+    <script type="module">
+      import * as TH from "../test.js";
+
+      const container = TH.getContainer({
+        callback: () => {
+          const testif = document.body.querySelector('test-if')
+          const inline1 = testif.querySelector('#inline1')
+          const inline2 = testif.querySelector('#inline2')
+          const display1 = testif.querySelector('#display1')
+          let displays2 = testif.querySelectorAll('[name="display2"]')
+          const display3 = testif.querySelector('#display3')
+          let displays4 = testif.querySelectorAll('[name="display4"]')
+
+          TH.tests['First inline visible'] = testif.contains(inline1) ? TH.success : TH.failure;
+          TH.tests['Second inline hidden'] = !testif.contains(inline2) ? TH.success : TH.failure;
+          TH.tests['Display 1 visible'] = testif.contains(display1) ? TH.success : TH.failure;
+          TH.tests['Display 2 visible'] = displays2.length === testif.$.display2Iter ? TH.success : TH.failure;
+          TH.tests['Display 3 visible'] = testif.contains(display3) ? TH.success : TH.failure;
+          TH.tests['Display 4 visible'] = displays4.length === testif.$.display4Iter ? TH.success : TH.failure;
+          TH.tests['Display 1 hidden'] = TH.failure;
+          TH.tests['Display 2 hidden'] = TH.failure;
+          TH.tests['Display 3 hidden'] = TH.failure;
+          TH.tests['Display 4 hidden'] = TH.failure;
+          TH.tests['Display 1 visible again'] = TH.failure;
+          TH.tests['Display 2 visible again (and bigger)'] = TH.failure;
+          TH.tests['Display 3 visible again'] = TH.failure;
+          TH.tests['Display 4 visible again (and bigger)'] = TH.failure;
+
+          testif.$.display1 = false;
+          testif.$.display2 = false;
+          testif.$.display3 = false;
+          testif.$.display4 = false;
+          testif.afterRender = function (res) {
+            if (!res.success) {
+              return;
+            }
+            let displays2 = testif.querySelectorAll('[name="display2"]')
+            let displays4 = testif.querySelectorAll('[name="display4"]')
+            TH.tests['Display 1 hidden'] = !testif.contains(display1) ? TH.success : TH.failure;
+            TH.tests['Display 2 hidden'] = displays2.length === 0 ? TH.success : TH.failure;
+            TH.tests['Display 3 hidden'] = !testif.contains(display3) ? TH.success : TH.failure;
+            TH.tests['Display 4 hidden'] = displays4.length === 0 ? TH.success : TH.failure;
+            testif.$.display2Iter = 3;
+            testif.$.display4Iter = 3;
+            testif.$.display1 = true;
+            testif.$.display2 = true;
+            testif.$.display3 = true;
+            testif.$.display4 = true;
+            testif.afterRender = function (res) {
+              if (!res.success) {
+                return;
+              }
+
+              let displays2 = testif.querySelectorAll('[name="display2"]')
+              let displays4 = testif.querySelectorAll('[name="display4"]')
+              TH.tests['Display 1 visible again'] = testif.contains(display1) ? TH.success : TH.failure;
+              TH.tests['Display 2 visible again (and bigger)'] = displays2.length === testif.$.display2Iter
+                ? TH.success : TH.failure;
+              TH.tests['Display 3 visible again'] = testif.contains(display3) ? TH.success : TH.failure;
+              TH.tests['Display 4 visible again (and bigger)'] = displays4.length === testif.$.display4Iter
+                ? TH.success : TH.failure;
+              TH.validateTestAndMoveToNext();
+            }
+          }
+        }
+      });
+      setTimeout(function () {
+        console.table(TH.tests);
+      }, 1000)
+      container.register('test-if', Math.random());
+      container.register('test-injected', Math.random());
+      await container.load();
+
+    </script>
+  </body>
+</html>
