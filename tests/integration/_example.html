@@ -9,6 +9,10 @@
     <script type="module">
       import * as TH from "../test.js";
 
+      const container = TH.getContainer();
+      container.register('test-empty', Math.random());
+      await container.load();
+
       TH.validateTestAndMoveToNext();
     </script>
   </body>

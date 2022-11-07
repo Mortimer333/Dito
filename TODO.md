@@ -13,10 +13,10 @@ Test:
   - [DONE] native
   - [DONE] ladder binding (one <-> two <-> three)
   - [DONE] injected binding
-- Events
-  - injected
-  - functions
-  - inline
+- [DONE] Events
+  - [DONE] injected
+  - [DONE] functions
+  - [DONE] inline
 - Attributes
   - injected
   - native

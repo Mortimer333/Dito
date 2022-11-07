@@ -67,10 +67,7 @@
               TH.tests['Bound custom change changes all binded'] = sameBound ? TH.success : TH.failure;
               const thirdChange = 'third changed';
               native.value = thirdChange;
-              const event = document.createEvent("HTMLEvents");
-              event.initEvent("change", true, true);
-              event.eventName = "change";
-              native.dispatchEvent(event);
+              TH.dispatchNativeEvent(native, 'change');
 
               bind.afterRender = function (res) {
                 if (!res.success) {

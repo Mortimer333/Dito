@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>Test</title>
+  </head>
+  <body>
+    <test-events></test-events>
+    <script type="module">
+      import * as TH from "../test.js";
+
+      const container = TH.getContainer({
+        callback : () => {
+          const events = document.body.querySelector('test-events');
+          const click = events.querySelector('#click');
+          const focus = events.querySelector('#focus');
+          const mouseover = events.querySelector('#mouseover');
+          click.click();
+          TH.tests['Click event'] = events.$.type === 'click'
+            && events.$.event?.target == click
+            && events.$.event?.type == 'click'
+            ? TH.success : TH.failure;
+
+          TH.dispatchNativeEvent(focus, 'focusin');
+          TH.tests['Focus event'] = events.$.type === 'focusin'
+            && events.$.event?.target == focus
+            && events.$.event?.type == 'focusin'
+            ? TH.success : TH.failure;
+
+          TH.dispatchNativeEvent(mouseover, 'mouseover');
+          TH.tests['Injected mouseover event'] = events.$.type === 'mouseover'
+            && events.$.event?.target == mouseover
+            && events.$.event?.type == 'mouseover'
+            ? TH.success : TH.failure;
+          TH.validateTestAndMoveToNext();
+        }
+      });
+      container.register('test-events', Math.random());
+      container.register('test-event-injected', Math.random(), 'test-events/');
+      await container.load();
+    </script>
+  </body>
+</html>
