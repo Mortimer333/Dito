@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>Test</title>
+  </head>
+  <body>
+    <test-attr></test-attr>
+    <script type="module">
+      import * as TH from "../test.js";
+
+      const container = TH.getContainer({
+          callback : () => {
+            const custom = document.getElementById('empty-id');
+            const native = document.getElementById('native-id');
+            TH.tests['ID was set properly on custom'] = TH.failure;
+            TH.tests['Name was set properly on custom'] = TH.failure;
+            TH.tests['ID was set properly on native'] = TH.failure;
+            TH.tests['Name was set properly on native'] = TH.failure;
+
+            if (custom) {
+              TH.tests['ID was set properly on custom'] = TH.success;
+              const name = custom.getAttribute('name');
+              if (name && name == 'name') {
+                TH.tests['Name was set properly on custom'] = TH.success;
+              }
+            }
+
+            if (native) {
+              TH.tests['ID was set properly on native'] = TH.success;
+              const name = native.getAttribute('name');
+              if (name && name == 'native-name') {
+                TH.tests['Name was set properly on native'] = TH.success;
+              }
+            }
+            TH.validateTestAndMoveToNext();
+          }
+      });
+      container.register('test-empty', Math.random());
+      container.register('test-attr', Math.random());
+      await container.load();
+
+    </script>
+  </body>
+</html>

@@ -1045,7 +1045,7 @@ class DitoElement extends HTMLElement {
   compileFindAndReplace(html, lm, prefix, attrName, hasName = false) {
     let attr, start = 0;
     const action = this.__dito.actions[attrName];
-    while (attr = this.getAttribute(html, lm, start)) {
+    while (attr = this.getCompiledAttribute(html, lm, start)) {
       const { name, value } = attr;
       const plc = prefix + name.start + '-' + value.end;
       if (hasName) {
@@ -1062,7 +1062,7 @@ class DitoElement extends HTMLElement {
     return html;
   }
 
-  getAttribute(text, lm, start = 0) {
+  getCompiledAttribute(text, lm, start = 0) {
     let aStart = text.indexOf(lm, start);
     if (aStart === -1) {
       return false;
@@ -1085,7 +1085,7 @@ class DitoElement extends HTMLElement {
         'String wrapper for `' + lm + '` in `' + this.constructor.name
         + '` not found (found letter: `' + text[aEnd + 1] + '`), skipping'
       );
-      return this.getAttribute(text, lm, aEnd)
+      return this.getCompiledAttribute(text, lm, aEnd)
     }
 
     return {
