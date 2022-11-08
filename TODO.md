@@ -18,7 +18,7 @@ Test:
   - [DONE] functions
   - [DONE] inline
 - [DONE] Attributes
-  - injected
+  - [DONE] injected
   - [DONE] native
   - [DONE] custom
 - [DONE] Registering
@@ -47,10 +47,10 @@ Test:
 - [DONE] If
   - [DONE] injected
   - [DONE] functions and operations
-- injected
-  - packing
-  - no packing
-  - mix
+- [DONE] injected
+  - [DONE] packing
+  - [DONE] no packing
+  - [DONE] mix
 - Kamikaze
   - If
   - for

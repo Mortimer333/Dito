@@ -1,0 +1,34 @@
+<test-empty>
+  <h1>Should not be rendered</h1>
+</test-empty>
+<test-injected>
+  <h1>Should be rendered</h1>
+</test-injected>
+<test-inject-pack1>
+  <h1 name="titleInvisible">Pack1: Should not be rendered</h1>
+  <h1 @pack="pack1" name="titleVisible">Pack1: Should be rendered</h1>
+  <h2 @pack="pack1" name="subTitleVisible">Pack1: Should also be rendered</h2>
+  <p @pack="pack1" @if="true" class="pack1" name="visible">
+    Pack2: Should be rendered and visible
+  </p>
+  <p @pack="pack1" @if="false" class="pack1" name="hidden">
+    Pack2: Should be rendered and be invisible
+  </p>
+  <div @pack="pack1"  @for="2" name="twice" class="pack1">
+    Should be rendered twice
+  </div>
+</test-inject-pack1>
+<test-inject-pack2>
+  <h1 name="titleInvisible">Pack2: Should not be rendered</h1>
+  <h1 @pack="pack2" class="pack2" name="titleVisible">Pack2: Should be rendered</h1>
+  <h2 @pack="pack2" class="pack2" name="subTitleVisible">Pack2: Should also be rendered</h2>
+  <p @pack="pack2" @if="true" class="pack2" name="visible">
+    Pack2: Should be rendered and visible
+  </p>
+  <p @pack="pack2" @if="false" class="pack2" name="hidden">
+    Pack2: Should be rendered and be invisible
+  </p>
+  <div @pack="pack2" @for="2" name="twice" class="pack2">
+    Should be rendered twice
+  </div>
+</test-inject-pack2>

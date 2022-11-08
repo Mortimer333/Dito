@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>Test</title>
+  </head>
+  <body>
+    <test-inject></test-inject>
+    <script type="module">
+      import * as TH from "../test.js";
+
+      const container = TH.getContainer({
+        callback : () => {
+          const inject = document.querySelector('test-inject');
+          const empty = inject.querySelector('test-empty');
+          const injected = inject.querySelector('test-injected');
+          const pack1 = inject.querySelector('test-inject-pack1');
+          const pack2 = inject.querySelector('test-inject-pack2');
+
+          TH.tests['HTML was not injected in empty'] = TH.failure;
+          if (empty.innerText.indexOf('Should not be rendered') === -1) {
+            TH.tests['HTML was not injected in empty'] = TH.success;
+          }
+
+          TH.tests['HTML was injected into injected'] = TH.failure;
+          if (injected.children.length > 0 && injected.innerText.trim() == 'Should be rendered') {
+            TH.tests['HTML was injected into injected'] = TH.success;
+          }
+
+          [pack1, pack2].forEach((pack, i) => {
+            TH.tests['HTML was compiled and injected into pack' + i] = TH.failure;
+            const titleInvisible = pack.querySelector('[name="titleInvisible"]');
+            const titleVisible = pack.querySelector('[name="titleVisible"]');
+            const subTitleVisible = pack.querySelector('[name="subTitleVisible"]');
+            const visible = pack.querySelector('[name="visible"]');
+            const hidden = pack.querySelector('[name="hidden"]');
+            const twice = pack.querySelectorAll('[name="twice"]');
+            if (!titleInvisible && titleVisible && subTitleVisible && visible && !hidden && twice.length == 2) {
+              TH.tests['HTML was compiled and injected into pack' + i] = TH.success;
+            }
+          });
+          TH.validateTestAndMoveToNext();
+        }
+      });
+      container.register('test-empty', Math.random());
+      container.register('test-inject', Math.random());
+      container.register('test-injected', Math.random());
+      container.register('test-inject-pack1', Math.random(), 'test-inject/');
+      container.register('test-inject-pack2', Math.random(), 'test-inject/');
+      await container.load();
+
+    </script>
+  </body>
+</html>
