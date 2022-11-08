@@ -17,10 +17,10 @@ Test:
   - [DONE] injected
   - [DONE] functions
   - [DONE] inline
-- Attributes
+- [DONE] Attributes
   - injected
-  - native
-  - custom
+  - [DONE] native
+  - [DONE] custom
 - [DONE] Registering
   - [DONE] tags present on site are downloaded
   - [DONE] tags from downloaded content are also being imported

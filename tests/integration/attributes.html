@@ -13,10 +13,13 @@
           callback : () => {
             const custom = document.getElementById('empty-id');
             const native = document.getElementById('native-id');
+            const nativeP = document.getElementById('native-p-id');
             TH.tests['ID was set properly on custom'] = TH.failure;
             TH.tests['Name was set properly on custom'] = TH.failure;
             TH.tests['ID was set properly on native'] = TH.failure;
             TH.tests['Name was set properly on native'] = TH.failure;
+            TH.tests['ID was set properly on P native'] = TH.failure;
+            TH.tests['Class was set properly on P native'] = TH.failure;
 
             if (custom) {
               TH.tests['ID was set properly on custom'] = TH.success;
@@ -33,6 +36,15 @@
                 TH.tests['Name was set properly on native'] = TH.success;
               }
             }
+
+            if (nativeP) {
+              TH.tests['ID was set properly on P native'] = TH.success;
+              const className = nativeP.getAttribute('class');
+              if (className && className == 'class-test') {
+                TH.tests['Class was set properly on P native'] = TH.success;
+              }
+            }
+
             TH.validateTestAndMoveToNext();
           }
       });
