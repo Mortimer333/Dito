@@ -16,7 +16,7 @@ export { EarthElement as default };
 
 ### HTML:
 ```html
-<h1 @a:className="className">Planet: {{name}} {{icon}}</h1>
+<h1 @a:class="className">Planet: {{name}} {{icon}}</h1>
 ```
 
 ### Output:
@@ -26,7 +26,7 @@ export { EarthElement as default };
 ```
 
 # Components
-Main purpose of this library is to have reusable Front End components with their own scope (both CSS and JS) without need for any large framework to make it work.
+Main purpose of this library is to have reusable Front End components with their own scope (both CSS and JS) without need for large framework to make it work.
 
 The main difference between this and i.e. Vue is that components are not on the site but are downloaded later. So you can register hundreds of components but if they are not used on current page they will not be downloaded which helps with keeping the website slim.
 
@@ -217,6 +217,25 @@ Inside `for` you have access to two additional values `$key` and `$value`:
 </p>
 ```
 
+##### `@value` and `@key`
+You can rename `$key` and `$value` variables when you want, for example, use it inside nested for:
+```html
+<div @for="['a','b']" @key="index" @value="letter">
+  <p @for="2">{{ index }} : {{ letter }} - {{ $key }}</p>
+</div>
+```
+Output:
+```html
+<div>
+  <p>0 : a - 0</p>
+  <p>0 : a - 1</p>
+</div>
+<div>
+  <p>1 : b - 0</p>
+  <p>1 : b - 1</p>
+</div>
+```
+
 ## Events
 You can attach any kind of event to the element that will be resolved with functionality from the template by adding `@e:` prefix and transforming name to the one used by `addEventListener`:
 #### before:
@@ -295,7 +314,7 @@ You can bind values to native tags like `input`. It is extremely useful when use
 ```js
 <input @b:value="inputValue">
 ```
-**!IMPORTANT**: update happens on `change` event which is triggered mostly on `focusout` when using inputs.
+**!IMPORTANT**: update happens on `change` event or `MutationObserver` for native elements.
 
 ## Injected HTML
 You can inject HTML to the component and decide where to use it inside the template with `dito-inject` tag:
