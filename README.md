@@ -375,22 +375,6 @@ Bio:
 <p dito-pack="bio">Trying to live my best life</p>
 ```
 
-## Containers
-To aviod unnecessary HTML nesting, library presents element which will remove itself by comitting something similar to node suicide by removing all his internal elements and removing itself. It's called `dito-kamikaze`:
-```html
-<dito-kamikaze @for="['First', 'Second']">
-  <h1>#{{ $key + 1 }}</h1>
-  <p>{{ $value }}</p>
-</dito-kamikaze>
-```
-Render:
-```html
-<h1>#1</h1>
-<p>First</p>
-<h1>#2</h1>
-<p>Second</p>
-```
-
 # Dynamic CSS
 CSS is also being downloaded and assigned to the component, so why not allow using variables inside of it? Anything set in `$css` will be available inside your components CSS file:
 

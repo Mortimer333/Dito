@@ -1,13 +1,9 @@
-Test:
-- Dynamic CSS
-  - executables (two same components different styles)
-- Kamikaze
-  - If
-  - for
-  - inject
-- Lify cycle
-  - prepare
-  - beforeRender
+[DONE] Test:
+- [DONE] Dynamic CSS
+  - [DONE] executables (two same components different styles)
+- [DONE] Lify cycle
+  - [DONE] prepare
+  - [DONE] beforeRender
   - [DONE] init
   - [DONE] afterRender
 - [DONE] Main instance
