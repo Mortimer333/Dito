@@ -28,10 +28,12 @@ class DitoElement extends HTMLElement {
   }
 
   /* EVENTS */
-  prepare(){}            // Before constructor starts but after HTMLElement constructor
-  init(){}               // After constructor finishes
-  beforeRender(){}       // Before render
-  afterRender(result){}  // After render
+  prepare(){}               // Before constructor starts but after HTMLElement constructor
+  init(){}                  // After constructor finishes
+  beforeRender(){}          // Before render
+  afterRender(result){}     // After render
+  beforeCssRender(){}       // Before render
+  afterCssRender(result){}  // After render
 
   connectedCallback() {
     if (!document.body.contains(this)) {
@@ -236,32 +238,38 @@ class DitoElement extends HTMLElement {
       return;
     }
 
-    if (!this.__dito.compiledCSS) {
-      this.compileCSS();
+    this.beforeCssRender();
+    try {
+      if (!this.__dito.compiledCSS) {
+        this.compileCSS();
+      }
+
+      let css = this.__dito.css;
+      css = this.resolveCssExecutables(css)
+      const stylesheet = new CSSStyleSheet();
+      await stylesheet.replace(css).catch(err => {
+        throw new Error('Failed to replace styles in `' + this.localName + '`: ' + err);
+      });
+
+      const styles = [];
+      const sheet = window.__dito.main.styleNode.sheet;
+      Object.values(stylesheet.cssRules).forEach((rule, i) => {
+        let index = sheet.cssRules.length;
+        if (this.$self.cssIndices[i]) {
+          index = this.$self.cssIndices[i];
+        } else {
+          this.$self.cssIndices[i] = index;
+        }
+        const nestedRule = this.$self.cssPath + ' ' + rule.cssText;
+        if (sheet.cssRules[index]) {
+          sheet.deleteRule(index);
+        }
+        sheet.insertRule(nestedRule, index);
+      });
+      this.afterCssRender({success: true});
+    } catch (e) {
+      this.afterCssRender({success: false, error: e});
     }
-
-    let css = this.__dito.css;
-    css = this.resolveCssExecutables(css)
-    const stylesheet = new CSSStyleSheet();
-    await stylesheet.replace(css).catch(err => {
-      throw new Error('Failed to replace styles in `' + this.localName + '`: ' + err);
-    });
-
-    const styles = [];
-    const sheet = window.__dito.main.styleNode.sheet;
-    Object.values(stylesheet.cssRules).forEach((rule, i) => {
-      let index = sheet.cssRules.length;
-      if (this.$self.cssIndices[i]) {
-        index = this.$self.cssIndices[i];
-      } else {
-        this.$self.cssIndices[i] = index;
-      }
-      const nestedRule = this.$self.cssPath + ' ' + rule.cssText;
-      if (sheet.cssRules[index]) {
-        sheet.deleteRule(index);
-      }
-      sheet.insertRule(nestedRule, index);
-    });
   }
 
   resolveCssExecutables(css) {

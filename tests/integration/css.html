@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>Test</title>
+  </head>
+  <body>
+    <test-css></test-css>
+    <script type="module">
+      import * as TH from "../test.js";
+
+      const container = TH.getContainer({
+        callback: () => {
+          const css = document.querySelector('test-css');
+          TH.tests['Color of P was changed'] = TH.failure;
+          css.$css.color = "blue";
+          css.afterCssRender = res => {
+            if (!res.success) {
+              return;
+            }
+
+            const p = css.querySelector('p');
+            const cssObj = window.getComputedStyle(p, null);
+            const color = cssObj.getPropertyValue("color");
+            console.log(color);
+            if (color == 'rgb(0, 0, 255)') {
+              TH.tests['Color of P was changed'] = TH.success;
+            }
+            TH.validateTestAndMoveToNext();
+          }
+        }
+      });
+      container.register('test-css', Math.random());
+      await container.load();
+
+    </script>
+  </body>
+</html>

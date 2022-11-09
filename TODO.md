@@ -1,4 +1,15 @@
 Test:
+- Dynamic CSS
+  - executables (two same components different styles)
+- Kamikaze
+  - If
+  - for
+  - inject
+- Lify cycle
+  - prepare
+  - beforeRender
+  - [DONE] init
+  - [DONE] afterRender
 - [DONE] Main instance
   - [DONE] url
   - [DONE] params
@@ -27,16 +38,9 @@ Test:
   - [DONE] localStorage on/off
   - [DONE] force
   - [DONE] nested
-- Dynamic CSS
-  - executables (two same components different styles)
 - [DONE] Rendering
   - [DONE] First render should happen only once per component
   - [DONE] reusing components
-- Lify cycle
-  - prepare
-  - [DONE] init
-  - beforeRender
-  - [DONE] afterRender
 - [DONE] executables
   - [DONE] functions and operations
   - [DONE] injected
@@ -51,7 +55,3 @@ Test:
   - [DONE] packing
   - [DONE] no packing
   - [DONE] mix
-- Kamikaze
-  - If
-  - for
-  - inject

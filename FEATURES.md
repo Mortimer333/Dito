@@ -1,5 +1,6 @@
 # Features:
-- [DONE] Event when first render finishes and every component is downloaded - not really doable with all those asyncs, and removing that creates pretty long waiting time
+- Add custom events on renderes, will be called on elements (<custom-element @e:renderdone="" @e:renderstart="")
+- [DONE] Fuction when first render finishes and every component is downloaded
 - [DONE] container tag - like ng-container which will just this.outerHTML = this.innerHTML, probably gonna call him dito-kamikaze
 - [DONE] allow injected html to be separate int different packages that can be used in few places
 - [DONE] change name of files from `main` to name of component so debuging is easier
@@ -22,11 +23,11 @@
 - [DONE] file separation
 - [DONE] events and {{}}
 - [DONE] passing html to the inside of element will result in rendering it inside of it
-- [REMOVED] templates: - Not needed, just create sperate component
-- reusable in component
-- have their own scope
-- are defined like this : <dito-template @n="template1"> <h1>Lalala</h1> </dito-template> nad used like this <dito-render @t="template1"></dito-render>
 - [DONE] allow choosing where to put injected html
+- [REMOVED] templates: - Not needed, just create sperate component
+  - reusable in component
+  - have their own scope
+  - are defined like this : <dito-template @n="template1"> <h1>Lalala</h1> </dito-template> nad used like this <dito-render @t="template1"></dito-render>
 - [REMOVED] allow to bind values in object (this.$.settings.password) - provides to complication which outweight benefits
 - [REMOVE] create `this` variable in events and outputs so we can pass reference to the node - not really needed but slows script o fair amount
 - [REMOVED] Add jmonkey-spinner class - if someone wants to have loaders they will add them
