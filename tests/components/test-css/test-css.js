@@ -1,4 +1,4 @@
-import { DitoElement } from '../../../root.js';
+import { DitoElement } from '../../../ditoelement.js';
 class TestCss extends DitoElement {
   init() {
     this.$css.color = 'red';

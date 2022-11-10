@@ -1,18 +1,16 @@
 class Dito {
   url;
-  localStorage = true;
-  filename = 'main';
-  headers = {};
+  styleNode;
   params = {};
+  headers = {};
   components = {};
   registered = [];
-  firstRendered = new Map();
+  _SKIP = '_skip';
   notDownloaded = {};
   downloadCheck = {};
-  _SKIP = '_skip';
-  styleNode;
-  kamikazeTagName = 'dito-kamikaze';
+  localStorage = true;
   downloadFinished = false;
+  firstRendered = new Map();
 
   constructor(settings = {}) {
     if (this.detectCSPRestriction()) {
@@ -52,11 +50,7 @@ class Dito {
     const callback = (mutationList, observer) => {
       for (const mutation of mutationList) {
         const binds = mutation?.target?.$self?.binds;
-        if (mutation.type === 'attributes') {
-          return;
-        }
-
-        if (!binds || !binds[mutation.attributeName]) {
+        if (mutation.type === 'attributes' || !binds || !binds[mutation.attributeName]) {
           return;
         }
 
@@ -139,12 +133,16 @@ class Dito {
     const skipSize = 3;
     await Promise.all(registered).then(async values => {
       for (var i = 0; i < values.length; i++) {
-        if (values[i + 1].message || values[i + 2].message || values[i + 3].message) {
+        let html = values[i + 1];
+        let js   = values[i + 2];
+        let css  = values[i + 3];
+
+        if (html.message || js.message || css.message) {
           console.error(
             'There was unexpected network error at #' + ((i/4) + 1) + '. Skipping...',
-            values[i + 1],
-            values[i + 2],
-            values[i + 3]
+            html,
+            js,
+            css
           );
           i += skipSize;
           continue;
@@ -160,9 +158,7 @@ class Dito {
         const version = compAndVer[compAndVer.length - 1];
         const component = compAndVer.slice(0, -1).join('_');
 
-        let html = values[i + 1];
-        let js   = values[i + 2];
-        let css  = values[i + 3];
+
         if (!await this.validateFiles(component, {html, css})) {
           i += skipSize;
           continue;

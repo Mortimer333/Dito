@@ -1,4 +1,4 @@
-import { DitoElement } from '../../../root.js';
+import { DitoElement } from '../../../ditoelement.js';
 class TestInput extends DitoElement {
   init() {
     this.$.inputValue = 'test';

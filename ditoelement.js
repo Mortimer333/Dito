@@ -3,7 +3,6 @@ class DitoElement extends HTMLElement {
   valueName = "$value";
   eventName = "$event";
   indexAtr = 'dito-i';
-  indexForAttrName = 'dito-for-i';
   packAttrName = 'dito-pack';
   timeAtr = 'dito-t';
 
@@ -27,13 +26,13 @@ class DitoElement extends HTMLElement {
     });
   }
 
-  /* EVENTS */
+  /* "EVENTS" */
   prepare(){}               // Before constructor starts but after HTMLElement constructor
   init(){}                  // After constructor finishes
   beforeRender(){}          // Before render
   afterRender(result){}     // After render
-  beforeCssRender(){}       // Before render
-  afterCssRender(result){}  // After render
+  beforeCssRender(){}       // Before CSS render
+  afterCssRender(result){}  // After CSS render
 
   connectedCallback() {
     if (!document.body.contains(this)) {
@@ -146,15 +145,6 @@ class DitoElement extends HTMLElement {
             this.tag.queueCssRender(prop);
           }
           return Reflect.set(...arguments);
-        },
-        get (target, prop, receiver) {
-          let value = target[prop];
-
-          if (typeof value == 'function') {
-            return value.bind(this.tag)();
-          }
-
-          return Reflect.get(...arguments);
         }
       }),
       writable: false
@@ -426,7 +416,6 @@ class DitoElement extends HTMLElement {
     actions.forEach(action => {
       if (!item.$) {
         if (window.__dito.registered[item.localName]) {
-          // this.$self.toInput.push({input: action, node: item});
           const input = this.$self.toInput.get(item);
           if (input) {
             this.$self.toInput.set(item, [...input, action]);
@@ -534,7 +523,6 @@ class DitoElement extends HTMLElement {
   setBind(bind, node) {
     const {name, value} = bind;
     node.$[name] = this.$[value];
-    // node.clearRenderQueue();
     node.$binded[name] = this;
     const item = {receiver: name, provider: value};
     const binded = this.$binder.get(node);
@@ -779,7 +767,6 @@ class DitoElement extends HTMLElement {
     }
   }
 
-  //@TODO reimplement
   resolveInjected(parent) {
     parent.querySelectorAll('dito-inject').forEach(node => {
       if (node.innerHTML.trim().length != 0) {
@@ -801,19 +788,6 @@ class DitoElement extends HTMLElement {
         });
       }
       node.remove();
-    });
-  }
-
-  //@TODO reimplement
-  assignPacks(parent) {
-    parent.$self.injectedPacks = {};
-    parent.querySelectorAll('[' + this.packAttrName + ']').forEach(node => {
-      const name = node.attributes[this.packAttrName]?.value;
-      if (parent.$self.injectedPacks[name]) {
-        parent.$self.injectedPacks[name].push(node);
-      } else {
-        parent.$self.injectedPacks[name] = [node];
-      }
     });
   }
 
@@ -854,8 +828,7 @@ class DitoElement extends HTMLElement {
   }
 
   defineFor(node) {
-    const actions = this.__dito.actions;
-    const aliases = [], keys = [], values = [];
+    const actions = this.__dito.actions, aliases = [], keys = [], values = [];
     node.getAttributeNames().forEach(name => {
       if (actions.fors[name]) {
         aliases.push(name);
@@ -981,7 +954,7 @@ class DitoElement extends HTMLElement {
       this.$self.children.push(node);
     }
 
-    if (node.nodeType == 3) { // Is text
+    if (node.nodeType == 3) {
       return node;
     }
 
@@ -989,8 +962,7 @@ class DitoElement extends HTMLElement {
   }
 
   searchForNotDownloaded(parent) {
-    const notDownloaded = window.__dito.main.notDownloaded;
-    const keys = Object.keys(notDownloaded);
+    const notDownloaded = window.__dito.main.notDownloaded, keys = Object.keys(notDownloaded);
     if (keys.length == 0) {
       return;
     }
@@ -1204,7 +1176,6 @@ class DitoElement extends HTMLElement {
     let timer;
     return (...args) => {
       clearTimeout(timer);
-      // if passed `clear` then stop debouncing
       if (args[0] === "clear") {
         return;
       }

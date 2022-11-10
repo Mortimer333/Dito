@@ -1,4 +1,4 @@
-import { DitoElement } from '../../../root.js';
+import { DitoElement } from '../../../ditoelement.js';
 class TestIf extends DitoElement {
   init() {
     this.$.display1 = true;

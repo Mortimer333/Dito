@@ -432,7 +432,7 @@ So any change during the call, inside classes scope, will be overwritten by the 
 
 #### JS of `<cake-block>` element
 ```js
-class CakeBlock extends RootJoin {
+class CakeBlock extends DitoElement {
   [...]
   testFn() {
     this.$.test = 'function test';
@@ -471,7 +471,7 @@ The same rule applies to events:
 
 #### JS of `<event-cake-block>` element
 ```js
-class CakeBlock extends RootJoin {
+class CakeBlock extends DitoElement {
   [...]
   testEventFn() {
     this.$.testEvent = 'function test event';

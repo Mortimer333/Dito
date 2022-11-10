@@ -1,4 +1,4 @@
-import { DitoElement } from '../../../../root.js';
+import { DitoElement } from '../../../../ditoelement.js';
 class TestBound extends DitoElement {
   init() {
     this.$.bound = 'a';

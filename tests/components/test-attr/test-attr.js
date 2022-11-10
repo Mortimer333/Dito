@@ -1,4 +1,4 @@
-import { DitoElement } from '../../../root.js';
+import { DitoElement } from '../../../ditoelement.js';
 class TestAttr extends DitoElement {
   init() {
     this.$.id = 'empty-id';
