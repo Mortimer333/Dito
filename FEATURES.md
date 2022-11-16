@@ -1,4 +1,5 @@
 # Features:
+- only remove local storage items with proper prefix - `dito_` 
 - Add custom events on renderes, will be called on elements (<custom-element @e:renderdone="" @e:renderstart="")
 - [DONE] Fuction when first render finishes and every component is downloaded
 - [DONE] container tag - like ng-container which will just this.outerHTML = this.innerHTML, probably gonna call him dito-kamikaze
