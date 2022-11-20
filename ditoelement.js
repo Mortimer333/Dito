@@ -112,12 +112,11 @@ class DitoElement extends HTMLElement {
             if (value !== obj[prop]) {
               this.tag.queueRender();
             }
-            if (this.tag.$binded[prop] && this.tag.$binded[prop][prop] !== value) {
-              const binder = this.tag.$binded[prop].$binder.get(this.tag);
-              if (binder) {
-                binder.forEach(item => {
-                  this.tag.$binded[item.receiver].$[item.provider] = value;
-                });
+
+            if (this.tag.$binded[prop]) {
+              const { provider, receiver } = this.tag.$binded[prop];
+              if (provider.target.$[provider.name] !== value) {
+                provider.target.$[provider.name] = value;
               }
             }
 
@@ -133,7 +132,7 @@ class DitoElement extends HTMLElement {
     });
 
     Object.defineProperty(this, "$binder", {
-      value: new WeakMap(),
+      value: {},
       writable: false
     });
 
@@ -329,15 +328,16 @@ class DitoElement extends HTMLElement {
 
       this.$self.children.forEach(child => {
         this.actionItem(child);
-        this.updateBinds(child);
       });
 
+      this.updateBinds();
+
+      this.afterRender({success: true});
       if (!this.$self.rendered) {
         window.__dito.main.firstRendered.delete(this);
         this.$self.rendered = true;
         window.__dito.main.allDownloaded();
       }
-      this.afterRender({success: true});
       res = true;
     } catch (e) {
       console.error('There was an error during rendering', e);
@@ -471,15 +471,7 @@ class DitoElement extends HTMLElement {
       this.defineSelf(node);
     }
 
-    const item = {receiver: name, provider: value};
-    const binded = this.$binder.get(node);
-    if (binded) {
-      this.$binder.set(node, [...binded, item]);
-    } else {
-      this.$binder.set(node, [item]);
-    }
-
-    node.$self.binds[name] = {
+    const item = {
       provider: {
         target: this,
         name: value
@@ -489,6 +481,13 @@ class DitoElement extends HTMLElement {
         name: name
       }
     };
+    if (this.$binder[value]) {
+      this.$binder[value].push(item);
+    } else {
+      this.$binder[value] = [item];
+    }
+
+    node.$self.binds[name] = item;
 
     // Mutation for attributes like class (outside) and change for like value (inside)
     this.setMutationObserver(node);
@@ -523,35 +522,41 @@ class DitoElement extends HTMLElement {
   setBind(bind, node) {
     const {name, value} = bind;
     node.$[name] = this.$[value];
-    node.$binded[name] = this;
-    const item = {receiver: name, provider: value};
-    const binded = this.$binder.get(node);
-    if (binded) {
-      this.$binder.set(node, [...binded, item]);
+    const item = {
+      provider: {
+        target: this,
+        name: value
+      },
+      receiver: {
+        target: node,
+        name: name
+      }
+    };
+    node.$binded[name] = item;
+
+    if (this.$binder[value]) {
+      this.$binder[value].push(item);
     } else {
-      this.$binder.set(node, [item]);
+      this.$binder[value] = [item];
     }
   }
 
-  updateBinds(child) {
-    if (!this.$binder.has(child)) {
-      return;
-    }
-
-    if (window.__dito.registered[child.localName]) {
-      this.$binder.get(child).forEach(bind => {
-        child.$[bind.receiver] = this.$[bind.provider];
-      });
-    } else {
-      this.$binder.get(child).forEach(bind => {
+  updateBinds() {
+    Object.values(this.$binder).forEach(binds => {
+      binds.forEach(bind => {
         const {receiver, provider} = bind;
-        if (typeof child[receiver] != 'undefined') {
-          child[receiver] = this.$[provider];
-        } else if (typeof child.getAttribute(name) != 'undefined') {
-          child.setAttribute(receiver, this.$[provider]);
+        const child = receiver.target;
+        if (window.__dito.registered[child.localName]) {
+          receiver.target.$[receiver.name] = this.$[provider.name];
+        } else {
+          if (typeof child[receiver.name] != 'undefined') {
+            child[receiver.name] = this.$[provider.name];
+          } else if (typeof child.getAttribute(receiver.name) != 'undefined') {
+            child.setAttribute(receiver.name, this.$[provider.name]);
+          }
         }
       });
-    }
+    });
   }
 
   setupEvents(item) {

@@ -1,5 +1,17 @@
 # Features:
-- only remove local storage items with proper prefix - `dito_` 
+- Insert inputs after `init`
+- CSS - special var which refers to the `self` so we can set styles to this container, ex: $self { display: block; } => element-one { display:block; }
+- Bring back Kamikaze to solve this problem:
+```html
+<div class="nav-link h-full" @for="nav" @value="link">
+    <img @if="link?.type === 'logo'" @a:src="link.src" alt="logo" class="nav-logo">
+    <p @if="!link?.type || link.type === 'item'">
+      {{ link.title }}
+    </p>
+  </div>
+```
+- allow to retrieve on force and use saved components from localStorage
+- only remove local storage items with proper prefix - `dito_`
 - Add custom events on renderes, will be called on elements (<custom-element @e:renderdone="" @e:renderstart="")
 - [DONE] Fuction when first render finishes and every component is downloaded
 - [DONE] container tag - like ng-container which will just this.outerHTML = this.innerHTML, probably gonna call him dito-kamikaze
