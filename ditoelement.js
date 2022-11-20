@@ -286,7 +286,6 @@ class DitoElement extends HTMLElement {
       this.queueRender();
       return;
     }
-
     this.clearRenderQueue();
     this.$self.rendering = true;
     if (document.body.querySelector(this.localName + ' ' + this.localName)) {
@@ -566,6 +565,7 @@ class DitoElement extends HTMLElement {
     }
 
     actions.forEach(action => {
+      console.log(action);
       item.addEventListener(action.name, (e) => {
         const observableKeys = this.getObservablesKeys(item);
         const valuesBefore = this.getObservablesValues(item);
@@ -937,15 +937,6 @@ class DitoElement extends HTMLElement {
       node.removeAttribute(alias);
     }
 
-    if (this.$self.uniqueNodes.get(node)) {
-      return node;
-    }
-
-    node.$self.parent = this;
-    node.$self.scope = Object.assign({}, this.$self.scope);
-
-    this.$self.uniqueNodes.set(node, true)
-
     const unique = {
       "events" : true,
       "binds" : true,
@@ -959,9 +950,14 @@ class DitoElement extends HTMLElement {
       this.$self.children.push(node);
     }
 
-    if (node.nodeType == 3) {
+    if (this.$self.uniqueNodes.get(node)) {
       return node;
     }
+
+    node.$self.parent = this;
+    node.$self.scope = Object.assign({}, this.$self.scope);
+
+    this.$self.uniqueNodes.set(node, true)
 
     return node;
   }
