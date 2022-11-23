@@ -1,4 +1,8 @@
 # Features:
+- ability to save node (like simple div to later access it) without setting id
+- min amount of iterations on for
+- CSS - let decide which styles should be scoped and which should be global (global wont be duplicated)
+- Add variable for default attributes of the custom elements: default classes, default value etc.
 - Insert inputs after `init`
 - CSS - special var which refers to the `self` so we can set styles to this container, ex: $self { display: block; } => element-one { display:block; }
 - Bring back Kamikaze to solve this problem:

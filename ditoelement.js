@@ -565,7 +565,6 @@ class DitoElement extends HTMLElement {
     }
 
     actions.forEach(action => {
-      console.log(action);
       item.addEventListener(action.name, (e) => {
         const observableKeys = this.getObservablesKeys(item);
         const valuesBefore = this.getObservablesValues(item);
@@ -618,6 +617,7 @@ class DitoElement extends HTMLElement {
       if (!document.body.contains(anchor)) {
         node.$self.for.anchors.splice(i, 1);
         i--;
+        anchor.remove();
         continue;
       }
 
@@ -628,7 +628,7 @@ class DitoElement extends HTMLElement {
   renderFor(node, anchor, values, keys, indent) {
     if (keys.length < anchor.$self.children.length) {
       anchor.$self.children.splice(keys.length).forEach(child => {
-        child.remove();
+        this.removeFromChildren(child);
       });
     }
 
@@ -675,6 +675,17 @@ class DitoElement extends HTMLElement {
     if (anchor.nodeType !== 3) {
       this.reconstructForAnchor(anchor, anchor)
     }
+  }
+
+  removeFromChildren(item) {
+    for (var i = 0; i < this.$self.children.length; i++) {
+      const child = this.$self.children[i];
+      if (item.contains(child)) {
+        this.$self.children.splice(i, 1);
+        i--;
+      }
+    }
+    item.remove();
   }
 
   reconstructForAnchor(oldAnchor, realAnchor) {
