@@ -12,7 +12,6 @@
 - min amount of iterations on for
 - CSS - let decide which styles should be scoped and which should be global (global wont be duplicated)
 - Add variable for default attributes of the custom elements: default classes, default value etc.
-- Insert inputs after `init`
 - CSS - special var which refers to the `self` so we can set styles to this container, ex: $self { display: block; } => element-one { display:block; }
 - [DONE] only remove local storage items with proper prefix - `dito_`
 - [DONE] Add custom events on renderes, will be called on elements (<custom-element @e:renderdone="" @e:renderstart="")
@@ -40,6 +39,7 @@
 - [DONE] events and {{}}
 - [DONE] passing html to the inside of element will result in rendering it inside of it
 - [DONE] allow choosing where to put injected html
+- [REMOVED] Insert inputs after `init` - actually this is correct flow, you can set default if there is no value but with that you can still take actions on init and not after
 - [REMOVED] allow to retrieve on force and use saved components from localStorage - just call without force; force is made explicitly to not use localStorage
 - [REMOVED] templates: - Not needed, just create sperate component
   - reusable in component

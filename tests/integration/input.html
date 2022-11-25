@@ -13,6 +13,7 @@
         callback: () => {
           const input = document.body.querySelector('test-input');
           const empty = input.querySelector('test-empty');
+          const inputChild = input.querySelector('test-input-child');
           const div = input.querySelector('#div-test');
           TH.tests['Input passed into custom element'] =
             typeof empty.$?.inputTest != 'undefined'
@@ -20,11 +21,14 @@
               ? TH.success : TH.failure;
           TH.tests['Input passed into native element returns error'] =
             div.className.length == 0 ? TH.success : TH.failure;
+          TH.tests['Input passed into input child is overwritten in init'] =
+            inputChild.$.inputValueChild == 'test child' ? TH.success : TH.failure;
           TH.validateTestAndMoveToNext();
         }
       });
       container.register('test-empty', Math.random());
       container.register('test-input', Math.random());
+      container.register('test-input-child', Math.random(), 'test-input/');
       container.load();
 
     </script>
