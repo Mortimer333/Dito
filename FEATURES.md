@@ -14,7 +14,6 @@
     </p>
   </div>
 ```
-- allow to retrieve on force and use saved components from localStorage
 - only remove local storage items with proper prefix - `dito_`
 - Add custom events on renderes, will be called on elements (<custom-element @e:renderdone="" @e:renderstart="")
 - [DONE] Fuction when first render finishes and every component is downloaded
@@ -41,6 +40,7 @@
 - [DONE] events and {{}}
 - [DONE] passing html to the inside of element will result in rendering it inside of it
 - [DONE] allow choosing where to put injected html
+- [REMOVED] allow to retrieve on force and use saved components from localStorage - just call without force; force is made explicitly to not use localStorage
 - [REMOVED] templates: - Not needed, just create sperate component
   - reusable in component
   - have their own scope
