@@ -101,10 +101,14 @@ class Dito {
     this.registered.push(...this.createRegisterPromise(path, name, version, force));
   }
 
+  getStorageName(name) {
+    return '_dito_' + name;
+  }
+
   createRegisterPromise(path, name, version, force = false) {
     let skip = false;
-    if (this.localStorage && !force && localStorage.getItem(name)) {
-      const comp = JSON.parse(localStorage.getItem(name));
+    if (this.localStorage && !force && localStorage.getItem(this.getStorageName(name))) {
+      const comp = JSON.parse(localStorage.getItem(this.getStorageName(name)));
       if (comp._version == version) {
         skip = true;
       }
@@ -165,7 +169,7 @@ class Dito {
           continue;
         }
 
-        const localComponent = JSON.parse(localStorage.getItem(component) || 'false');
+        const localComponent = JSON.parse(localStorage.getItem(this.getStorageName(component)) || 'false');
         if (!localComponent && (html === this._SKIP || css === this._SKIP)) {
           console.error(
             'The component `' + component + '` was marked as already loaded once but' +
@@ -254,17 +258,22 @@ class Dito {
       return;
     }
     try {
-      localStorage.setItem(key, data);
+      localStorage.setItem(this.getStorageName(key), data);
     } catch (e) {
       if (e.name.toLowerCase().match(/quota/)) {
-        if (localStorage.length == 0) {
-          console.error("Component `" + key + "` won't be cached because of his size (over 5mb)");
+        const lengthBefore = localStorage.length;
+        this.removeOldestComponent();
+        if (lengthBefore === localStorage.length) {
+          console.error("Component `" + key + "` won't be cached because there is no space in localStorage");
           return;
         }
-        this.removeOldestComponent();
         this.saveComponent(key, data);
       }
     }
+  }
+
+  isDitoComponentKey(name) {
+    return name.substr(0, 6) === '_dito_';
   }
 
   removeOldestComponent() {
@@ -274,6 +283,9 @@ class Dito {
     }
     for (let i=0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
+      if (!this.isDitoComponentKey(key)) {
+        continue;
+      }
       const component = localStorage.getItem(key);
       if (!oldest.time) {
         oldest.time = component.time;
