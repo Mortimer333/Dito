@@ -43,12 +43,43 @@ class Dito {
     });
 
     this.defineMutationObserver();
+    this.defineCustomEvents();
+  }
+
+  defineCustomEvents() {
+    window.__dito.events = {};
+    window.__dito.events.render = new CustomEvent("render", {
+      detail: {},
+      bubbles: true,
+      cancelable: true,
+      composed: false,
+    });
+
+    window.__dito.events.rendered = new CustomEvent("rendered", {
+      detail: {},
+      bubbles: true,
+      cancelable: true,
+      composed: false,
+    });
+
+    window.__dito.events.firstrender = new CustomEvent("firstrender", {
+      detail: {},
+      bubbles: true,
+      cancelable: true,
+      composed: false,
+    });
+
+    window.__dito.events.firstrendered = new CustomEvent("firstrendered", {
+      detail: {},
+      bubbles: true,
+      cancelable: true,
+      composed: false,
+    });
   }
 
   defineMutationObserver() {
     // Callback function to execute when mutations are observed
     const callback = (mutationList, observer) => {
-      console.log("new mutation");
       for (const mutation of mutationList) {
         const binds = mutation?.target?.$self?.binds;
         if (mutation.type === 'attributes' || !binds || !binds[mutation.attributeName]) {

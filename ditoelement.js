@@ -277,7 +277,7 @@ class DitoElement extends HTMLElement {
     return this.createQueryUp(element.parentElement, parent) + ' ' + element.localName + ':nth-child(' + index + ')';
   }
 
-  render(force = false) {
+  async render(force = false) {
     if (!force && (this.$self.renderInProgress || !document.body.contains(this))) {
       return;
     }
@@ -287,13 +287,19 @@ class DitoElement extends HTMLElement {
       return;
     }
     this.clearRenderQueue();
-    this.$self.rendering = true;
     if (document.body.querySelector(this.localName + ' ' + this.localName)) {
       throw new Error('Custom element ' + this.localName + ' is recursively called. Stopping the render....');
     }
 
+    this.$self.rendering = true;
     let res = false;
     this.beforeRender();
+    if (!this.$self.rendered) {
+      this.dispatchEvent(window.__dito.events.firstrender);
+    } else {
+      this.dispatchEvent(window.__dito.events.render);
+    }
+
     try {
       if (!this.__dito.compiledHTML) {
         this.compile();
@@ -333,9 +339,12 @@ class DitoElement extends HTMLElement {
 
       this.afterRender({success: true});
       if (!this.$self.rendered) {
+        this.dispatchEvent(window.__dito.events.firstrendered);
         window.__dito.main.firstRendered.delete(this);
         this.$self.rendered = true;
         window.__dito.main.allDownloaded();
+      } else {
+        this.dispatchEvent(window.__dito.events.rendered);
       }
       res = true;
     } catch (e) {

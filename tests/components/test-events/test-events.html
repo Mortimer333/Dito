@@ -4,3 +4,9 @@
   <div @e:mouseover="updateEvent($event)" @a:class="'a'" id="mouseover">
   Over meee</div>
 </test-injected>
+<test-empty id="empty"
+  @e:render="updateRenderEventBefore('normal before')"
+  @e:rendered="updateRenderEventAfter('normal after')"
+  @e:firstrender="updateRenderEventBefore('first before')"
+  @e:firstrendered="updateRenderEventAfter('first after')">
+</test-empty>

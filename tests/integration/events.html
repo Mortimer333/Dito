@@ -10,11 +10,23 @@
       import * as TH from "../test.js";
 
       const container = TH.getContainer({
-        callback : () => {
+        callback : async () => {
           const events = document.body.querySelector('test-events');
           const click = events.querySelector('#click');
           const focus = events.querySelector('#focus');
+          const empty = events.querySelector('#empty');
           const mouseover = events.querySelector('#mouseover');
+          TH.tests['Empty had his first render event called'] =
+            events.$self.renderEventBefore === 'first before'? TH.success : TH.failure;
+          TH.tests['Empty had his first rendered event called'] =
+            events.$self.renderEventAfter === 'first after' ? TH.success : TH.failure;
+
+          await empty.render();
+          TH.tests['Empty had his second render event called'] =
+            events.$self.renderEventBefore === 'normal before'? TH.success : TH.failure;
+          TH.tests['Empty had his second rendered event called'] =
+            events.$self.renderEventAfter === 'normal after' ? TH.success : TH.failure;
+
           click.click();
           TH.tests['Click event'] = events.$.type === 'click'
             && events.$.event?.target == click
@@ -32,9 +44,11 @@
             && events.$.event?.target == mouseover
             && events.$.event?.type == 'mouseover'
             ? TH.success : TH.failure;
-          TH.validateTestAndMoveToNext();
+          console.table(TH.tests);
+          // TH.validateTestAndMoveToNext();
         }
       });
+      container.register('test-empty', Math.random());
       container.register('test-events', Math.random());
       container.register('test-injected', Math.random());
       await container.load();
