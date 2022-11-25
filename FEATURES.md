@@ -14,7 +14,6 @@
 - Add variable for default attributes of the custom elements: default classes, default value etc.
 - Insert inputs after `init`
 - CSS - special var which refers to the `self` so we can set styles to this container, ex: $self { display: block; } => element-one { display:block; }
-- allow to retrieve on force and use saved components from localStorage
 - [DONE] only remove local storage items with proper prefix - `dito_`
 - [DONE] Add custom events on renderes, will be called on elements (<custom-element @e:renderdone="" @e:renderstart="")
 - [DONE] Fuction when first render finishes and every component is downloaded
@@ -41,6 +40,7 @@
 - [DONE] events and {{}}
 - [DONE] passing html to the inside of element will result in rendering it inside of it
 - [DONE] allow choosing where to put injected html
+- [REMOVED] allow to retrieve on force and use saved components from localStorage - just call without force; force is made explicitly to not use localStorage
 - [REMOVED] templates: - Not needed, just create sperate component
   - reusable in component
   - have their own scope
