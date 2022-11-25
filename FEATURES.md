@@ -8,11 +8,11 @@
     </p>
   </div>
 ```
-- ability to save node (like simple div to later access it) without setting id
-- min amount of iterations on for
-- CSS - let decide which styles should be scoped and which should be global (global wont be duplicated)
-- Add variable for default attributes of the custom elements: default classes, default value etc.
 - CSS - special var which refers to the `self` so we can set styles to this container, ex: $self { display: block; } => element-one { display:block; }
+  - [DUPLICATE] CSS - let decide which styles should be scoped and which should be global (global wont be duplicated)
+- ability to save node (like simple div to later access it) without setting id - <div @s="div1"></div> => this.$self.nodes.div1
+- min amount of iterations on for - array = [1,2] => <div @for="array" @min="3">{{$key}} - {{$value}}</div> => <div>1 - 1</div><div>2 - 2</div><div>3 - undefined</div>
+- Add variable for default attributes of the custom elements: default classes, default value etc. - $default ?
 - [DONE] only remove local storage items with proper prefix - `dito_`
 - [DONE] Add custom events on renderes, will be called on elements (<custom-element @e:renderdone="" @e:renderstart="")
 - [DONE] Fuction when first render finishes and every component is downloaded
