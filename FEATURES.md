@@ -1,10 +1,4 @@
 # Features:
-- ability to save node (like simple div to later access it) without setting id
-- min amount of iterations on for
-- CSS - let decide which styles should be scoped and which should be global (global wont be duplicated)
-- Add variable for default attributes of the custom elements: default classes, default value etc.
-- Insert inputs after `init`
-- CSS - special var which refers to the `self` so we can set styles to this container, ex: $self { display: block; } => element-one { display:block; }
 - Bring back Kamikaze to solve this problem:
 ```html
 <div class="nav-link h-full" @for="nav" @value="link">
@@ -14,9 +8,15 @@
     </p>
   </div>
 ```
+- ability to save node (like simple div to later access it) without setting id
+- min amount of iterations on for
+- CSS - let decide which styles should be scoped and which should be global (global wont be duplicated)
+- Add variable for default attributes of the custom elements: default classes, default value etc.
+- Insert inputs after `init`
+- CSS - special var which refers to the `self` so we can set styles to this container, ex: $self { display: block; } => element-one { display:block; }
 - allow to retrieve on force and use saved components from localStorage
-- only remove local storage items with proper prefix - `dito_`
-- Add custom events on renderes, will be called on elements (<custom-element @e:renderdone="" @e:renderstart="")
+- [DONE] only remove local storage items with proper prefix - `dito_`
+- [DONE] Add custom events on renderes, will be called on elements (<custom-element @e:renderdone="" @e:renderstart="")
 - [DONE] Fuction when first render finishes and every component is downloaded
 - [DONE] container tag - like ng-container which will just this.outerHTML = this.innerHTML, probably gonna call him dito-kamikaze
 - [DONE] allow injected html to be separate int different packages that can be used in few places

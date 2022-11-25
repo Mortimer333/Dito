@@ -13,17 +13,33 @@
       const container = TH.getContainer();
       container.register('test-empty', 1);
       await container.load();
-      TH.tests['Empty saved in localStorage'] = localStorage.getItem('test-empty') ? TH.success : TH.failure;
+      TH.tests['Empty saved in localStorage'] =
+        localStorage.getItem(container.getStorageName('test-empty')) ? TH.success : TH.failure;
 
       container.localStorage = false;
       container.register('test-empty-2', 1);
       await container.load();
-      TH.tests['Empty 2 is not saved in localStorage'] = localStorage.getItem('test-empty-2') ? TH.failure : TH.success;
+      TH.tests['Empty 2 is not saved in localStorage'] =
+        localStorage.getItem(container.getStorageName('test-empty-2')) ? TH.failure : TH.success;
 
       container.localStorage = true;
       container.register('test-empty-3', 1, '', true);
       await container.load();
-      TH.tests['Empty 3 saved in localStorage with force'] = localStorage.getItem('test-empty-3') ? TH.success : TH.failure;
+      TH.tests['Empty 3 saved in localStorage with force'] =
+        localStorage.getItem(container.getStorageName('test-empty-3')) ? TH.success : TH.failure;
+
+      localStorage.setItem('notdeletedtest', 'test');
+      container.removeOldestComponent();
+      TH.tests['Empty 1 was removed from localStorage'] =
+        localStorage.getItem(container.getStorageName('test-empty-1')) ? TH.failure : TH.success;
+      container.removeOldestComponent();
+      TH.tests['Empty 3 was removed from localStorage'] =
+        localStorage.getItem(container.getStorageName('test-empty-3')) ? TH.failure : TH.success;
+      container.removeOldestComponent();
+      container.removeOldestComponent();
+      container.removeOldestComponent();
+      TH.tests['Test was not removed from localStorage'] =
+        localStorage.getItem('notdeletedtest') === 'test' ? TH.success : TH.failure;
 
       TH.validateTestAndMoveToNext();
     </script>

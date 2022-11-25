@@ -154,12 +154,40 @@ div {
 <p>{{ value }}</p>
 ```
 
-## Lify cycle
+## Life cycle
 In the previous example, you can see, that I've used method called `init` inside the `ElementOne` class. It's one of the few "event calls" during the life cycle of the components:
 - **prepare** - called before any preparation of the `DitoElement` constructor but after `HTMLElement` constructor was called
 - **init** - called only once per component instance - before its first render
 - **beforeRender** - called each time the render of component is about to start
 - **afterRender** - called each time render finishes (successfully or not), as first argument it accepts result for the render
+Those exist so they can be set in parents and inherited by extensions:
+```js
+class Parent extends DitoElement
+{
+  beforeRender() {
+    childBeforeRender();
+  }
+  childBeforeRender() {} // placeholder
+}
+class Child extends Parent
+{
+  childBeforeRender() {
+    // before it will be called all parent code is executed as function `beforeRender` is inherited
+  }
+}
+```
+
+### Custom events
+The real events can be listened only on custom elements (which should be obvious):
+- `firstrender` - called before component will be rendered for the first time
+- `firstrendered` - called after component was rendered for the first time
+- `render` - called each time component is rendered but first
+- `render` - called each time component was rendered but first
+
+```html
+<custom-component @e:firstrender="console.log('First Render!');">
+</custom-component>
+```
 
 # Template language
 Quick and easy way to build HTML without need for additional JS. In template inline call you have access to all values inside `$` and methods defined on the class.
