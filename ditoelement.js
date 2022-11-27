@@ -24,6 +24,7 @@ class DitoElement extends HTMLElement {
       this.$self.cssRenderInProgress = false;
       this.cssRender();
     });
+    this.defineDefaults();
   }
 
   /* "EVENTS" */
@@ -33,6 +34,8 @@ class DitoElement extends HTMLElement {
   afterRender(result){}     // After render
   beforeCssRender(){}       // Before CSS render
   afterCssRender(result){}  // After CSS render
+
+  getDefaults(){}           // Placeholder
 
   connectedCallback() {
     if (!document.body.contains(this)) {
@@ -47,6 +50,40 @@ class DitoElement extends HTMLElement {
     }
 
     this.queueRender();
+  }
+
+  defineDefaults() {
+    const defaults = this.getDefaults() || {};
+    const types = {
+      append: (name, attr) => {
+        const currentAttr = this.getAttribute(name) || '';
+        this.setAttribute(name, currentAttr + ' ' + attr.value);
+      },
+      replace: (name, attr) => {
+        this.setAttribute(name, attr.value);
+      },
+      add: (name, attr) => {
+        const currentAttr = this.getAttribute(name) || '';
+        this.setAttribute(name, currentAttr + attr.value);
+      },
+    };
+
+    Object.defineProperty(this.$self, "default", {
+      value: defaults,
+      writable: false
+    });
+
+    Object.keys(defaults).forEach(function (key) {
+      const attr = defaults[key];
+      const type = attr.type || 'append';
+
+      if (!types[type]) {
+        console.error('Attribute create as type `' + type + '` is not supported');
+        return;
+      }
+
+      types[type](key, attr);
+    }.bind(this));
   }
 
   firstRenderBeforeActions() {
