@@ -492,6 +492,26 @@ Bio:
 <p dito-pack="bio">Trying to live my best life</p>
 ```
 
+## `@get`
+To avoid additional IDs you can retrieve node by `@get` special attribute:
+```html
+<div @get="'div'"></div>
+```
+And then access it inside `$self` attribute of all custom and some native nodes:
+```js
+this.$self.get.div // div
+```
+Notice that I'm using string to set the name of the node as this attribute it threated as JS field which means you can automitize retrival of the nodes:
+```html
+<div @get="'div' + $key" for="3"></div>
+```
+JS:
+```js
+this.$self.get.div0 // div
+this.$self.get.div1 // div
+this.$self.get.div2 // div
+```
+
 # Dynamic CSS
 CSS is also being downloaded and assigned to the component, so why not allow using variables inside of it? Anything set in `$css` will be available inside your components CSS file:
 

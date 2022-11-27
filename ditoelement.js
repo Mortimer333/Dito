@@ -226,6 +226,7 @@ class DitoElement extends HTMLElement {
         toInput: new WeakMap(),
         uniqueChildren: [],
         uniqueNodes: new WeakMap(),
+        get: {},
       },
       writable: false
     });
@@ -373,6 +374,12 @@ class DitoElement extends HTMLElement {
       });
 
       this.updateBinds();
+      Object.keys(this.$self.get).forEach(itemName => {
+        if (!document.contains(this.$self.get[itemName])) {
+          delete this.$self.get[itemName];
+        }
+      });
+
 
       this.afterRender({success: true});
       if (!this.$self.rendered) {
@@ -426,6 +433,20 @@ class DitoElement extends HTMLElement {
     this.setupBinds(item);
     this.setupInputs(item);
     this.setupOutputs(item);
+    this.setupGets(item);
+  }
+
+  setupGets(item) {
+    const actions = item.$self?.actions?.gets;
+    if (!actions) {
+      return;
+    }
+
+    if (actions.length > 1) {
+      throw new Error('You can only retrieve one node once');
+    }
+    const name = this.getExecuteable(actions[0], item)(...this.getObservablesValues(item));
+    this.$self.get[name] = item;
   }
 
   setupOutputs(item) {
@@ -1021,7 +1042,8 @@ class DitoElement extends HTMLElement {
       "events" : true,
       "binds" : true,
       "outputs" : true,
-      "inputs" : true
+      "inputs" : true,
+      "gets": true
     };
 
     if (unique[actionName]) {
@@ -1098,6 +1120,7 @@ class DitoElement extends HTMLElement {
     html = this.compileFindAndReplace(html, ' @value', 'v', 'for_values');
     html = this.compileFindAndReplace(html, ' @key', 'k', 'for_keys');
     html = this.compileFindAndReplace(html, ' @pack', 'p', 'packs');
+    html = this.compileFindAndReplace(html, ' @get', 'g', 'gets');
     html = this.compileFindAndReplace(html, ' @min', 'm', 'for_mins');
     html = this.compileFindAndReplace(html, ' @def-min', 'di', 'for_min_defs');
     this.__dito.html = this.compileFindAndReplace(html, ' @for', 'for', 'fors');
