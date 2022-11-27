@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>Test</title>
+  </head>
+  <body>
+    <test-get></test-get>
+    <script type="module">
+      import * as TH from "../test.js";
+
+      const container = TH.getContainer();
+      container.register('test-get', Math.random());
+      await container.load();
+      const get = document.querySelector('test-get');
+      get.afterRender = res => {
+        const div0 = get.querySelector('#div0');
+        const div1 = get.querySelector('#div1');
+        const p = get.querySelector('#pName');
+        TH.tests['Div0 is properly retrieved and saved'] = get.$self.get.div0 === div0 ? TH.success : TH.failure;
+        TH.tests['Div1 is properly retrieved and saved'] = get.$self.get.div1 === div1 ? TH.success : TH.failure;
+        TH.tests['P is properly retrieved and saved'] = get.$self.get.pName === p ? TH.success : TH.failure;
+
+        get.$.items = 3;
+        get.afterRender = res => {
+          const div2 = get.querySelector('#div2');
+          TH.tests['Div2 is properly retrieved and saved'] = get.$self.get.div2 === div2 ? TH.success : TH.failure;
+          get.$.items = 2;
+          get.afterRender = res => {
+            const div2 = get.querySelector('#div2');
+            TH.tests['Div2 is properly removed'] = !get.$self.get.div2 && !div2 ? TH.success : TH.failure;
+            TH.validateTestAndMoveToNext();
+          }
+        }
+      };
+
+    </script>
+  </body>
+</html>
