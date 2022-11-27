@@ -49,22 +49,16 @@
             TH.tests['True provider bind change changes all binded'] = sameBound ? TH.success : TH.failure;
             const secondChange = 'second changed';
             bounds[bounds.length - 1].$.bound = secondChange;
-            console.log("before render");
             bind.afterRender = function (res) {
-              console.log("after render");
               if (!res.success) {
-                console.log("n o success");
                 return;
               }
 
               let sameBound = native.value === secondChange;
-              console.log("1. ", sameBound);
               if (sameBound) {
                 sameBound = bind.$.bind === secondChange;
-                console.log("2. ", sameBound);
               }
               bounds.forEach(function (bound) {
-                console.log("3. ", bound.$.bound);
                 if (bound.$.bound != secondChange) {
                   sameBound = false;
                   return;
@@ -111,10 +105,6 @@
               }
             }
           }
-
-          setTimeout(function () {
-            console.table(TH.tests);
-          }, 1000)
         }
       });
       container.register('test-bind', Math.random());

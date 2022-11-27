@@ -72,9 +72,6 @@
           }
         }
       });
-      setTimeout(function () {
-        console.table(TH.tests);
-      }, 1000)
       container.register('test-if', Math.random());
       container.register('test-injected', Math.random());
       await container.load();

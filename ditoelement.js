@@ -656,6 +656,7 @@ class DitoElement extends HTMLElement {
     if (!node.$self.for) {
       throw new Error("Node marked as for doesn't have required values");
     }
+    console.log("new action");
     const {condition, anchors} = node.$self.for;
 
     let res = this.getExecuteable(condition, node)(...this.getObservablesValues(node));
@@ -698,7 +699,6 @@ class DitoElement extends HTMLElement {
       if (!document.body.contains(anchor)) {
         node.$self.for.anchors.splice(i, 1);
         i--;
-        anchor.remove();
         continue;
       }
 
@@ -734,6 +734,7 @@ class DitoElement extends HTMLElement {
         const newAnchor = clone.querySelector(path);
         const realAnchor = node.querySelector(path);
         if (!newAnchor || !realAnchor) {
+          throw new Error('No anchor found!');
         } else {
           const newTextA = this.reconstructForAnchor(newAnchor, realAnchor)
           newTextA.$self.children = [];

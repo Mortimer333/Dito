@@ -12,6 +12,9 @@ const beforeTest = e => {
   const index = getTestCounter();
   localStorage.clear();
   setTestCounter(index);
+  setTimeout(function () {
+    console.table(tests);
+  }, 1000);
 };
 const componentsURL = URL + 'tests/components/';
 const startOrder = e => localStorage.setItem('integration-test-current', -1);
