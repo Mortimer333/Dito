@@ -236,6 +236,44 @@ Output:
 </div>
 ```
 
+##### `@min` and `@def-min`
+If you want to render a tray with at least some amount of items you can use `@min` special attribute. It will make sure that `for` iterated at least the amount of times you passed there (it only accepts numbers).
+```html
+<p @for="['1', '2']" @min="3">
+  {{ $key }} {{ $value }}
+</p>
+```
+Output:
+```html
+<p>
+  0 1
+</p>
+<p>
+  1 2
+</p>
+<p>
+  2
+</p>
+```
+As you can see there are 3 paragraphs even though the passed array had only 2 items. But the last item doesn't have a value which might create need for creating not needed ifs and checks which mostly can be resolved with default item: `@def-min`:
+```html
+<p @for="['1', '2']" @min="3" @def-min="'default'">
+  {{ $key }} {{ $value }}
+</p>
+```
+Output:
+```html
+<p>
+  0 1
+</p>
+<p>
+  1 2
+</p>
+<p>
+  2 default
+</p>
+```
+
 ## Events
 You can attach any kind of event to the element that will be resolved with functionality from the template by adding `@e:` prefix and transforming name to the one used by `addEventListener`:
 #### before:

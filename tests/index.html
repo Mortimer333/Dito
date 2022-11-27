@@ -5,8 +5,7 @@
     <title>Joint test</title>
   </head>
   <body>
-    <test-empty></test-empty>
-    <test-empty-4></test-empty-4>
+    <play-area></play-area>
     <script type="text/javascript">
       if (new URLSearchParams(window.location.search).get('integration')) {
         window.location.href = window.location.origin + '/tests/integration';
@@ -24,6 +23,7 @@
 
         }
       });
+      container.register('play-area', Math.random());
       container.register('test-empty', Math.random());
       container.register('test-empty-2', Math.random());
       container.register('test-empty-3', Math.random());

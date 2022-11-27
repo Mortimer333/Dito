@@ -608,6 +608,20 @@ class DitoElement extends HTMLElement {
         res = new Array(res).fill(null);
       }
 
+      if (node.$self.for.min) {
+        const min = this.getExecuteable(node.$self.for.min, node)(...this.getObservablesValues(node));
+        let item = undefined;
+        if (node.$self.for.minDef) {
+          item = this.getExecuteable(node.$self.for.minDef, node)(...this.getObservablesValues(node));
+        }
+        if (typeof min != 'number') {
+          throw new Error('For min must be a number');
+        }
+        if (res.length < min) {
+          res = res.concat(new Array(min - res.length).fill(item));
+        }
+      }
+
       keys = Object.keys(res);
       values = Object.values(res);
     }
@@ -845,6 +859,7 @@ class DitoElement extends HTMLElement {
 
   defineFor(node) {
     const actions = this.__dito.actions, aliases = [], keys = [], values = [];
+    let min, minDef;
     node.getAttributeNames().forEach(name => {
       if (actions.fors[name]) {
         aliases.push(name);
@@ -854,6 +869,12 @@ class DitoElement extends HTMLElement {
       }
       if (actions.for_values[name]) {
         values.push(actions.for_values[name]);
+      }
+      if (actions.for_mins[name]) {
+        min = actions.for_mins[name];
+      }
+      if (actions.for_min_defs[name]) {
+        minDef = actions.for_min_defs[name];
       }
     });
 
@@ -890,7 +911,9 @@ class DitoElement extends HTMLElement {
     node.parentElement.replaceChild(anchor, node);
     node.$self.for = {
       condition: actions.fors[alias],
-      anchors: [anchor]
+      anchors: [anchor],
+      min,
+      minDef
     }
   }
 
@@ -1029,6 +1052,8 @@ class DitoElement extends HTMLElement {
     html = this.compileFindAndReplace(html, ' @value', 'v', 'for_values');
     html = this.compileFindAndReplace(html, ' @key', 'k', 'for_keys');
     html = this.compileFindAndReplace(html, ' @pack', 'p', 'packs');
+    html = this.compileFindAndReplace(html, ' @min', 'm', 'for_mins');
+    html = this.compileFindAndReplace(html, ' @def-min', 'di', 'for_min_defs');
     this.__dito.html = this.compileFindAndReplace(html, ' @for', 'for', 'fors');
 
     this.__dito.compiledHTML = true;
@@ -1137,13 +1162,8 @@ class DitoElement extends HTMLElement {
       ...Object.keys(node.$self.scope)
     ];
 
-    if (node.$self.forBox.key) {
-      keys.push(node.$self.forBox.keyName || this.keyName);
-    }
-
-    if (node.$self.forBox.value) {
-      keys.push(node.$self.forBox.valueName || this.valueName);
-    }
+    keys.push(node.$self.forBox.keyName || this.keyName);
+    keys.push(node.$self.forBox.valueName || this.valueName);
 
     return keys;
   }
@@ -1162,13 +1182,8 @@ class DitoElement extends HTMLElement {
       ...Object.values(node.$self.scope)
     ];
 
-    if (node.$self.forBox.key) {
-      values.push(node.$self.forBox.key);
-    }
-
-    if (node.$self.forBox.value) {
-      values.push(node.$self.forBox.value);
-    }
+    values.push(node.$self.forBox.key);
+    values.push(node.$self.forBox.value);
 
     return values;
   }

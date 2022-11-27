@@ -227,7 +227,9 @@ class Dito {
                   binds: {},
                   events: {},
                   executables: {},
-                  packs: {}
+                  packs: {},
+                  for_mins: {},
+                  for_min_defs: {}
                 }
               },
               writable: false
