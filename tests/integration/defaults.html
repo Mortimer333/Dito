@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>Defaults</title>
+  </head>
+  <body>
+    <test-defaults class="prefix" value="replace me" name="add here: "></test-defaults>
+    <script type="module">
+      import * as TH from "../test.js";
+
+      const container = TH.getContainer();
+      container.register('test-defaults', Math.random());
+      await container.load();
+      const defaults = document.querySelector('test-defaults');
+      TH.tests['Default class is appended'] =
+        defaults.getAttribute('class') === 'prefix test class' ? TH.success : TH.failure;
+      TH.tests['Default value is replaced'] =
+        defaults.getAttribute('value') === 'value' ? TH.success : TH.failure;
+      TH.tests['Default name is added'] =
+        defaults.getAttribute('name') === 'add here: test' ? TH.success : TH.failure;
+      TH.validateTestAndMoveToNext();
+    </script>
+  </body>
+</html>

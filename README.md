@@ -299,6 +299,38 @@ Binding attributes to observables is similar to the `events` - prefix your attri
 ```
 Class will be updated each time `pClass` changes.
 
+### Defaults
+
+You can define default attributes for custom element in `getDefaults` method:
+##### HTML
+```html
+<custom-element class="test" value="replace" name="add: "></custom-element>
+```
+##### JS
+```js
+  getDefaults() {
+    return {
+      class: {
+        value: 'appended'
+      },
+      value: {
+        value: 'value',
+        type: 'replace'
+      },
+      name: {
+        value: 'test',
+        type: 'add'
+      }
+    };
+  }
+```
+as you can see in the example above the name of the attribute you want to set is in the key of the object and item has two properties:
+- value - string value to be put in the attribute
+- type - not required - defaults to `append`, defines how data should be inserted into attribute:
+  - `append` - `value` will be added after space - `class="test"` => `class="test appended"`
+  - `add` - `value` will be added to the existing attribute (without space) - `name="add: "` => `name="add: test"`
+  - `replace` - `value` will replace the content of chosen attribute - `value="replace"` => `value="value"`
+
 ## Communication between components
 All the components are downloaded asynchronously and can't really see each other without some setup, so to fix this problem library presents similar solution to Angular: `inputs`, `outputs` and `binds`.
 
