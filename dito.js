@@ -266,12 +266,22 @@ class Dito {
                   gets: {},
                   for_mins: {},
                   for_min_defs: {}
-                }
+                },
+                css: {
+                  actions: {
+                    scopes: {},
+                    executables: {},
+                    templates: {}
+                  },
+                  content: '',
+                  scoped: [],
+                  global: [],
+                },
               },
               writable: false
           });
           js.prototype.__dito.html = html;
-          js.prototype.__dito.css = css;
+          js.prototype.__dito.css.content = css;
           this.components[component] = {name: component, js, html, css};
           i += skipSize;
           delete this.notDownloaded[component];

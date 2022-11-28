@@ -102,7 +102,7 @@ class DitoElement extends HTMLElement {
     this.setAttribute(this.timeAtr, +new Date());
     this.setAttribute(this.indexAtr, Array.prototype.indexOf.call(this.parentElement.children, this));
     this.$self.path = this.getPath(this);
-    this.$self.cssPath = this.pathToCss(this.$self.path);
+    this.$self.css.path = this.pathToCss(this.$self.path);
   }
 
   saveMethods() {
@@ -202,8 +202,14 @@ class DitoElement extends HTMLElement {
         actions: {},
         children: [],
         binds: {},
-        cssIndices: [],
-        cssPath: null,
+        css : {
+          compiled: false,
+          indices: [],
+          path: null,
+          rendered: false,
+          renderInProgress: false,
+          scoped: null
+        },
         default: {
           injected: [],
         },
@@ -240,28 +246,89 @@ class DitoElement extends HTMLElement {
   }
 
   compileCSS() {
-    this.__dito.css = this.compileCSSExecutables(this.__dito.css);
+    this.__dito.css.content = this.compileCSSExecutables(this.__dito.css.content);
+    this.categorizeCssRules();
     this.__dito.compiledCSS = true;
   }
 
+  categorizeCssRules() {
+    const rules = this.seperateRules(this.__dito.css.content);
+    this.__dito.css.scoped = [];
+    this.__dito.css.global = [];
+    rules.forEach(rule => {
+      if (rule.indexOf('@self') !== -1) {
+        this.__dito.css.scoped.push({
+          rule,
+          index: -1
+        });
+      } else {
+        this.__dito.css.global.push({
+          rule,
+          index: -1
+        });
+      }
+    });
+
+    const sheet = window.__dito.main.styleNode.sheet;
+    this.__dito.css.global.forEach(rule => {
+      rule.index = sheet.cssRules.length;
+      sheet.insertRule(rule.rule, sheet.cssRules.length);
+    });
+  }
+
+  seperateRules(css) {
+    let inRule = false, lastEnd = 0;
+    const rules = [];
+    for (var i = 0; i < css.length; i++) {
+      const letter = css[i];
+      if (!inRule && letter === '{') {
+        inRule = true;
+        continue;
+      }
+
+      if (!inRule) {
+        continue;
+      }
+
+      const stringLm = {
+        '"' : true,
+        "'" : true,
+        '`' : true,
+      }
+
+      if (stringLm[letter]) {
+        i = this.getStringEnd(css, letter, i + 1);
+        continue;
+      }
+
+      if (letter === '}') {
+        rules.push(css.substr(lastEnd, i - lastEnd + 1).trim());
+        lastEnd = i + 1;
+        continue;
+      }
+    }
+
+    return rules;
+  }
+
   compileCSSExecutables(css) {
-    this.__dito.cssExecutables = {};
+    this.__dito.css.actions.executables = {};
     let start = css.indexOf('{{');
     while (start !== -1) {
       let end = css.indexOf('}}', start);
       if (end === -1) {
         break;
       }
-      const name = 'cssExec_' + start + '_' + end;
-      this.__dito.cssExecutables[name] = css.substr(start + 2, end - (start + 2));
+      const name = 'exec_' + start + '_' + end;
+      this.__dito.css.actions.executables[name] = css.substr(start + 2, end - (start + 2));
       css = css.replaceAll(css.substr(start, end + 2 - start), name);
       start = css.indexOf('{{', start + name.length);
     }
     return css;
   }
 
-  async cssRender() {
-    if (this.$self.cssRenderInProgress || !document.body.contains(this)) {
+  cssRender() {
+    if (this.$self.css.renderInProgress || !document.body.contains(this)) {
       return;
     }
 
@@ -271,27 +338,23 @@ class DitoElement extends HTMLElement {
         this.compileCSS();
       }
 
-      let css = this.__dito.css;
-      css = this.resolveCssExecutables(css)
-      const stylesheet = new CSSStyleSheet();
-      await stylesheet.replace(css).catch(err => {
-        throw new Error('Failed to replace styles in `' + this.localName + '`: ' + err);
-      });
+      if (!this.$self.css.scoped) {
+        this.$self.css.scoped = JSON.parse(JSON.stringify(this.__dito.css.scoped));
+        this.$self.css.scoped.forEach(rule => {
+          rule.rule = rule.rule.replaceAll('@self', this.$self.css.path);
+        });
+      }
 
-      const styles = [];
       const sheet = window.__dito.main.styleNode.sheet;
-      Object.values(stylesheet.cssRules).forEach((rule, i) => {
-        let index = sheet.cssRules.length;
-        if (this.$self.cssIndices[i]) {
-          index = this.$self.cssIndices[i];
+      this.$self.css.scoped.forEach(rule => {
+        let css = this.resolveCssExecutables(rule.rule);
+        if (rule.index === -1) {
+          rule.index = sheet.cssRules.length;
+          sheet.insertRule(css, sheet.cssRules.length);
         } else {
-          this.$self.cssIndices[i] = index;
+          sheet.deleteRule(rule.index);
+          sheet.insertRule(css, rule.index);
         }
-        const nestedRule = this.$self.cssPath + ' ' + rule.cssText;
-        if (sheet.cssRules[index]) {
-          sheet.deleteRule(index);
-        }
-        sheet.insertRule(nestedRule, index);
       });
       this.afterCssRender({success: true});
     } catch (e) {
@@ -300,7 +363,7 @@ class DitoElement extends HTMLElement {
   }
 
   resolveCssExecutables(css) {
-    const exe = this.__dito.cssExecutables;
+    const exe = this.__dito.css.actions.executables;
     Object.keys(exe).forEach(alias => {
       css = css.replaceAll(alias, this.getCSSExecuteable(exe[alias])(...this.getCSSObservablesValues()));
     });
@@ -656,7 +719,6 @@ class DitoElement extends HTMLElement {
     if (!node.$self.for) {
       throw new Error("Node marked as for doesn't have required values");
     }
-    console.log("new action");
     const {condition, anchors} = node.$self.for;
 
     let res = this.getExecuteable(condition, node)(...this.getObservablesValues(node));
@@ -1111,48 +1173,70 @@ class DitoElement extends HTMLElement {
   compile() {
     let html = this.__dito.html;
 
-    html = this.compileFindAndReplace(html, ' @b:', 'b', 'binds', true);
-    html = this.compileFindAndReplace(html, ' @i:', 'i', 'inputs', true);
-    html = this.compileFindAndReplace(html, ' @o:', 'o', 'outputs', true);
-    html = this.compileFindAndReplace(html, ' @a:', 'a', 'attrs', true);
+    html = this.compileFindAndReplace(html, '@b:', 'b', 'binds', { hasName: true });
+    html = this.compileFindAndReplace(html, '@i:', 'i', 'inputs', { hasName: true });
+    html = this.compileFindAndReplace(html, '@o:', 'o', 'outputs', { hasName: true });
+    html = this.compileFindAndReplace(html, '@a:', 'a', 'attrs', { hasName: true });
     html = this.compileExecutables(html);
-    html = this.compileFindAndReplace(html, ' @e:', 'e', 'events', true);
-    html = this.compileFindAndReplace(html, ' @if', 'if', 'ifs');
-    html = this.compileFindAndReplace(html, ' @value', 'v', 'for_values');
-    html = this.compileFindAndReplace(html, ' @key', 'k', 'for_keys');
-    html = this.compileFindAndReplace(html, ' @pack', 'p', 'packs');
-    html = this.compileFindAndReplace(html, ' @get', 'g', 'gets');
-    html = this.compileFindAndReplace(html, ' @min', 'm', 'for_mins');
-    html = this.compileFindAndReplace(html, ' @def-min', 'di', 'for_min_defs');
-    this.__dito.html = this.compileFindAndReplace(html, ' @for', 'for', 'fors');
+    html = this.compileFindAndReplace(html, '@e:', 'e', 'events', { hasName: true });
+    html = this.compileFindAndReplace(html, '@if', 'if', 'ifs');
+    html = this.compileFindAndReplace(html, '@value', 'v', 'for_values');
+    html = this.compileFindAndReplace(html, '@key', 'k', 'for_keys');
+    html = this.compileFindAndReplace(html, '@pack', 'p', 'packs');
+    html = this.compileFindAndReplace(html, '@get', 'g', 'gets');
+    html = this.compileFindAndReplace(html, '@min', 'm', 'for_mins');
+    html = this.compileFindAndReplace(html, '@def-min', 'di', 'for_min_defs');
+    this.__dito.html = this.compileFindAndReplace(html, '@for', 'for', 'fors');
 
     this.__dito.compiledHTML = true;
   }
 
-  compileFindAndReplace(html, lm, prefix, attrName, hasName = false) {
-    let attr, start = 0;
-    const action = this.__dito.actions[attrName];
-    while (attr = this.getCompiledAttribute(html, lm, start)) {
+  compileFindAndReplace(text, lm, prefix, attrName, settings = {}) {
+    let attr, start = 0, action = this.__dito.actions[attrName], { hasName, isCss, skipValue, replace } = settings;
+    if (isCss) {
+      action = this.__dito.css.actions[attrName]
+    }
+    while (attr = this.getCompiledAttribute(text, lm, skipValue, start)) {
       const { name, value } = attr;
-      const plc = prefix + name.start + '-' + value.end;
+      const plc = replace || prefix + name.start + '-' + value.end;
       if (hasName) {
         action[plc] = {
-          name: html.substr(name.start + lm.length, name.end - (name.start + lm.length)).trim(),
-          value: html.substr(value.start + 1, value.end - 1 - value.start),
+          name: text.substr(name.start + lm.length - 1, name.end - (name.start + lm.length - 1)).trim(),
+          value: text.substr(value.start, value.end - 1 - value.start),
         };
       } else {
-        action[plc] = html.substr(value.start + 1, value.end - 1 - value.start);
+        action[plc] = text.substr(value.start, value.end - 1 - value.start);
       }
-      html = html.replaceAll(html.substr(name.start + 1, value.end + 1 - (name.start + 1)), plc);
+      text = text.replaceAll(text.substr(name.start, value.end - name.start), plc);
     }
 
-    return html;
+    return text;
   }
 
-  getCompiledAttribute(text, lm, start = 0) {
+  getCompiledAttribute(text, lm, skipValue = false, start = 0) {
     let aStart = text.indexOf(lm, start);
-    if (aStart === -1) {
+    if (
+      aStart === -1
+      || (
+        aStart === 0
+        && !/\s/g.test(text[aStart - 1])
+      )
+    ) {
       return false;
+    }
+
+    if (skipValue) {
+      const end = aStart + lm.length;
+      return {
+        name : {
+          start: aStart,
+          end: end,
+        },
+        value: {
+          start: end,
+          end
+        }
+      };
     }
 
     let aEnd = text.indexOf('=', aStart);
@@ -1172,7 +1256,7 @@ class DitoElement extends HTMLElement {
         'String wrapper for `' + lm + '` in `' + this.constructor.name
         + '` not found (found letter: `' + text[aEnd + 1] + '`), skipping'
       );
-      return this.getCompiledAttribute(text, lm, aEnd)
+      return this.getCompiledAttribute(text, lm, skipValue, aEnd)
     }
 
     return {
@@ -1196,20 +1280,20 @@ class DitoElement extends HTMLElement {
     return pos;
   }
 
-  compileExecutables(html) {
-    let start = html.indexOf('{{');
+  compileExecutables(text) {
+    let start = text.indexOf('{{');
     while (start !== -1) {
-      let end = html.indexOf('}}', start);
+      let end = text.indexOf('}}', start);
       if (end === -1) {
         break;
       }
       const name = 'exec_' + start + '_' + end;
-      this.__dito.actions.executables[name] = html.substr(start + 2, end - (start + 2));
-      html = html.replaceAll(html.substr(start, end + 2 - start), '<span ' + name + '></span>');
-      start = html.indexOf('{{', start + name.length);
+      this.__dito.actions.executables[name] = text.substr(start + 2, end - (start + 2));
+      text = text.replaceAll(text.substr(start, end + 2 - start), '<span ' + name + '></span>');
+      start = text.indexOf('{{', start + name.length);
     }
 
-    return html;
+    return text;
   }
 
   getExecuteable(script, node) {

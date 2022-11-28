@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>Test</title>
+  </head>
+  <body>
+    <test-css-scope></test-css-scope>
+    <script type="module">
+      import * as TH from "../test.js";
+
+      const container = TH.getContainer();
+      container.register('test-css-scope', Math.random());
+      await container.load();
+
+      // TH.validateTestAndMoveToNext();
+    </script>
+  </body>
+</html>
