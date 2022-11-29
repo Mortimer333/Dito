@@ -1222,13 +1222,13 @@ class DitoElement extends HTMLElement {
       const plc = replace || prefix + name.start + '-' + value.end;
       if (hasName) {
         action[plc] = {
-          name: text.substr(name.start + lm.length - 1, name.end - (name.start + lm.length - 1)).trim(),
-          value: text.substr(value.start, value.end - 1 - value.start),
+          name: text.substr(name.start + lm.length, name.end - (name.start + lm.length)).trim(),
+          value: text.substr(value.start + 1, value.end - 1 - value.start),
         };
       } else {
-        action[plc] = text.substr(value.start, value.end - 1 - value.start);
+        action[plc] = text.substr(value.start + 1, value.end - 1 - value.start);
       }
-      text = text.replaceAll(text.substr(name.start, value.end - name.start), plc);
+      text = text.replaceAll(text.substr(name.start, value.end - name.start + 1), plc);
     }
 
     return text;
