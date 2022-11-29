@@ -101,7 +101,7 @@ As you can see on the example above, components' files have to be put inside the
 - **.js** - Module with your component class extending imported `DitoElement` class and exporting created class as default
 - **.html** - Your components' template, here you can use all the feature presented you by this library
 - **.css** - Your component scoped styles. Each rule will be prefixed in a way that will make styles there be only applied to this component
-  - **!IMPORTANT** Even if there will be two components with the same name their styles might differ due to Dynamic CSS feature, so if you have CSS that matches all components and doesn't change it is recommended to not include it in components' CSS file
+  - **!IMPORTANT** Even if there will be two components with the same name their styles might differ due to Dynamic CSS feature
 
 #### Bare minimum:
 
@@ -513,22 +513,36 @@ this.$self.get.div2 // div
 ```
 
 # Dynamic CSS
-CSS is also being downloaded and assigned to the component, so why not allow using variables inside of it? Anything set in `$css` will be available inside your components CSS file:
+CSS is also being downloaded and assigned to the component, so why not allow using variables inside of it? Anything set in `$css` will be available inside your components CSS file in scoped styles. To understand what is means you have to understand that there are two types of CSS rules:
+- scoped - assigned to single custom element and repeated for each present element
+- global - only assigned to document once, normal style without template functionality and never rerended
 
-#### Functionality:
-```js
-init() {
-  this.$css.color = "brown";
-}
-```
-#### Styles:
+## Scoped - `@self`
+Simple example of scoped style:
 ```css
-p {
+@self h1 {
   color: {{ color }};
-  background-color: {{ color }};
 }
 ```
-Re-render of the template doesn't actually update CSS, so you need to specifically change the value in `$css` to make it update.
+will turn into something like this:
+```css
+custom-element[dito-t="1669705750862"][dito-i="0"] h1 {
+  color: red;
+}
+```
+To enable template syntax in CSS you have to use `@self` special rule, but it doesn't have to be at the start of rule like with other at-rules:
+```css
+@media only screen and (max-width:768px) {
+  main @self p {
+    color: {{ color }};
+  }
+
+  div {
+    padding: {{ padding }};
+  }
+}
+```
+Notice that I used template syntax in rule without `@self` in the definition and that's because, for performance reasons, script treat the whole media as a single rule with enabled syntax language and will replace it when `$css` changes even though only one rule there has `@self` on it.
 
 ### Currently CSS file supports only executables
 
