@@ -2,6 +2,21 @@ body {
   text-align: center;
 }
 
+* {
+  padding: 0;
+  margin: 0;
+}
+
+html {
+  padding: 10px;
+}
+
 @self h1 {
   color : {{ color }};
+}
+
+@media only screen and (max-width: 800px) {
+  @self h1 {
+    color: red;
+  }
 }

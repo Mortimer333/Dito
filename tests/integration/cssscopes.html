@@ -12,8 +12,21 @@
       const container = TH.getContainer();
       container.register('test-css-scope', Math.random());
       await container.load();
+      const css = document.querySelector('test-css-scope');
+      css.afterCssRender = res => {
+        TH.tests['There are two scoped rules'] = css.$self.css.scoped.length === 2 ? TH.success : TH.failure;
+        TH.tests['There are three global rules'] = css.__dito.css.global.length === 3 ? TH.success : TH.failure;
+        css.$self.css.scoped.forEach(async (rule, i) => {
+          const stylesheet = new CSSStyleSheet();
+          await stylesheet.replace(css.resolveCssExecutables(rule.rule)).catch(err => {
+            throw new Error('Failed to replace styles in `' + this.localName + '`: ' + err);
+          });
 
-      // TH.validateTestAndMoveToNext();
+          TH.tests['Scoped rule [' + i + '] after resolving executables it properly read by CSSRules'] =
+            stylesheet.rules.length === 1 ? TH.success : TH.failure;
+          TH.validateTestAndMoveToNext();
+        });
+      }
     </script>
   </body>
 </html>

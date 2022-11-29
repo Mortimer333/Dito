@@ -277,10 +277,12 @@ class DitoElement extends HTMLElement {
   }
 
   seperateRules(css) {
-    let inRule = false, lastEnd = 0;
+    let inRule = false, lastEnd = 0, nested = 0;
     const rules = [];
+
     for (var i = 0; i < css.length; i++) {
       const letter = css[i];
+
       if (!inRule && letter === '{') {
         inRule = true;
         continue;
@@ -301,9 +303,20 @@ class DitoElement extends HTMLElement {
         continue;
       }
 
+      if (letter === '{') {
+        nested++;
+        continue;
+      }
+
       if (letter === '}') {
+        if (nested > 0) {
+          nested--;
+          continue;
+        }
+
         rules.push(css.substr(lastEnd, i - lastEnd + 1).trim());
         lastEnd = i + 1;
+        inRule = false;
         continue;
       }
     }
@@ -314,12 +327,16 @@ class DitoElement extends HTMLElement {
   compileCSSExecutables(css) {
     this.__dito.css.actions.executables = {};
     let start = css.indexOf('{{');
+
     while (start !== -1) {
-      let end = css.indexOf('}}', start);
+      const end = css.indexOf('}}', start);
+
       if (end === -1) {
         break;
       }
+
       const name = 'exec_' + start + '_' + end;
+
       this.__dito.css.actions.executables[name] = css.substr(start + 2, end - (start + 2));
       css = css.replaceAll(css.substr(start, end + 2 - start), name);
       start = css.indexOf('{{', start + name.length);
@@ -327,11 +344,12 @@ class DitoElement extends HTMLElement {
     return css;
   }
 
-  cssRender() {
+  async cssRender() {
     if (this.$self.css.renderInProgress || !document.body.contains(this)) {
       return;
     }
 
+    this.clearCssRenderQueue();
     this.beforeCssRender();
     try {
       if (!this.__dito.compiledCSS) {
@@ -357,6 +375,7 @@ class DitoElement extends HTMLElement {
         }
       });
       this.afterCssRender({success: true});
+      this.$self.css.rendered = true;
     } catch (e) {
       this.afterCssRender({success: false, error: e});
     }
@@ -412,7 +431,9 @@ class DitoElement extends HTMLElement {
         this.assignChildren(this);
         this.retrieveBindedValues();
         this.renderInjected(this);
-        this.queueCssRender();
+        if (!this.$self.css.rendered) {
+          this.queueCssRender();
+        }
       }
 
       this.$self.forNodes.forEach(child => {

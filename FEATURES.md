@@ -8,13 +8,14 @@
     </p>
   </div>
 ```
-- CSS - special var which refers to the `self` so we can set styles to this container, ex: $self { display: block; } => element-one { display:block; }
+- [DONE] CSS - special var which refers to the `self` so we can set styles to this container, ex: $self { display: block; } => element-one { display:block; }
   - [DUPLICATE] CSS - let decide which styles should be scoped and which should be global (global wont be duplicated)
-  - Add support for media queries like blocks - retrieve them first and create new recursive functionality to handle them
+  - [REMOVED] Add support for media queries like blocks - retrieve them first and create new recursive functionality to handle them
     - @media
     - @container
     - @font-feature-values
     - @supports
+    - Not really needed as we are just need to implement skipping nested rules and resolving them
 - [DONE] ability to save node (like simple div to later access it) without setting id - <div @s="div1"></div> => this.$self.nodes.div1
 - [DONE] min amount of iterations on for - array = [1,2] => <div @for="array" @min="3">{{$key}} - {{$value}}</div> => <div>1 - 1</div><div>2 - 2</div><div>3 - undefined</div>
 - [DONE] Add variable for default attributes of the custom elements: default classes, default value etc. - $default ?
