@@ -505,7 +505,7 @@ class DitoElement extends HTMLElement {
         });
       } else {
         this.$self.default.injected.forEach(node => {
-          this.insertBefore(node, inject);
+          inject.parentElement.insertBefore(node, inject);
         });
       }
       inject.remove();
