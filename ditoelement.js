@@ -432,7 +432,7 @@ class DitoElement extends HTMLElement {
         this.retrieveBindedValues();
         this.renderInjected(this);
         if (!this.$self.css.rendered) {
-          this.queueCssRender();
+          await this.cssRender();
         }
       }
 
