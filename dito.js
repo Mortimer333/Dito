@@ -145,7 +145,9 @@ class Dito {
       }
     }
 
-    this.downloadCheck[name] = true;
+    if (!force) {
+      this.downloadCheck[name] = true;
+    }
 
     path = this.url + path + name + '/' + name + '.';
     const js = import(path + 'js?v=' + version + this.getQuery());
