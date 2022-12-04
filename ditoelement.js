@@ -493,7 +493,7 @@ class DitoElement extends HTMLElement {
             }
             const packName = node.getAttribute(this.packAttrName);
             if (packName == pack) {
-              this.insertBefore(node, inject);
+              inject.parentElement.insertBefore(node, inject);
               node.removeAttribute(this.packAttrName);
             } else {
               node.querySelectorAll('[' + this.packAttrName + '="' + pack + '"]').forEach(subnode => {
