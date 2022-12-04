@@ -497,7 +497,7 @@ class DitoElement extends HTMLElement {
               node.removeAttribute(this.packAttrName);
             } else {
               node.querySelectorAll('[' + this.packAttrName + '="' + pack + '"]').forEach(subnode => {
-                this.insertBefore(subnode, inject);
+                inject.parentElement.insertBefore(subnode, inject);
                 subnode.removeAttribute(this.packAttrName);
               });
             }
