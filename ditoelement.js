@@ -742,6 +742,10 @@ class DitoElement extends HTMLElement {
     }
     const {condition, anchors} = node.$self.for;
 
+    anchors.forEach(anchor => {
+      node.$self.scope = Object.assign({}, node.$self.scope, anchor.$self.scope);
+    });
+
     let res = this.getExecuteable(condition, node)(...this.getObservablesValues(node));
     let type = typeof res;
     if (type == 'string') {
