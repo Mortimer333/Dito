@@ -545,11 +545,12 @@ class DitoElement extends HTMLElement {
 
       item.$output[action.name] = {};
       item.$output[action.name].emit = function (e) {
-        const observableKeys = this.getObservablesKeys(item);
-        const valuesBefore = this.getObservablesValues(item);
+        const parent = this.$self.parent;
+        const observableKeys = this.getObservablesKeys.bind(parent)(parent);
+        const valuesBefore = this.getObservablesValues.bind(parent)(parent);
         try {
-          const res = this.getFunction(action.value, item, [this.eventName]).bind(this)(e, ...valuesBefore);
-          this.updatedChangedValues(res, observableKeys, valuesBefore);
+          const res = this.getFunction.bind(parent)(action.value, parent, [this.eventName]).bind(parent)(e, ...valuesBefore);
+          this.updatedChangedValues.bind(parent)(res, observableKeys, valuesBefore);
         } catch (e) {
           console.error("Error on output", e);
         }
@@ -826,7 +827,7 @@ class DitoElement extends HTMLElement {
           const newTextA = this.reconstructForAnchor(newAnchor, realAnchor)
           newTextA.$self.children = [];
           const nested = newTextA.$self.parent;
-          newTextA.$self.scope = Object.assign({}, anchor.$self.scope, nested.$self.scope);
+          newTextA.$self.scope = Object.assign({}, nested.$self.scope, anchor.$self.scope);
           if (node.$self.forBox.keyName) {
             newTextA.$self.scope[node.$self.forBox.keyName] = key;
           }

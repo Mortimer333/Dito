@@ -1,6 +1,6 @@
 <div @for="iter" @key="index" @value="letter" name="first">
   {{ index }}@{{ letter }}
-  <div @for="iter" @key="index2" @value="letter2" name="second">
+  <div @for="iter" @key="index2" @value="letter2" name="second" @a:value="letter2">
     {{ index }}@{{ letter }} => {{ index2 }}@{{ letter2 }}
     <test-bound @b:bound="bind">
       <p @for="iter">
@@ -11,3 +11,7 @@
 </div>
 <p @for="2" @if="display" name="ifForCheck"></p>
 <input type="text" name="" @b:value="bind" id="native">
+
+<div @for="nested" @value="item">
+  <p @for="item.children" @value="child">{{ item.value }} => {{ child }}</p>
+</div>
