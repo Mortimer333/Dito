@@ -784,7 +784,7 @@ class DitoElement extends HTMLElement {
 
     for (var i = 0; i < anchors.length; i++) {
       const anchor = anchors[i];
-      if (!document.body.contains(anchor)) {
+      if (!document.body.contains(anchor) && anchors.length > 1) {
         node.$self.for.anchors.splice(i, 1);
         i--;
         continue;
