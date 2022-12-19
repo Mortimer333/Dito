@@ -350,7 +350,7 @@ class DitoElement extends HTMLElement {
     }
 
     this.clearCssRenderQueue();
-    this.beforeCssRender();
+    await this.beforeCssRender();
     try {
       if (!this.__dito.compiledCSS) {
         this.compileCSS();
@@ -374,10 +374,10 @@ class DitoElement extends HTMLElement {
           sheet.insertRule(css, rule.index);
         }
       });
-      this.afterCssRender({success: true});
+      await this.afterCssRender({success: true});
       this.$self.css.rendered = true;
     } catch (e) {
-      this.afterCssRender({success: false, error: e});
+      await this.afterCssRender({success: false, error: e});
     }
   }
 
@@ -413,7 +413,7 @@ class DitoElement extends HTMLElement {
 
     this.$self.rendering = true;
     let res = false;
-    this.beforeRender();
+    await this.beforeRender();
     if (!this.$self.rendered) {
       this.dispatchEvent(window.__dito.events.firstrender);
     } else {
@@ -465,7 +465,7 @@ class DitoElement extends HTMLElement {
       });
 
 
-      this.afterRender({success: true});
+      await this.afterRender({success: true});
       if (!this.$self.rendered) {
         this.dispatchEvent(window.__dito.events.firstrendered);
         window.__dito.main.firstRendered.delete(this);
@@ -477,7 +477,7 @@ class DitoElement extends HTMLElement {
       res = true;
     } catch (e) {
       console.error('There was an error during rendering', e);
-      this.afterRender({success: false, error: e});
+      await this.afterRender({success: false, error: e});
     }
     this.$self.rendering = false;
     return res;
