@@ -741,10 +741,14 @@ class DitoElement extends HTMLElement {
     if (!node.$self.for) {
       throw new Error("Node marked as for doesn't have required values");
     }
+
     const {condition, anchors} = node.$self.for;
 
     anchors.forEach(anchor => {
       node.$self.scope = Object.assign({}, node.$self.scope, anchor.$self.scope);
+      if (!anchor.$self.forGenerated) {
+        anchor.$self.forGenerated = [];
+      }
     });
 
     let res = this.getExecuteable(condition, node)(...this.getObservablesValues(node));
@@ -799,12 +803,22 @@ class DitoElement extends HTMLElement {
       anchor.$self.children.splice(keys.length).forEach(child => {
         this.removeFromChildren(child);
       });
+      anchor.$self.forGenerated.splice(keys.length);
     }
 
     const tmpParent = document.createElement('div');
     const actions = this.__dito.actions;
+    anchor.$self.forGenerated.forEach((generatedChildren, i) => {
+      const key = keys[i], value = values[i];
+      generatedChildren.forEach(child => {
+        child.$self.forBox.key = key;
+        child.$self.forBox.value = value;
+      });
+    });
+
     for (var i = anchor.$self.children.length; i < keys.length; i++) {
       const key = keys[i], value = values[i], clone = node.cloneNode(true);
+      anchor.$self.forGenerated[i] = [];
       tmpParent.appendChild(clone);
       this.iterateOverActions(tmpParent, (action, alias, child) => {
         child = this.defineChild(child, action, alias, actions[action][alias]);
@@ -813,6 +827,7 @@ class DitoElement extends HTMLElement {
         child.$self.forBox.keyName = node.$self.forBox.keyName;
         child.$self.forBox.valueName = node.$self.forBox.valueName;
         child.$self.scope = Object.assign({}, anchor.$self.scope, child.$self.scope);
+        anchor.$self.forGenerated[i].push(child);
       });
 
       anchor.parentElement.insertBefore(clone, anchor);
@@ -901,8 +916,12 @@ class DitoElement extends HTMLElement {
       }
     }
 
-    const res = this.getExecuteable(node.$self.if.condition, node)(...this.getObservablesValues(node))
     const rep = node.$self.if.replacement;
+    if (!document.body.contains(rep) && !document.body.contains(node)) {
+      return;
+    }
+
+    const res = this.getExecuteable(node.$self.if.condition, node)(...this.getObservablesValues(node))
     if (res && !document.body.contains(node)) {
       rep.parentElement.replaceChild(node, rep);
     } else if (!res && document.body.contains(node)) {

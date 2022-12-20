@@ -1,0 +1,7 @@
+<div @for="nestedIter" @value="item" id="nestedFor">
+  <test-injected @if="item.href" @a:value="item.href" name="injected">
+    <p @if="item.icon" @a:value="item.icon" name="icon">
+      Hello
+    </p>
+  </test-injected>
+</div>

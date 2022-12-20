@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>Test</title>
+  </head>
+  <body>
+    <test-if-nested></test-if-nested>
+    <script type="module">
+      import * as TH from "../test.js";
+
+      const container = TH.getContainer({
+        callback: async () => {
+          const testif = document.body.querySelector('test-if-nested')
+          const nestedFor = testif.querySelector('#nestedFor')
+          let injected = testif.querySelectorAll('[name="injected"]')
+          let icon = testif.querySelectorAll('[name="icon"]')
+
+          TH.tests['All injected visible'] = injected.length == 2 ? TH.success : TH.failure;
+          TH.tests['All icons visible'] = icon.length == 2 ? TH.success : TH.failure;
+          testif.$.nestedIter = [];
+
+          let res = await testif.render(true);
+          injected = testif.querySelectorAll('[name="injected"]');
+          icon = testif.querySelectorAll('[name="icon"]');
+          TH.tests['All injected invisible'] = (res && injected.length == 0) ? TH.success : TH.failure;
+          TH.tests['All icons invisible'] = (res && icon.length == 0) ? TH.success : TH.failure;
+          testif.$.nestedIter = [{href: true, icon: false}];
+
+          res = await testif.render(true);
+          injected = testif.querySelectorAll('[name="injected"]');
+          icon = testif.querySelectorAll('[name="icon"]');
+          TH.tests['One injected visible'] = (res && injected.length == 1) ? TH.success : TH.failure;
+          TH.tests['All icons still invisible'] = (res && icon.length == 0) ? TH.success : TH.failure;
+          testif.$.nestedIter = [{href: true, icon: true}, {href: false, icon: true}, {href: true, icon: false}];
+
+          res = await testif.render(true);
+          injected = testif.querySelectorAll('[name="injected"]');
+          icon = testif.querySelectorAll('[name="icon"]');
+          TH.tests['Two injected visible'] = (res && injected.length == 2) ? TH.success : TH.failure;
+          TH.tests['One icons still invisible'] = (res && icon.length == 1) ? TH.success : TH.failure;
+
+          TH.validateTestAndMoveToNext();
+        }
+      });
+      container.register('test-if-nested', Math.random());
+      container.register('test-injected', Math.random());
+      await container.load();
+
+    </script>
+  </body>
+</html>

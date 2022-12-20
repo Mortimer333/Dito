@@ -1,8 +1,12 @@
-<div id="inline1" @if="true"></div>
-<div id="inline2" @if="false"></div>
-<div id="display1" @if="display1"></div>
-<div @for="display2Iter" name="display2" @if="display2"></div>
+<div id="inline1" @if="true">true inline</div>
+<div id="inline2" @if="false">false inline</div>
+<div id="display1" @if="display1">display1</div>
+<div @for="display2Iter" name="display2" @if="display2">display2</div>
 <test-injected>
-  <div id="display3" @if="display3"></div>
-  <div @for="display4Iter" name="display4" @if="display4"></div>
+  <div id="display3" @if="display3">
+    display3
+  </div>
+  <div @for="display4Iter" name="display4" @if="display4">
+    display4
+  </div>
 </test-injected>
