@@ -2,8 +2,8 @@ import { DitoElement } from "../../ditoelement.js";
 import { Dito } from "../../dito.js";
 const URL = 'http://dito.local/';
 const order = [
-  'localstorage', 'callback', 'settings', 'input', 'output', 'bindandfor', 'events', 'if', 'ifnested', 'attributes',
-  'injected', 'css', 'get', 'defaults', 'for_min', 'cssscopes'
+  'attributes', 'bindandfor', 'callback', 'css', 'cssscopes', 'defaults',  'events', 'for_min' 'get', 'if', 'ifnested',
+  'injected', 'input', 'localstorage', 'output', 'settings',
 ];
 const tests = {};
 const success = 'SUCCESS';

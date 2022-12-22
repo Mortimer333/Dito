@@ -515,7 +515,6 @@ class DitoElement extends HTMLElement {
   setupUnique(item) {
     this.setupEvents(item);
     this.setupBinds(item);
-    this.setupInputs(item);
     this.setupOutputs(item);
     this.setupGets(item);
   }
@@ -735,6 +734,7 @@ class DitoElement extends HTMLElement {
     this.actionIf(item, actions.ifs || [], 'ifs');
     this.actionAttrs(item, actions.attrs || [], 'attrs');
     this.actionExecutables(item, actions.executables || [], 'executables');
+    this.setupInputs(item);
   }
 
   actionFor(node, indent = ' ') {
@@ -813,6 +813,9 @@ class DitoElement extends HTMLElement {
       generatedChildren.forEach(child => {
         child.$self.forBox.key = key;
         child.$self.forBox.value = value;
+        if (child.render) {
+          child.render(true);
+        }
       });
     });
 
@@ -1150,7 +1153,6 @@ class DitoElement extends HTMLElement {
       "events" : true,
       "binds" : true,
       "outputs" : true,
-      "inputs" : true,
       "gets": true
     };
 
