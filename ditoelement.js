@@ -546,10 +546,10 @@ class DitoElement extends HTMLElement {
       item.$output[action.name] = {};
       item.$output[action.name].emit = function (e) {
         const parent = this.$self.parent;
-        const observableKeys = this.getObservablesKeys.bind(parent)(parent);
-        const valuesBefore = this.getObservablesValues.bind(parent)(parent);
+        const observableKeys = this.getObservablesKeys.bind(parent)(item);
+        const valuesBefore = this.getObservablesValues.bind(parent)(item);
         try {
-          const res = this.getFunction.bind(parent)(action.value, parent, [this.eventName]).bind(parent)(e, ...valuesBefore);
+          const res = this.getFunction.bind(parent)(action.value, item, [this.eventName]).bind(parent)(e, ...valuesBefore);
           this.updatedChangedValues.bind(parent)(res, observableKeys, valuesBefore);
         } catch (e) {
           console.error("Error on output", e);
@@ -1155,7 +1155,9 @@ class DitoElement extends HTMLElement {
     };
 
     if (unique[actionName]) {
-      this.$self.uniqueChildren.push(node);
+      if (!this.$self.uniqueChildren.includes(node)) {
+        this.$self.uniqueChildren.push(node);
+      }
     } else {
       this.$self.children.push(node);
     }
