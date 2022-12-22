@@ -746,8 +746,13 @@ class DitoElement extends HTMLElement {
 
     anchors.forEach(anchor => {
       node.$self.scope = Object.assign({}, node.$self.scope, anchor.$self.scope);
+
       if (!anchor.$self.forGenerated) {
         anchor.$self.forGenerated = [];
+      }
+
+      if (!anchor.$self.anchorGenerated) {
+        anchor.$self.anchorGenerated = [];
       }
     });
 
@@ -804,6 +809,7 @@ class DitoElement extends HTMLElement {
         this.removeFromChildren(child);
       });
       anchor.$self.forGenerated.splice(keys.length);
+      anchor.$self.anchorGenerated.splice(keys.length);
     }
 
     const tmpParent = document.createElement('div');
@@ -811,10 +817,21 @@ class DitoElement extends HTMLElement {
     anchor.$self.forGenerated.forEach((generatedChildren, i) => {
       const key = keys[i], value = values[i];
       generatedChildren.forEach(child => {
+        child.$self.scope = Object.assign({}, child.$self.scope, anchor.$self.scope);
         child.$self.forBox.key = key;
         child.$self.forBox.value = value;
-        if (child.render) {
-          child.render(true);
+      });
+    });
+
+    anchor.$self.anchorGenerated.forEach((subAnchors, i) => {
+      const key = keys[i], value = values[i];
+      subAnchors.forEach(subAnchor => {
+        if (node.$self.forBox.keyName) {
+          subAnchor.$self.scope[node.$self.forBox.keyName] = key;
+        }
+
+        if (node.$self.forBox.valueName) {
+          subAnchor.$self.scope[node.$self.forBox.valueName] = value;
         }
       });
     });
@@ -834,6 +851,7 @@ class DitoElement extends HTMLElement {
       });
 
       anchor.parentElement.insertBefore(clone, anchor);
+      anchor.$self.anchorGenerated[i] = [];
 
       // Nested fors
       node.$self.forBox.anchors.forEach(path => {
@@ -844,6 +862,8 @@ class DitoElement extends HTMLElement {
         } else {
           const newTextA = this.reconstructForAnchor(newAnchor, realAnchor)
           newTextA.$self.children = [];
+          newTextA.$self.forGenerated = [];
+
           const nested = newTextA.$self.parent;
           newTextA.$self.scope = Object.assign({}, nested.$self.scope, anchor.$self.scope);
           if (node.$self.forBox.keyName) {
@@ -854,12 +874,14 @@ class DitoElement extends HTMLElement {
             newTextA.$self.scope[node.$self.forBox.valueName] = value;
           }
 
+          anchor.$self.anchorGenerated[i].push(newTextA);
           this.actionFor(newTextA.$self.parent, indent + '  ');
         }
       });
 
       anchor.$self.children.push(clone);
     }
+
     if (anchor.nodeType !== 3) {
       this.reconstructForAnchor(anchor, anchor)
     }

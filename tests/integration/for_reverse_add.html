@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>Test</title>
+  </head>
+  <body>
+    <test-for></test-for>
+    <script type="module">
+      import * as TH from "../test.js";
+
+      const container = TH.getContainer({
+        callback: async e => {
+          const testFor = document.querySelector('test-for');
+          testFor.$.items.unshift({value: '1'});
+          await testFor.render(true);
+          TH.tests['Proper items scope update'] =
+            '1234' == testFor.innerText.replaceAll(' ', '').replaceAll('\n', '') ? TH.success : TH.failure;
+          TH.validateTestAndMoveToNext();
+        }
+      });
+      container.register('test-for', Math.random());
+      container.register('test-empty', Math.random());
+      await container.load();
+
+    </script>
+  </body>
+</html>
