@@ -12,10 +12,10 @@
       const container = TH.getContainer({
         callback: async e => {
           const testFor = document.querySelector('test-for');
-          testFor.$.items.unshift({value: '1'});
+          testFor.$.items.unshift({value: '1', values: [{number: 1}]});
           await testFor.render(true);
           TH.tests['Proper items scope update'] =
-            '1234' == testFor.innerText.replaceAll(' ', '').replaceAll('\n', '') ? TH.success : TH.failure;
+            '1=>12=>23=>34=>4' == testFor.innerText.replaceAll(' ', '').replaceAll('\n', '') ? TH.success : TH.failure;
           TH.validateTestAndMoveToNext();
         }
       });

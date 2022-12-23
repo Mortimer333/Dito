@@ -744,8 +744,14 @@ class DitoElement extends HTMLElement {
 
     const {condition, anchors} = node.$self.for;
 
-    anchors.forEach(anchor => {
-      node.$self.scope = Object.assign({}, node.$self.scope, anchor.$self.scope);
+    for (var i = 0; i < anchors.length; i++) {
+      const anchor = anchors[i];
+
+      if (!document.body.contains(anchor) && anchors.length > 1) {
+        node.$self.for.anchors.splice(i, 1);
+        i--;
+        continue;
+      }
 
       if (!anchor.$self.forGenerated) {
         anchor.$self.forGenerated = [];
@@ -754,49 +760,40 @@ class DitoElement extends HTMLElement {
       if (!anchor.$self.anchorGenerated) {
         anchor.$self.anchorGenerated = [];
       }
-    });
 
-    let res = this.getExecuteable(condition, node)(...this.getObservablesValues(node));
-    let type = typeof res;
-    if (type == 'string') {
-      res = res * 1;
-      type = typeof res;
-    }
-
-    let keys, values;
-    if (type != 'number' && type != 'object' || (isNaN(res) && type != 'object')) {
-      console.error('For in `' + this.constructor.name + '` doesn\'t have iterable value, removing node...');
-      node.remove();
-      return;
-    } else {
-      if (type == 'number') {
-        res = new Array(res).fill(null);
+      let res = this.getExecuteable(condition, anchor)(...this.getObservablesValues(anchor));
+      let type = typeof res;
+      if (type == 'string') {
+        res = res * 1;
+        type = typeof res;
       }
 
-      if (node.$self.for.min) {
-        const min = this.getExecuteable(node.$self.for.min, node)(...this.getObservablesValues(node));
-        let item = undefined;
-        if (node.$self.for.minDef) {
-          item = this.getExecuteable(node.$self.for.minDef, node)(...this.getObservablesValues(node));
+      let keys, values;
+      if (type != 'number' && type != 'object' || (isNaN(res) && type != 'object')) {
+        console.error('For in `' + this.constructor.name + '` doesn\'t have iterable value, removing node...');
+        node.remove();
+        return;
+      } else {
+        if (type == 'number') {
+          res = new Array(res).fill(null);
         }
-        if (typeof min != 'number') {
-          throw new Error('For min must be a number');
-        }
-        if (res.length < min) {
-          res = res.concat(new Array(min - res.length).fill(item));
-        }
-      }
 
-      keys = Object.keys(res);
-      values = Object.values(res);
-    }
+        if (node.$self.for.min) {
+          const min = this.getExecuteable(node.$self.for.min, anchor)(...this.getObservablesValues(anchor));
+          let item = undefined;
+          if (node.$self.for.minDef) {
+            item = this.getExecuteable(node.$self.for.minDef, anchor)(...this.getObservablesValues(anchor));
+          }
+          if (typeof min != 'number') {
+            throw new Error('For min must be a number');
+          }
+          if (res.length < min) {
+            res = res.concat(new Array(min - res.length).fill(item));
+          }
+        }
 
-    for (var i = 0; i < anchors.length; i++) {
-      const anchor = anchors[i];
-      if (!document.body.contains(anchor) && anchors.length > 1) {
-        node.$self.for.anchors.splice(i, 1);
-        i--;
-        continue;
+        keys = Object.keys(res);
+        values = Object.values(res);
       }
 
       this.renderFor(node, anchor, values, keys, indent);
@@ -833,6 +830,8 @@ class DitoElement extends HTMLElement {
         if (node.$self.forBox.valueName) {
           subAnchor.$self.scope[node.$self.forBox.valueName] = value;
         }
+
+        this.actionFor(subAnchor.$self.parent, indent + '-- ');
       });
     });
 
@@ -875,7 +874,7 @@ class DitoElement extends HTMLElement {
           }
 
           anchor.$self.anchorGenerated[i].push(newTextA);
-          this.actionFor(newTextA.$self.parent, indent + '  ');
+          this.actionFor(newTextA.$self.parent, indent + '-- ');
         }
       });
 
@@ -1122,6 +1121,14 @@ class DitoElement extends HTMLElement {
     node.querySelectorAll('[dito-anchor]').forEach((anchor, i) => {
       paths.push(this.buildPath(anchor, node) + '[dito-anchor="' + i + '"]');
       anchor.setAttribute('dito-anchor', i);
+
+      const nodes = this.$self.forNodes;
+      for (var i = 0; i < nodes.length; i++) {
+        if (anchor.$self.parent === nodes[i]) {
+          nodes.splice(i, 1);
+          break;
+        }
+      }
     });
     return paths;
   }

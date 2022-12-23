@@ -1,3 +1,6 @@
 <div @for="items" @value="item">
-  {{ item.value }}
+  {{ item.value }} =>
+  <span @for="item.values" @value="value">
+    {{ value.number }}
+  </span>
 </div>
