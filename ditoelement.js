@@ -37,7 +37,7 @@ class DitoElement extends HTMLElement {
 
   getDefaults(){}           // Placeholder
 
-  connectedCallback() {
+  async connectedCallback() {
     if (!document.body.contains(this)) {
       return;
     }
@@ -46,7 +46,7 @@ class DitoElement extends HTMLElement {
       window.__dito.main.firstRendered.set(this);
       delete window.__dito.main.downloadCheck[this.localName];
       this.firstRenderBeforeActions();
-      this.init();
+      await this.init();
     }
 
     this.queueRender();
@@ -476,7 +476,7 @@ class DitoElement extends HTMLElement {
       }
       res = true;
     } catch (e) {
-      console.error('There was an error during rendering', e);
+      console.error('There was an error during rendering', e, this);
       await this.afterRender({success: false, error: e});
     }
     this.$self.rendering = false;
