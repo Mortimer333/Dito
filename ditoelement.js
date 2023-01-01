@@ -42,8 +42,8 @@ class DitoElement extends HTMLElement {
       return;
     }
 
-    if (!this.$self.rendered) {
-      window.__dito.main.firstRendered.set(this);
+    if (!window.__dito.main.firstRendered.get(this)) {
+      window.__dito.main.firstRendered.set(this, true);
       delete window.__dito.main.downloadCheck[this.localName];
       this.firstRenderBeforeActions();
       await this.init();
@@ -770,7 +770,7 @@ class DitoElement extends HTMLElement {
 
       let keys, values;
       if (type != 'number' && type != 'object' || (isNaN(res) && type != 'object')) {
-        console.error('For in `' + this.constructor.name + '` doesn\'t have iterable value, removing node...');
+        console.error('For in `' + this.constructor.name + '` doesn\'t have iterable value, removing node...', condition);
         node.remove();
         return;
       } else {

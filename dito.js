@@ -50,28 +50,28 @@ class Dito {
     window.__dito.events = {};
     window.__dito.events.render = new CustomEvent("render", {
       detail: {},
-      bubbles: true,
+      bubbles: false,
       cancelable: true,
       composed: false,
     });
 
     window.__dito.events.rendered = new CustomEvent("rendered", {
       detail: {},
-      bubbles: true,
+      bubbles: false,
       cancelable: true,
       composed: false,
     });
 
     window.__dito.events.firstrender = new CustomEvent("firstrender", {
       detail: {},
-      bubbles: true,
+      bubbles: false,
       cancelable: true,
       composed: false,
     });
 
     window.__dito.events.firstrendered = new CustomEvent("firstrendered", {
       detail: {},
-      bubbles: true,
+      bubbles: false,
       cancelable: true,
       composed: false,
     });
