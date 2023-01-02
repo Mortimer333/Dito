@@ -42,6 +42,8 @@ class DitoElement extends HTMLElement {
       return;
     }
 
+    this.clearRenderQueue();
+
     if (!window.__dito.main.firstRendered.get(this)) {
       window.__dito.main.firstRendered.set(this, true);
       delete window.__dito.main.downloadCheck[this.localName];
@@ -406,6 +408,7 @@ class DitoElement extends HTMLElement {
       this.queueRender();
       return;
     }
+
     this.clearRenderQueue();
     if (document.body.querySelector(this.localName + ' ' + this.localName)) {
       throw new Error('Custom element ' + this.localName + ' is recursively called. Stopping the render....');
