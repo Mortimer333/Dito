@@ -101,6 +101,10 @@ class DitoElement extends HTMLElement {
   }
 
   setCssScope() {
+    if (this.$self.css.scoped) {
+      this.queueCssRender();
+    }
+    this.$self.css.scoped = null;
     this.setAttribute(this.timeAtr, +new Date());
     this.setAttribute(this.indexAtr, Array.prototype.indexOf.call(this.parentElement.children, this));
     this.$self.path = this.getPath(this);
@@ -141,28 +145,28 @@ class DitoElement extends HTMLElement {
 
   defineObservable() {
     Object.defineProperty(this, "$", {
-        value: new Proxy({}, {
-          tag: this,
-          set (obj, prop, value) {
-            if (prop[0] == '$') {
-              throw new Error("You can't create variables on this.$ starting with `$`, it's a taken prefix");
-            }
-
-            if (value !== obj[prop]) {
-              this.tag.queueRender();
-            }
-
-            if (this.tag.$binded[prop]) {
-              const { provider, receiver } = this.tag.$binded[prop];
-              if (provider.target.$[provider.name] !== value) {
-                provider.target.$[provider.name] = value;
-              }
-            }
-
-            return Reflect.set(...arguments);
+      value: new Proxy({}, {
+        tag: this,
+        set (obj, prop, value) {
+          if (prop[0] == '$') {
+            throw new Error("You can't create variables on this.$ starting with `$`, it's a taken prefix");
           }
-        }),
-        writable: false
+
+          if (value !== obj[prop]) {
+            this.tag.queueRender();
+          }
+
+          if (this.tag.$binded[prop]) {
+            const { provider, receiver } = this.tag.$binded[prop];
+            if (provider.target.$[provider.name] !== value) {
+              provider.target.$[provider.name] = value;
+            }
+          }
+
+          return Reflect.set(...arguments);
+        }
+      }),
+      writable: false
     });
 
     Object.defineProperty(this, "$binded", {
@@ -597,8 +601,8 @@ class DitoElement extends HTMLElement {
     actions.forEach(function (action) {
       if (typeof this.$[action.value] == 'undefined') {
         console.error(
-          'Observable in `' + this.constructor.name + '` doesn\'t have `'
-          + action.value + '` variable, skipping binding...'
+            'Observable in `' + this.constructor.name + '` doesn\'t have `'
+            + action.value + '` variable, skipping binding...'
         );
         return;
       }
@@ -1025,8 +1029,8 @@ class DitoElement extends HTMLElement {
 
   getPath(node) {
     const index = this.attributes[this.indexAtr].value,
-      time = this.attributes[this.timeAtr].value,
-      path = node.localName + '@' + index + '@' + time;
+        time = this.attributes[this.timeAtr].value,
+        path = node.localName + '@' + index + '@' + time;
     if (!this.$self.parent) {
       return path;
     }
@@ -1220,7 +1224,7 @@ class DitoElement extends HTMLElement {
         const component = notDownloaded[node.localName];
         delete notDownloaded[node.localName];
         promises.push(
-          ...window.__dito.main.createRegisterPromise(component.path, component.name, component.version)
+            ...window.__dito.main.createRegisterPromise(component.path, component.name, component.version)
         );
       }
     });
@@ -1241,10 +1245,10 @@ class DitoElement extends HTMLElement {
 
     observableKeys.forEach((key, i) => {
       if (
-        key[0] !== '$'
-        && !skipTypes[typeof this.$[key]]
-        && !skipTypes[typeof res[i]]
-        && valuesBefore[i] !== res[i]
+          key[0] !== '$'
+          && !skipTypes[typeof this.$[key]]
+          && !skipTypes[typeof res[i]]
+          && valuesBefore[i] !== res[i]
       ) {
         this.$[key] = res[i];
       }
@@ -1297,11 +1301,11 @@ class DitoElement extends HTMLElement {
   getCompiledAttribute(text, lm, skipValue = false, start = 0) {
     let aStart = text.indexOf(lm, start);
     if (
-      aStart === -1
-      || (
-        aStart === 0
-        && !/\s/g.test(text[aStart - 1])
-      )
+        aStart === -1
+        || (
+            aStart === 0
+            && !/\s/g.test(text[aStart - 1])
+        )
     ) {
       return false;
     }
@@ -1334,8 +1338,8 @@ class DitoElement extends HTMLElement {
     const wrapper = strings[text[aEnd + 1]];
     if (!wrapper) {
       console.error(
-        'String wrapper for `' + lm + '` in `' + this.constructor.name
-        + '` not found (found letter: `' + text[aEnd + 1] + '`), skipping'
+          'String wrapper for `' + lm + '` in `' + this.constructor.name
+          + '` not found (found letter: `' + text[aEnd + 1] + '`), skipping'
       );
       return this.getCompiledAttribute(text, lm, skipValue, aEnd)
     }
