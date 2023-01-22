@@ -265,6 +265,8 @@ class Dito {
                   events: {},
                   executables: {},
                   packs: {},
+                  unames: {},
+                  uses: {},
                   gets: {},
                   for_mins: {},
                   for_min_defs: {}

@@ -4,7 +4,9 @@ class DitoElement extends HTMLElement {
   eventName = "$event";
   indexAtr = 'dito-i';
   packAttrName = 'dito-pack';
+  useNameAttrName = 'dito-use-name';
   timeAtr = 'dito-t';
+  anchorAliasAttr = 'dito-anchor-alias';
 
   constructor() {
     super();
@@ -221,6 +223,7 @@ class DitoElement extends HTMLElement {
         },
         for: {},
         forBox: {
+          isItem: false,
           key: null,
           value: null,
           keyName: null,
@@ -239,6 +242,7 @@ class DitoElement extends HTMLElement {
         uniqueChildren: [],
         uniqueNodes: new WeakMap(),
         get: {},
+        template: {},
       },
       writable: false
     });
@@ -258,7 +262,7 @@ class DitoElement extends HTMLElement {
   }
 
   categorizeCssRules() {
-    const rules = this.seperateRules(this.__dito.css.content);
+    const rules = this.separateRules(this.__dito.css.content);
     this.__dito.css.scoped = [];
     this.__dito.css.global = [];
     rules.forEach(rule => {
@@ -282,7 +286,7 @@ class DitoElement extends HTMLElement {
     });
   }
 
-  seperateRules(css) {
+  separateRules(css) {
     let inRule = false, lastEnd = 0, nested = 0;
     const rules = [];
 
@@ -395,14 +399,6 @@ class DitoElement extends HTMLElement {
     return css;
   }
 
-  createQueryUp(element, parent) {
-    if (element == parent) {
-      return '';
-    }
-    const index = Array.prototype.indexOf.call(element.parentElement.children, element) + 1;
-    return this.createQueryUp(element.parentElement, parent) + ' ' + element.localName + ':nth-child(' + index + ')';
-  }
-
   async render(force = false) {
     if (!force && (this.$self.renderInProgress || !document.body.contains(this))) {
       return;
@@ -490,33 +486,116 @@ class DitoElement extends HTMLElement {
     return res;
   }
 
+  cloneNode(template, callback = null) {
+    const node = template.cloneNode();
+    if (template.$self && callback) {
+      callback(template, node);
+    }
+
+    template.childNodes.forEach(child => {
+      node.appendChild(this.cloneNode(child, callback));
+    });
+
+    return node;
+  }
+
+  actionItems(node) {
+    if (node.$self) {
+      this.setupUnique(node);
+      this.actionItem(node);
+    }
+
+    node.childNodes.forEach(child => {
+      this.actionItems(child);
+    });
+  }
+
   renderInjected(item) {
     this.querySelectorAll('dito-inject').forEach(inject => {
+      const uses = inject.$self?.actions?.uses;
+      let use = null;
+      if (uses?.length > 0) {
+        if (uses.length > 1) {
+          throw new Error('Dito inject can one have one use variable');
+        }
+
+        use = this.getExecuteable(uses[0], this)(...this.getObservablesValues(this));
+      }
+
       if (inject.$self?.actions?.packs?.length > 0) {
         inject.$self.actions.packs.forEach(pack => {
-          this.$self.default.injected.forEach(function (node) {
-            if (node.nodeType === 3) {
+          pack = this.getExecuteable(pack, item)(...this.getObservablesValues(item));
+          this.$self.default.injected.forEach(function (template) {
+            if (template.nodeType === 3 || !template.getAttribute(this.packAttrName)) {
               return;
             }
-            const packName = node.getAttribute(this.packAttrName);
-            if (packName == pack) {
-              inject.parentElement.insertBefore(node, inject);
-              node.removeAttribute(this.packAttrName);
-            } else {
-              node.querySelectorAll('[' + this.packAttrName + '="' + pack + '"]').forEach(subnode => {
-                inject.parentElement.insertBefore(subnode, inject);
-                subnode.removeAttribute(this.packAttrName);
-              });
+
+            const packName = this.getExecuteable(
+              template.getAttribute(this.packAttrName),
+              item
+            )(...this.getObservablesValues(item));
+
+            if (packName != pack) {
+                return;
             }
+
+            let node = this.initInjected(inject, template, use);
+            node.removeAttribute(this.packAttrName);
           }.bind(this));
         });
       } else {
-        this.$self.default.injected.forEach(node => {
-          inject.parentElement.insertBefore(node, inject);
+        this.$self.default.injected.forEach(template => {
+          this.initInjected(inject, template, use);
         });
       }
       inject.remove();
     });
+  }
+
+  initInjected(inject, template, use) {
+    let scope = null;
+    const forActions = [];
+    if (use && template.getAttribute(this.useNameAttrName)) {
+      let name = template.getAttribute(this.useNameAttrName);
+      scope = {[name] : use};
+      template.removeAttribute(this.useNameAttrName);
+    } else if (use) {
+      scope = { use };
+    }
+
+    const node = this.cloneNode(template, function(template, node) {
+      node.$self = Object.assign({}, template.$self);
+      if (scope) {
+        node.$self.scope = Object.assign(node.$self.scope, scope);
+      }
+
+      if (
+        !node.$self.forBox.isItem
+        && (
+          !node.getAttribute
+          || (node.getAttribute && !node.getAttribute(this.anchorAliasAttr))
+        )
+      ) {
+        this.$self.children.push(node);
+      } else if (node.getAttribute && node.getAttribute(this.anchorAliasAttr)) {
+        console.log(node)
+        node.$self.parent.$self.for.anchors[0] = node;
+        this.$self.forNodes.push(node.$self.parent);
+        forActions.push(node.$self.parent);
+      }
+    }.bind(this.$self.parent));
+
+    if (!node) {
+      throw new Error("Injected node wasn't properly cloned");
+    }
+
+    inject.parentElement.insertBefore(node, inject);
+    forActions.forEach(child => {
+      this.$self.parent?.actionFor(child);
+    });
+    this.$self.parent?.actionItems(node);
+
+    return node;
   }
 
   setupUnique(item) {
@@ -533,7 +612,7 @@ class DitoElement extends HTMLElement {
     }
 
     if (actions.length > 1) {
-      throw new Error('You can only retrieve one node once');
+      throw new Error('You can only retrieve the same node once');
     }
     const name = this.getExecuteable(actions[0], item)(...this.getObservablesValues(item));
     this.$self.get[name] = item;
@@ -848,6 +927,7 @@ class DitoElement extends HTMLElement {
       tmpParent.appendChild(clone);
       this.iterateOverActions(tmpParent, (action, alias, child) => {
         child = this.defineChild(child, action, alias, actions[action][alias]);
+        child.$self.forBox.isItem = true;
         child.$self.forBox.key = key;
         child.$self.forBox.value = value;
         child.$self.forBox.keyName = node.$self.forBox.keyName;
@@ -886,6 +966,9 @@ class DitoElement extends HTMLElement {
       });
 
       anchor.$self.children.push(clone);
+    }
+    if (this.$self.parent) {
+      this.renderInjected(this.$self.parent);
     }
 
     if (anchor.nodeType !== 3) {
@@ -960,73 +1043,6 @@ class DitoElement extends HTMLElement {
     }
   }
 
-  removeNotAssignedChildren(parent) {
-    const keys = Object.keys(this.$self.children);
-    for (var i = 0; i < keys.length; i++) {
-      const path = keys[i];
-      if (!parent.contains(this.$self.children[path])) {
-        delete this.$self.children[path];
-      }
-    }
-  }
-
-  resolveNativeBinds(parent) {
-    const nodesIter = [];
-    const native = this.$self.nativeChildren;
-    const keys = Object.keys(native);
-    if (keys == 0) {
-      return;
-    }
-    const toRemove = new WeakMap();
-    const nodes = parent.querySelectorAll('[' + keys.join('], [') + ']');
-
-    for (let i = nodes.length - 1; i >= 0 ; i--) {
-      const node = nodes[i];
-      const similar = [];
-      node.getAttributeNames().forEach(name => {
-        if (native[name]) {
-          similar.push(name);
-        }
-      });
-
-      let replace = null;
-      similar.forEach(alias => {
-        const item = native[alias];
-        item.node.setAttribute(item.name, this.$[item.value]);
-        replace = item.node;
-      });
-
-      if (replace) {
-        node.parentElement.insertBefore(replace, node);
-        node.remove();
-      }
-    }
-  }
-
-  resolveInjected(parent) {
-    parent.querySelectorAll('dito-inject').forEach(node => {
-      if (node.innerHTML.trim().length != 0) {
-        console.error('Inject tag is not empty, everything inside of him will be removed:', node.innerHTML.trim());
-      }
-      const packName = node.getAttribute(this.packAttrName);
-      if (packName) {
-        const pack = this.$self.injectedPacks[packName];
-        if (pack) {
-          let current = node;
-          pack.forEach(packNode => {
-            current.parentElement.insertBefore(packNode, current);
-            current = packNode;
-          });
-        }
-      } else {
-        this.$self.injected.forEach(child => {
-          node.parentElement.insertBefore(child, node);
-        });
-      }
-      node.remove();
-    });
-  }
-
   getPath(node) {
     const index = this.attributes[this.indexAtr].value,
         time = this.attributes[this.timeAtr].value,
@@ -1098,7 +1114,7 @@ class DitoElement extends HTMLElement {
 
     const alias = aliases[0], anchor = document.createElement('a');
     anchor.setAttribute('dito-anchor', 1);
-    anchor.setAttribute('dito-anchor-alias', alias);
+    anchor.setAttribute(this.anchorAliasAttr, alias);
     this.defineSelf(node);
     this.defineSelf(anchor);
     node.removeAttribute(alias);
@@ -1112,15 +1128,60 @@ class DitoElement extends HTMLElement {
     }
 
     node.$self.forBox.anchors = this.getAnchorPaths(node);
-    this.$self.forNodes.push(node);
+    if (!this.isInjected(node)) {
+      this.$self.forNodes.push(node);
+    } else {
+      const keys = Object.keys(this.__dito.actions.packs);
+      for (let i=0; i < keys.length; i++) {
+        const alias = keys[i];
+        if (null !== node.getAttribute(alias)) {
+          anchor.setAttribute(alias, '');
+          break;
+        }
+      }
+    }
+
     anchor.$self.parent = node;
+    console.log("Set anchor parent", anchor.$self.parent)
     node.parentElement.replaceChild(anchor, node);
     node.$self.for = {
       condition: actions.fors[alias],
       anchors: [anchor],
       min,
       minDef
+    };
+  }
+
+  isInjected(node) {
+    let copy = {...window.__dito.registered};
+    delete copy[this.localName];
+    const keys = Object.keys(copy);
+    if (keys.length === 0) {
+      return false;
     }
+
+    let all = this.$self.css.path + ' ' + keys.join(' [dito-find-me], ' + this.$self.css.path + ' ')
+      + ' [dito-find-me]';
+    if (node.nodeType !== 3) {
+      node.setAttribute('dito-find-me', '');
+    } else {
+      node.parentElement.setAttribute('dito-find-me', '');
+    }
+
+    let res = true;
+    if (!this.querySelector(all)) {
+      res = false;
+    } else if(this.localName === 'test-inject-pack3') {
+      throw new Error('stop')
+    }
+
+    if (node.nodeType !== 3) {
+      node.removeAttribute('dito-find-me');
+    } else {
+      node.parentElement.removeAttribute('dito-find-me');
+    }
+
+    return res;
   }
 
   getAnchorPaths(node) {
@@ -1144,7 +1205,7 @@ class DitoElement extends HTMLElement {
     if (node == parent || !node.parentElement) {
       return '';
     }
-    const index = Array.prototype.indexOf.call(node.parentElement.children, node);
+
     return this.buildPath(node.parentElement, parent) + ' ' + node.localName;
   }
 
@@ -1169,6 +1230,8 @@ class DitoElement extends HTMLElement {
       node = text;
     } else if (actionName === 'packs') {
       node.setAttribute(this.packAttrName, action);
+    } else if (actionName === 'unames') {
+      node.setAttribute(this.useNameAttrName, action);
     }
 
     if (!node.$self) {
@@ -1197,15 +1260,22 @@ class DitoElement extends HTMLElement {
         this.$self.uniqueChildren.push(node);
       }
     } else {
-      this.$self.children.push(node);
+      if (!this.isInjected(node)) {
+        this.$self.children.push(node);
+      }
     }
 
     if (this.$self.uniqueNodes.get(node)) {
       return node;
     }
 
-    node.$self.parent = this;
-    node.$self.scope = Object.assign({}, this.$self.scope);
+    if (!node.$self.parent) {
+      node.$self.parent = this;
+    }
+
+    if (!node.$self.scope) {
+      node.$self.scope = Object.assign({}, this.$self.scope);
+    }
 
     this.$self.uniqueNodes.set(node, true)
 
@@ -1268,6 +1338,8 @@ class DitoElement extends HTMLElement {
     html = this.compileFindAndReplace(html, '@value', 'v', 'for_values');
     html = this.compileFindAndReplace(html, '@key', 'k', 'for_keys');
     html = this.compileFindAndReplace(html, '@pack', 'p', 'packs');
+    html = this.compileFindAndReplace(html, '@use', 'u', 'uses');
+    html = this.compileFindAndReplace(html, '@uname', 'un', 'unames');
     html = this.compileFindAndReplace(html, '@get', 'g', 'gets');
     html = this.compileFindAndReplace(html, '@min', 'm', 'for_mins');
     html = this.compileFindAndReplace(html, '@def-min', 'di', 'for_min_defs');

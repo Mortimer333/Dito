@@ -10,12 +10,13 @@
       import * as TH from "../test.js";
 
       const container = TH.getContainer({
-        callback : () => {
+        callback : async () => {
           const inject = document.querySelector('test-inject');
           const empty = inject.querySelector('test-empty');
           const injected = inject.querySelector('test-injected');
           const pack1 = inject.querySelector('test-inject-pack1');
           const pack2 = inject.querySelector('test-inject-pack2');
+          const pack3 = inject.querySelector('test-inject-pack3');
 
           TH.tests['HTML was not injected in empty'] = TH.failure;
           if (empty.innerText.indexOf('Should not be rendered') === -1) {
@@ -35,10 +36,32 @@
             const visible = pack.querySelector('[name="visible"]');
             const hidden = pack.querySelector('[name="hidden"]');
             const twice = pack.querySelectorAll('[name="twice"]');
+            // console.log('titleInvisible', titleInvisible)
+            // console.log('titleVisible', titleVisible)
+            // console.log('subTitleVisible', subTitleVisible)
+            // console.log('visible', visible)
+            // console.log('hidden', hidden)
+            // console.log('twice', twice)
+            // console.log("================")
             if (!titleInvisible && titleVisible && subTitleVisible && visible && !hidden && twice.length == 2) {
               TH.tests['HTML was compiled and injected into pack' + i] = TH.success;
             }
           });
+          TH.tests['Pack 3 was injected and used in for'] = pack3.querySelectorAll('.pack3')?.length == 2
+            ? TH.success : TH.failure;
+          TH.tests['Pack 3 test was properly rendered'] = TH.failure;
+          TH.tests['Pack 3 test after change was properly rendered'] = TH.failure;
+          let pack3Ren = pack3.querySelectorAll('.pack3')[0] || false;
+          if (!pack3Ren) {
+            return;
+          }
+          TH.tests['Pack 3 test was properly rendered'] = pack3Ren.innerText.trim() === inject.$.test + ' test'
+            ? TH.success : TH.failure;
+          inject.$.test = 'test changed';
+          await inject.render(true);
+          TH.tests['Pack 3 test after change was properly rendered'] = pack3Ren.innerText.trim() === inject.$.test + ' test'
+            ? TH.success : TH.failure;
+          
           TH.validateTestAndMoveToNext();
         }
       });
@@ -47,6 +70,7 @@
       container.register('test-injected', Math.random());
       container.register('test-inject-pack1', Math.random(), 'test-inject/');
       container.register('test-inject-pack2', Math.random(), 'test-inject/');
+      container.register('test-inject-pack3', Math.random(), 'test-inject/');
       await container.load();
 
     </script>

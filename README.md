@@ -439,48 +439,52 @@ Our parent:
 You can pack injected nodes in packages and use them in different places inside template with `dito-pack` attribute:
 ```html
 <element-two>
-  <h1 dito-pack="helloPackage">Hello, its ElementOne</h1>
-  <h3 dito-pack="bio">Just simple Dito component</h3>
+  <h1 dito-pack="'helloPackage'">Hello, its ElementOne</h1>
+  <h3 dito-pack="'bio'">Just simple Dito component</h3>
 </element-two>
 ```
 `element-two` template:
 ```html
 Our parent:
-<dito-inject dito-pack="helloPackage"></dito-inject>
+<dito-inject dito-pack="'helloPackage'"></dito-inject>
 Bio:
-<dito-inject dito-pack="bio"></dito-inject>
+<dito-inject dito-pack="'bio'"></dito-inject>
 ```
-This will seperate injected HTML and render it in two different places:
+#### Note
+Pack names are defined in strings to enable arguments passing and calculating the name. Thanks to that you can use injects like templates.
+
+This will separate injected HTML and render it in two different places:
 ```html
 Our parent:
-<h1 dito-pack="helloPackage">Hello, its ElementOne</h1>
+<h1 dito-pack="'helloPackage'">Hello, its ElementOne</h1>
 Bio:
-<h3 dito-pack="bio">Just simple Dito component</h3>
+<h3 dito-pack="'bio'">Just simple Dito component</h3>
 ```
 Injected HTML benefits from all special actions this library offers but this also means that injection cannot be multiplied. What does this mean?
 If we were to put the same package twice but in different place:
 ```html
 Our parent:
-<dito-inject dito-pack="helloPackage"></dito-inject>
+<dito-inject dito-pack="'helloPackage'"></dito-inject>
 Bio:
-<dito-inject dito-pack="bio"></dito-inject>
+<dito-inject dito-pack="'bio'"></dito-inject>
 Other Bio:
-<dito-inject dito-pack="bio"></dito-inject>
+<dito-inject dito-pack="'bio'"></dito-inject>
 ```
-Only the last one will be rendered:
+Notice that the same component was rendered twice:
 ```html
 Our parent:
-<h1 dito-pack="helloPackage">Hello, its ElementOne</h1>
+<h1 dito-pack="'helloPackage'">Hello, its ElementOne</h1>
 Bio:
+<h3 dito-pack="'bio'">Just simple Dito component</h3>
 Other Bio:
-<h3 dito-pack="bio">Just simple Dito component</h3>
+<h3 dito-pack="'bio'">Just simple Dito component</h3>
 ```
 This is because we are reusing generated components with all their attributes and special actions. But, the other way around, injected HTML with the same name of package will be bundled and rendered altogether:
 ```html
 <element-two>
-  <h1 dito-pack="helloPackage">Hello, its ElementOne</h1>
-  <h3 dito-pack="bio">Just simple Dito component</h3>
-  <p dito-pack="bio">Trying to live my best life</p>
+  <h1 dito-pack="'helloPackage'">Hello, its ElementOne</h1>
+  <h3 dito-pack="'bio'">Just simple Dito component</h3>
+  <p dito-pack="'bio'">Trying to live my best life</p>
 </element-two>
 ```
 Rendered:
@@ -490,6 +494,33 @@ Our parent:
 Bio:
 <h3 dito-pack="bio">Just simple Dito component</h3>
 <p dito-pack="bio">Trying to live my best life</p>
+```
+
+### @use
+You can also inject some data into injected element (normally `dito-inject` has scope of the parent component so this was you can pass data into it - great when using as template):
+Element One:
+```html
+<element-two>
+  <h1>{{ use.name }}</h1>
+</element-two>
+```
+Element Two:
+```html
+<dito-inject @use="{name: 'test'}"></dito-inject>
+```
+Render:
+```html
+<element-two>
+  <h1>test</h1>
+</element-two>
+```
+### @nuse
+If you need to specify the name for the `use` variable you can do it by `@nuse`:
+Element One:
+```html
+<element-two>
+  <h1 @nuse="data">{{ data.name }}</h1>
+</element-two>
 ```
 
 ## `@get`

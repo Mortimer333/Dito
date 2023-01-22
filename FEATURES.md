@@ -1,5 +1,15 @@
 # Features:
-- Bring back Kamikaze to solve this problem:
+- [DONE] Templates: - extended dito-inject with calculated names and data injection, also can be called multiple times without problem
+  - <del>can be transported between components</del>
+  - <del>can be used in loops with different sets of data</del>
+  - <del>have a scope of defining component</del>
+  - <del>`dito-template` tag is a template with `@tname` annotation/decoration to set its name but only contents of the tag will be rendered, not tag itself</del>
+  - <del>all templates are saved in `$self.template.[template name]` </del>
+  - <del>can be rendered with `dito-outlet` and set `@temp` annotation in which you pass instantiation of the template</del>
+    - <del>you can also add `@use` annotation to add additional object which will be available in template</del>
+    - <del>in template, you can use `@uname` to set name of the variable from `@use`</del>
+    - <del>`dito-outlet` will be replaced with contents of the template</del>
+- Bring back Kamikaze to solve this problem (additional P tag):
 ```html
 <div class="nav-link h-full" @for="nav" @value="link">
     <img @if="link?.type === 'logo'" @a:src="link.src" alt="logo" class="nav-logo">
