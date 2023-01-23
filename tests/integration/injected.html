@@ -33,6 +33,9 @@
           if (pack4.querySelector('.pack4')) {
             TH.tests['Injected component was downloaded'] = TH.success;
           }
+          TH.tests['Injected component has injected proper parent'] = pack4.$self.parent === inject ? TH.success : TH.failure;
+          TH.tests['Injected component is using proper scoping for internal actions'] =
+            inject.$.emitted === 'emitted' ? TH.success : TH.failure;
 
           [pack1, pack2].forEach((pack, i) => {
             TH.tests['HTML was compiled and injected into pack' + i] = TH.failure;

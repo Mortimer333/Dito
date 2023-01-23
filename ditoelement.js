@@ -448,7 +448,10 @@ class DitoElement extends HTMLElement {
         if (!custom.$self) {
           this.defineSelf(custom);
         }
-        custom.$self.parent = this;
+
+        if (!custom.$self.parent) {
+          custom.$self.parent = this;
+        }
       });
 
       while (this.$self.uniqueChildren.length > 0) {
@@ -466,7 +469,6 @@ class DitoElement extends HTMLElement {
           delete this.$self.get[itemName];
         }
       });
-
 
       await this.afterRender({success: true});
       if (!this.$self.rendered) {
