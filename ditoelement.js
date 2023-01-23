@@ -612,7 +612,7 @@ class DitoElement extends HTMLElement {
     });
 
     toRender.forEach(child => {
-      child.render();
+      child.render(true);
     })
 
     this.$self.parent?.actionItems(node);
