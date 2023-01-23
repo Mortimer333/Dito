@@ -173,12 +173,12 @@ class DitoElement extends HTMLElement {
 
     Object.defineProperty(this, "$binded", {
       value: {},
-      writable: false
+      writable: true
     });
 
     Object.defineProperty(this, "$binder", {
       value: {},
-      writable: false
+      writable: true
     });
 
     Object.defineProperty(this, "$css", {
@@ -244,14 +244,14 @@ class DitoElement extends HTMLElement {
         get: {},
         template: {},
       },
-      writable: false
+      writable: true
     });
   }
 
   defineOutput(obj) {
     Object.defineProperty(obj, "$output", {
       value: {},
-      writable: false
+      writable: true
     });
   }
 
@@ -486,14 +486,14 @@ class DitoElement extends HTMLElement {
     return res;
   }
 
-  cloneNode(template, callback = null) {
+  cloneNodeRecursive(template, callback = null) {
     const node = template.cloneNode();
     if (template.$self && callback) {
       callback(template, node);
     }
 
     template.childNodes.forEach(child => {
-      node.appendChild(this.cloneNode(child, callback));
+      node.appendChild(this.cloneNodeRecursive(child, callback));
     });
 
     return node;
@@ -555,6 +555,7 @@ class DitoElement extends HTMLElement {
   initInjected(inject, template, use) {
     let scope = null;
     const forActions = [];
+    const toRender = [];
     if (use && template.getAttribute(this.useNameAttrName)) {
       let name = template.getAttribute(this.useNameAttrName);
       scope = {[name] : use};
@@ -563,10 +564,27 @@ class DitoElement extends HTMLElement {
       scope = { use };
     }
 
-    const node = this.cloneNode(template, function(template, node) {
+    const node = this.cloneNodeRecursive(template, function(template, node) {
       node.$self = Object.assign({}, template.$self);
+      if (template.$binded) {
+        node.$binded = Object.assign({}, template.$binded);
+      }
+
+      if (template.$binder) {
+        node.$binder = Object.assign({}, template.$binder);
+      }
+
+      if (template.$output) {
+        node.$output = Object.assign({}, template.$output);
+      }
+
       if (scope) {
         node.$self.scope = Object.assign(node.$self.scope, scope);
+      }
+
+      if (window.__dito.main.firstRendered.get(template)) {
+        window.__dito.main.firstRendered.delete(template);
+        toRender.push(node);
       }
 
       if (
@@ -592,6 +610,11 @@ class DitoElement extends HTMLElement {
     forActions.forEach(child => {
       this.$self.parent?.actionFor(child);
     });
+
+    toRender.forEach(child => {
+      child.render();
+    })
+
     this.$self.parent?.actionItems(node);
 
     return node;
