@@ -18,14 +18,8 @@ class DitoElement extends HTMLElement {
     this.saveMethods();
     this.$self.cssRenderInProgress = false;
     this.$self.renderInProgress = false;
-    this.$self.debounceRender = this.debounce(e => {
-      this.$self.renderInProgress = false;
-      this.render();
-    });
-    this.$self.debounceCssRender = this.debounce(e => {
-      this.$self.cssRenderInProgress = false;
-      this.cssRender();
-    });
+    this.defineCallback();
+    this.defineCssCallback();
     this.defineDefaults();
   }
 
@@ -54,6 +48,20 @@ class DitoElement extends HTMLElement {
     }
 
     this.queueRender();
+  }
+
+  defineCallback() {
+    this.$self.debounceRender = this.debounce(e => {
+      this.$self.renderInProgress = false;
+      this.render();
+    });
+  }
+
+  defineCssCallback() {
+    this.$self.debounceCssRender = this.debounce(e => {
+      this.$self.cssRenderInProgress = false;
+      this.cssRender();
+    });
   }
 
   defineDefaults() {
@@ -568,6 +576,7 @@ class DitoElement extends HTMLElement {
 
     const node = this.cloneNodeRecursive(template, function(template, node) {
       node.$self = Object.assign({}, template.$self);
+
       if (template.$binded) {
         node.$binded = Object.assign({}, template.$binded);
       }
@@ -614,7 +623,10 @@ class DitoElement extends HTMLElement {
     });
 
     toRender.forEach(child => {
-      child.render(true);
+      child.setCssScope();
+      child.defineCallback();
+      child.defineCssCallback();
+      child.queueRender();
     })
 
     this.$self.parent?.actionItems(node);
@@ -991,6 +1003,7 @@ class DitoElement extends HTMLElement {
 
       anchor.$self.children.push(clone);
     }
+
     if (this.$self.parent) {
       this.renderInjected(this.$self.parent);
     }
