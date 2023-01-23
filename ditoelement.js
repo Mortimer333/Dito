@@ -519,12 +519,12 @@ class DitoElement extends HTMLElement {
           throw new Error('Dito inject can one have one use variable');
         }
 
-        use = this.getExecuteable(uses[0], this)(...this.getObservablesValues(this));
+        use = this.getExecuteable(uses[0], inject)(...this.getObservablesValues(inject));
       }
 
       if (inject.$self?.actions?.packs?.length > 0) {
         inject.$self.actions.packs.forEach(pack => {
-          pack = this.getExecuteable(pack, item)(...this.getObservablesValues(item));
+          pack = this.getExecuteable(pack, inject)(...this.getObservablesValues(inject));
           this.$self.default.injected.forEach(function (template) {
             if (template.nodeType === 3 || !template.getAttribute(this.packAttrName)) {
               return;
@@ -536,7 +536,7 @@ class DitoElement extends HTMLElement {
             )(...this.getObservablesValues(item));
 
             if (packName != pack) {
-                return;
+              return;
             }
 
             let node = this.initInjected(inject, template, use);
@@ -679,8 +679,8 @@ class DitoElement extends HTMLElement {
     actions.forEach(function (action) {
       if (typeof this.$[action.value] == 'undefined') {
         console.error(
-            'Observable in `' + this.constructor.name + '` doesn\'t have `'
-            + action.value + '` variable, skipping binding...'
+          'Observable in `' + this.constructor.name + '` doesn\'t have `'
+          + action.value + '` variable, skipping binding...'
         );
         return;
       }
@@ -1044,8 +1044,8 @@ class DitoElement extends HTMLElement {
 
   getPath(node) {
     const index = this.attributes[this.indexAtr].value,
-        time = this.attributes[this.timeAtr].value,
-        path = node.localName + '@' + index + '@' + time;
+      time = this.attributes[this.timeAtr].value,
+      path = node.localName + '@' + index + '@' + time;
     if (!this.$self.parent) {
       return path;
     }
@@ -1292,7 +1292,7 @@ class DitoElement extends HTMLElement {
         const component = notDownloaded[node.localName];
         delete notDownloaded[node.localName];
         promises.push(
-            ...window.__dito.main.createRegisterPromise(component.path, component.name, component.version)
+          ...window.__dito.main.createRegisterPromise(component.path, component.name, component.version)
         );
       }
     });
@@ -1313,10 +1313,10 @@ class DitoElement extends HTMLElement {
 
     observableKeys.forEach((key, i) => {
       if (
-          key[0] !== '$'
-          && !skipTypes[typeof this.$[key]]
-          && !skipTypes[typeof res[i]]
-          && valuesBefore[i] !== res[i]
+        key[0] !== '$'
+        && !skipTypes[typeof this.$[key]]
+        && !skipTypes[typeof res[i]]
+        && valuesBefore[i] !== res[i]
       ) {
         this.$[key] = res[i];
       }
@@ -1371,11 +1371,11 @@ class DitoElement extends HTMLElement {
   getCompiledAttribute(text, lm, skipValue = false, start = 0) {
     let aStart = text.indexOf(lm, start);
     if (
-        aStart === -1
-        || (
-            aStart === 0
-            && !/\s/g.test(text[aStart - 1])
-        )
+      aStart === -1
+      || (
+        aStart === 0
+        && !/\s/g.test(text[aStart - 1])
+      )
     ) {
       return false;
     }
@@ -1408,8 +1408,8 @@ class DitoElement extends HTMLElement {
     const wrapper = strings[text[aEnd + 1]];
     if (!wrapper) {
       console.error(
-          'String wrapper for `' + lm + '` in `' + this.constructor.name
-          + '` not found (found letter: `' + text[aEnd + 1] + '`), skipping'
+        'String wrapper for `' + lm + '` in `' + this.constructor.name
+        + '` not found (found letter: `' + text[aEnd + 1] + '`), skipping'
       );
       return this.getCompiledAttribute(text, lm, skipValue, aEnd)
     }
