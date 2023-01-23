@@ -578,7 +578,6 @@ class DitoElement extends HTMLElement {
       ) {
         this.$self.children.push(node);
       } else if (node.getAttribute && node.getAttribute(this.anchorAliasAttr)) {
-        console.log(node)
         node.$self.parent.$self.for.anchors[0] = node;
         this.$self.forNodes.push(node.$self.parent);
         forActions.push(node.$self.parent);
@@ -1142,7 +1141,6 @@ class DitoElement extends HTMLElement {
     }
 
     anchor.$self.parent = node;
-    console.log("Set anchor parent", anchor.$self.parent)
     node.parentElement.replaceChild(anchor, node);
     node.$self.for = {
       condition: actions.fors[alias],
