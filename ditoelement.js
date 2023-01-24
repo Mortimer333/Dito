@@ -511,8 +511,8 @@ class DitoElement extends HTMLElement {
 
   actionItems(node) {
     if (node.$self) {
-      this.setupUnique(node);
-      this.actionItem(node);
+      node.$self.parent.setupUnique(node);
+      node.$self.parent.actionItem(node);
     }
 
     node.childNodes.forEach(child => {
@@ -520,8 +520,8 @@ class DitoElement extends HTMLElement {
     });
   }
 
-  renderInjected(item) {
-    this.querySelectorAll('dito-inject').forEach(inject => {
+  renderInjected(item, scope = this) {
+    scope.querySelectorAll('dito-inject').forEach(inject => {
       const uses = inject.$self?.actions?.uses;
       let use = null;
       if (uses?.length > 0) {
@@ -607,9 +607,9 @@ class DitoElement extends HTMLElement {
       ) {
         this.$self.children.push(node);
       } else if (node.getAttribute && node.getAttribute(this.anchorAliasAttr)) {
-        node.$self.parent.$self.for.anchors[0] = node;
-        this.$self.forNodes.push(node.$self.parent);
-        forActions.push(node.$self.parent);
+        node.$self.for.parent.$self.for.anchors[0] = node;
+        this.$self.forNodes.push(node.$self.for.parent);
+        forActions.push(node.$self.for.parent);
       }
     }.bind(this.$self.parent));
 
@@ -628,7 +628,6 @@ class DitoElement extends HTMLElement {
       child.defineCssCallback();
       child.queueRender();
     })
-
     this.$self.parent?.actionItems(node);
 
     return node;
@@ -953,7 +952,7 @@ class DitoElement extends HTMLElement {
           subAnchor.$self.scope[node.$self.forBox.valueName] = value;
         }
 
-        this.actionFor(subAnchor.$self.parent, indent + '-- ');
+        this.actionFor(subAnchor.$self.for.parent, indent + '-- ');
       });
     });
 
@@ -986,7 +985,7 @@ class DitoElement extends HTMLElement {
           newTextA.$self.children = [];
           newTextA.$self.forGenerated = [];
 
-          const nested = newTextA.$self.parent;
+          const nested = newTextA.$self.for.parent;
           newTextA.$self.scope = Object.assign({}, nested.$self.scope, anchor.$self.scope);
           if (node.$self.forBox.keyName) {
             newTextA.$self.scope[node.$self.forBox.keyName] = key;
@@ -997,7 +996,7 @@ class DitoElement extends HTMLElement {
           }
 
           anchor.$self.anchorGenerated[i].push(newTextA);
-          this.actionFor(newTextA.$self.parent, indent + '-- ');
+          this.actionFor(newTextA.$self.for.parent, indent + '-- ');
         }
       });
 
@@ -1005,7 +1004,7 @@ class DitoElement extends HTMLElement {
     }
 
     if (this.$self.parent) {
-      this.renderInjected(this.$self.parent);
+      this.renderInjected(this.$self.parent, anchor.parentElement);
     }
 
     if (anchor.nodeType !== 3) {
@@ -1028,7 +1027,7 @@ class DitoElement extends HTMLElement {
     const newAnchor = document.createTextNode('');
     oldAnchor.parentElement.replaceChild(newAnchor, oldAnchor);
     newAnchor.$self = Object.assign({}, realAnchor.$self);
-    const forTemplate = newAnchor.$self.parent;
+    const forTemplate = newAnchor.$self.for.parent;
     forTemplate.$self.for.anchors.push(newAnchor);
     return newAnchor;
   }
@@ -1154,6 +1153,7 @@ class DitoElement extends HTMLElement {
     anchor.setAttribute(this.anchorAliasAttr, alias);
     this.defineSelf(node);
     this.defineSelf(anchor);
+    anchor.$self.parent = this;
     node.removeAttribute(alias);
 
     if (keys.length > 0) {
@@ -1178,7 +1178,7 @@ class DitoElement extends HTMLElement {
       }
     }
 
-    anchor.$self.parent = node;
+    anchor.$self.for.parent = node;
     node.parentElement.replaceChild(anchor, node);
     node.$self.for = {
       condition: actions.fors[alias],
@@ -1228,7 +1228,7 @@ class DitoElement extends HTMLElement {
 
       const nodes = this.$self.forNodes;
       for (var i = 0; i < nodes.length; i++) {
-        if (anchor.$self.parent === nodes[i]) {
+        if (anchor.$self.for.parent === nodes[i]) {
           nodes.splice(i, 1);
           break;
         }
