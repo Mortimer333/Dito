@@ -166,8 +166,8 @@ class DitoElement extends HTMLElement {
             this.tag.queueRender();
           }
 
-          if (this.tag.$binded[prop]) {
-            const { provider, receiver } = this.tag.$binded[prop];
+          if (this.tag.$bound[prop]) {
+            const { provider, receiver } = this.tag.$bound[prop];
             if (provider.target.$[provider.name] !== value) {
               provider.target.$[provider.name] = value;
             }
@@ -179,7 +179,7 @@ class DitoElement extends HTMLElement {
       writable: false
     });
 
-    Object.defineProperty(this, "$binded", {
+    Object.defineProperty(this, "$bound", {
       value: {},
       writable: true
     });
@@ -440,7 +440,7 @@ class DitoElement extends HTMLElement {
         this.$self.default.injected = Object.values(this.childNodes);
         this.innerHTML = this.__dito.html;
         this.assignChildren(this);
-        this.retrieveBindedValues();
+        this.retrieveBoundValues();
         this.renderInjected(this);
         if (!this.$self.css.rendered) {
           await this.cssRender();
@@ -577,8 +577,8 @@ class DitoElement extends HTMLElement {
     const node = this.cloneNodeRecursive(template, function(template, node) {
       node.$self = Object.assign({}, template.$self);
 
-      if (template.$binded) {
-        node.$binded = Object.assign({}, template.$binded);
+      if (template.$bound) {
+        node.$bound = Object.assign({}, template.$bound);
       }
 
       if (template.$binder) {
@@ -774,7 +774,7 @@ class DitoElement extends HTMLElement {
     }.bind(this))
   }
 
-  retrieveBindedValues() {
+  retrieveBoundValues() {
     if (this.$self.parent) {
       this.checkBinds.bind(this.$self.parent)()
     }
@@ -804,7 +804,7 @@ class DitoElement extends HTMLElement {
         name: name
       }
     };
-    node.$binded[name] = item;
+    node.$bound[name] = item;
 
     if (this.$binder[value]) {
       this.$binder[value].push(item);

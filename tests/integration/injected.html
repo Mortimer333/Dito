@@ -60,11 +60,12 @@
           TH.tests['Pack 3 test was properly rendered'] = pack3Ren.innerText.trim() === inject.$.test + ' test'
             ? TH.success : TH.failure;
           inject.$.test = 'test changed';
+          inject.$.bind = 'new bind';
           await inject.render(true);
           TH.tests['Pack 3 test after change was properly rendered'] = pack3Ren.innerText.trim() === inject.$.test + ' test'
             ? TH.success : TH.failure;
-          
-          TH.validateTestAndMoveToNext();
+          TH.tests['Pack 4 is bound properly'] = pack4.$.bind === inject.$.bind ? TH.success : TH.failure;
+          // TH.validateTestAndMoveToNext();
         }
       });
       container.register('test-empty', Math.random());

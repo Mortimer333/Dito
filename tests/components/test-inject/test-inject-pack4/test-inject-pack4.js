@@ -1,7 +1,7 @@
 import { DitoElement } from '../../../../ditoelement.js';
 class TestInjectPack4 extends DitoElement {
   init() {
-
+    this.$.bind = this.$.bind || 'not bind';
   }
 
   afterRender() {
