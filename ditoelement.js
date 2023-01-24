@@ -376,6 +376,9 @@ class DitoElement extends HTMLElement {
 
       if (!this.$self.css.scoped) {
         this.$self.css.scoped = JSON.parse(JSON.stringify(this.__dito.css.scoped));
+        // this.$self.css.scoped.forEach(rule => {
+        //   rule.rule = rule.rule.replaceAll('@self', this.$self.css.path);
+        // });
       }
 
       const sheet = window.__dito.main.styleNode.sheet;
@@ -574,6 +577,7 @@ class DitoElement extends HTMLElement {
 
     const node = this.cloneNodeRecursive(template, function(template, node) {
       node.$self = Object.assign({}, template.$self);
+      node.$self.rendered = false;
 
       if (template.$bound) {
         node.$bound = Object.assign({}, template.$bound);
