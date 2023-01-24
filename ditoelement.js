@@ -376,14 +376,12 @@ class DitoElement extends HTMLElement {
 
       if (!this.$self.css.scoped) {
         this.$self.css.scoped = JSON.parse(JSON.stringify(this.__dito.css.scoped));
-        this.$self.css.scoped.forEach(rule => {
-          rule.rule = rule.rule.replaceAll('@self', this.$self.css.path);
-        });
       }
 
       const sheet = window.__dito.main.styleNode.sheet;
       this.$self.css.scoped.forEach(rule => {
-        let css = this.resolveCssExecutables(rule.rule);
+        let ruleCss = rule.rule.replaceAll('@self', this.$self.css.path);
+        let css = this.resolveCssExecutables(ruleCss);
         if (rule.index === -1) {
           rule.index = sheet.cssRules.length;
           sheet.insertRule(css, sheet.cssRules.length);
@@ -595,6 +593,9 @@ class DitoElement extends HTMLElement {
 
       if (window.__dito.main.firstRendered.get(template)) {
         window.__dito.main.firstRendered.delete(template);
+      }
+
+      if (window.__dito.main.components[node.localName]) {
         toRender.push(node);
       }
 

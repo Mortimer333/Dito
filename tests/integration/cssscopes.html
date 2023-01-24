@@ -17,8 +17,9 @@
         TH.tests['There are two scoped rules'] = css.$self.css.scoped.length === 2 ? TH.success : TH.failure;
         TH.tests['There are three global rules'] = css.__dito.css.global.length === 3 ? TH.success : TH.failure;
         css.$self.css.scoped.forEach(async (rule, i) => {
+          let cssRule = rule.rule.replaceAll('@self', css.$self.css.path);
           const stylesheet = new CSSStyleSheet();
-          await stylesheet.replace(css.resolveCssExecutables(rule.rule)).catch(err => {
+          await stylesheet.replace(css.resolveCssExecutables(cssRule)).catch(err => {
             throw new Error('Failed to replace styles in `' + this.localName + '`: ' + err);
           });
 
