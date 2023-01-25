@@ -249,6 +249,7 @@ class DitoElement extends HTMLElement {
         toInput: new WeakMap(),
         uniqueChildren: [],
         uniqueNodes: new WeakMap(),
+        childNodes: new WeakMap(),
         get: {},
         template: {},
       },
@@ -376,9 +377,6 @@ class DitoElement extends HTMLElement {
 
       if (!this.$self.css.scoped) {
         this.$self.css.scoped = JSON.parse(JSON.stringify(this.__dito.css.scoped));
-        // this.$self.css.scoped.forEach(rule => {
-        //   rule.rule = rule.rule.replaceAll('@self', this.$self.css.path);
-        // });
       }
 
       const sheet = window.__dito.main.styleNode.sheet;
@@ -438,7 +436,9 @@ class DitoElement extends HTMLElement {
       }
 
       if (!this.$self.rendered) {
-        this.$self.default.injected = Object.values(this.childNodes);
+        if (!this.$self.default.injected) {
+          this.$self.default.injected = Object.values(this.childNodes);
+        }
         this.innerHTML = this.__dito.html;
         this.assignChildren(this);
         this.retrieveBoundValues();
@@ -570,7 +570,6 @@ class DitoElement extends HTMLElement {
     if (use && template.getAttribute(this.useNameAttrName)) {
       let name = template.getAttribute(this.useNameAttrName);
       scope = {[name] : use};
-      template.removeAttribute(this.useNameAttrName);
     } else if (use) {
       scope = { use };
     }
@@ -592,7 +591,7 @@ class DitoElement extends HTMLElement {
       }
 
       if (scope) {
-        node.$self.scope = Object.assign(node.$self.scope, scope);
+        node.$self.scope = Object.assign({}, node.$self.scope, scope);
       }
 
       if (window.__dito.main.firstRendered.get(template)) {
@@ -603,6 +602,10 @@ class DitoElement extends HTMLElement {
         toRender.push(node);
       }
 
+      if (node.getAttribute && node.getAttribute(this.useNameAttrName)) {
+        node.removeAttribute(this.useNameAttrName);
+      }
+
       if (
         !node.$self.forBox.isItem
         && (
@@ -610,7 +613,7 @@ class DitoElement extends HTMLElement {
           || (node.getAttribute && !node.getAttribute(this.anchorAliasAttr))
         )
       ) {
-        this.$self.children.push(node);
+        node.$self.parent.$self.children.push(node);
       } else if (node.getAttribute && node.getAttribute(this.anchorAliasAttr)) {
         node.$self.for.parent.$self.for.anchors[0] = node;
         this.$self.forNodes.push(node.$self.for.parent);
@@ -967,13 +970,15 @@ class DitoElement extends HTMLElement {
       tmpParent.appendChild(clone);
       this.iterateOverActions(tmpParent, (action, alias, child) => {
         child = this.defineChild(child, action, alias, actions[action][alias]);
-        child.$self.forBox.isItem = true;
-        child.$self.forBox.key = key;
-        child.$self.forBox.value = value;
-        child.$self.forBox.keyName = node.$self.forBox.keyName;
-        child.$self.forBox.valueName = node.$self.forBox.valueName;
-        child.$self.scope = Object.assign({}, anchor.$self.scope, child.$self.scope);
-        anchor.$self.forGenerated[i].push(child);
+        if (!child.$self.forBox.isItem) {
+          child.$self.forBox.isItem = true;
+          child.$self.forBox.key = key;
+          child.$self.forBox.value = value;
+          child.$self.forBox.keyName = node.$self.forBox.keyName;
+          child.$self.forBox.valueName = node.$self.forBox.valueName;
+          child.$self.scope = Object.assign({}, anchor.$self.scope, child.$self.scope);
+          anchor.$self.forGenerated[i].push(child);
+        }
       });
 
       anchor.parentElement.insertBefore(clone, anchor);
@@ -1020,7 +1025,7 @@ class DitoElement extends HTMLElement {
   removeFromChildren(item) {
     for (var i = 0; i < this.$self.children.length; i++) {
       const child = this.$self.children[i];
-      if (item.contains(child)) {
+      if (item.contains(child) || item === child) {
         this.$self.children.splice(i, 1);
         i--;
       }
@@ -1073,6 +1078,8 @@ class DitoElement extends HTMLElement {
 
     const rep = node.$self.if.replacement;
     if (!document.body.contains(rep) && !document.body.contains(node)) {
+      this.removeFromChildren(rep);
+      this.removeFromChildren(node);
       return;
     }
 
@@ -1300,10 +1307,9 @@ class DitoElement extends HTMLElement {
       if (!this.$self.uniqueChildren.includes(node)) {
         this.$self.uniqueChildren.push(node);
       }
-    } else {
-      if (!this.isInjected(node)) {
-        this.$self.children.push(node);
-      }
+    } else if (!this.$self.childNodes.get(node) && !this.isInjected(node)) {
+      this.$self.children.push(node);
+      this.$self.childNodes.set(node, true)
     }
 
     if (this.$self.uniqueNodes.get(node)) {
@@ -1318,7 +1324,9 @@ class DitoElement extends HTMLElement {
       node.$self.scope = Object.assign({}, this.$self.scope);
     }
 
-    this.$self.uniqueNodes.set(node, true)
+    if (unique[actionName]) {
+      this.$self.uniqueNodes.set(node, true)
+    }
 
     return node;
   }
