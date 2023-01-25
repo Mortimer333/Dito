@@ -522,6 +522,7 @@ class DitoElement extends HTMLElement {
   }
 
   renderInjected(item, scope = this) {
+    let rendered = [];
     scope.querySelectorAll('dito-inject').forEach(inject => {
       const uses = inject.$self?.actions?.uses;
       let use = null;
@@ -550,8 +551,9 @@ class DitoElement extends HTMLElement {
               return;
             }
 
-            let node = this.initInjected(inject, template, use);
+            let [node, subRendered] = this.initInjected(inject, template, use, uses);
             node.removeAttribute(this.packAttrName);
+            rendered = rendered.concat(subRendered);
           }.bind(this));
         });
       } else {
@@ -561,15 +563,17 @@ class DitoElement extends HTMLElement {
       }
       inject.remove();
     });
+
+    return rendered;
   }
 
-  initInjected(inject, template, use) {
-    let scope = null;
+  initInjected(inject, template, use, uses) {
+    let scope = null, useName = 'use', rendered = [];
     const forActions = [];
     const toRender = [];
     if (use && template.getAttribute(this.useNameAttrName)) {
-      let name = template.getAttribute(this.useNameAttrName);
-      scope = {[name] : use};
+      useName = template.getAttribute(this.useNameAttrName);
+      scope = {[useName] : use};
     } else if (use) {
       scope = { use };
     }
@@ -577,6 +581,8 @@ class DitoElement extends HTMLElement {
     const node = this.cloneNodeRecursive(template, function(template, node) {
       node.$self = Object.assign({}, template.$self);
       node.$self.rendered = false;
+      node.$self.actions.uses = {value: uses, name: useName}
+      rendered.push(node);
 
       if (template.$bound) {
         node.$bound = Object.assign({}, template.$bound);
@@ -638,7 +644,7 @@ class DitoElement extends HTMLElement {
     })
     this.$self.parent?.actionItems(node);
 
-    return node;
+    return [node, rendered];
   }
 
   setupUnique(item) {
@@ -934,18 +940,26 @@ class DitoElement extends HTMLElement {
       anchor.$self.children.splice(keys.length).forEach(child => {
         this.removeFromChildren(child);
       });
-      anchor.$self.forGenerated.splice(keys.length);
       anchor.$self.anchorGenerated.splice(keys.length);
+      anchor.$self.forGenerated.splice(keys.length);
     }
 
     const tmpParent = document.createElement('div');
-    const actions = this.__dito.actions;
     anchor.$self.forGenerated.forEach((generatedChildren, i) => {
       const key = keys[i], value = values[i];
       generatedChildren.forEach(child => {
         child.$self.scope = Object.assign({}, child.$self.scope, anchor.$self.scope);
         child.$self.forBox.key = key;
         child.$self.forBox.value = value;
+        const uses = child.$self.actions.uses;
+        if (uses?.value) {
+          child.$self.forBox.keyName = node.$self.forBox.keyName;
+          child.$self.forBox.valueName = node.$self.forBox.valueName;
+
+          const use = this.getExecuteable(uses.value, child)(...this.getObservablesValues(child));
+          child.$self.scope[uses.name] = use;
+          child.$self.parent.actionItem(child);
+        }
       });
     });
 
@@ -964,6 +978,7 @@ class DitoElement extends HTMLElement {
       });
     });
 
+    const actions = this.__dito.actions;
     for (var i = anchor.$self.children.length; i < keys.length; i++) {
       const key = keys[i], value = values[i], clone = node.cloneNode(true);
       anchor.$self.forGenerated[i] = [];
@@ -1011,11 +1026,14 @@ class DitoElement extends HTMLElement {
       });
 
       anchor.$self.children.push(clone);
+
+      if (this.$self.parent) {
+        const rendered = this.renderInjected(this.$self.parent, clone);
+        anchor.$self.forGenerated[i] = anchor.$self.forGenerated[i].concat(rendered);
+      }
     }
 
-    if (this.$self.parent) {
-      this.renderInjected(this.$self.parent, anchor.parentElement);
-    }
+
 
     if (anchor.nodeType !== 3) {
       this.reconstructForAnchor(anchor, anchor)
@@ -1023,14 +1041,17 @@ class DitoElement extends HTMLElement {
   }
 
   removeFromChildren(item) {
+    const removed = [];
     for (var i = 0; i < this.$self.children.length; i++) {
       const child = this.$self.children[i];
       if (item.contains(child) || item === child) {
+        removed.push(child);
         this.$self.children.splice(i, 1);
         i--;
       }
     }
     item.remove();
+    return removed;
   }
 
   reconstructForAnchor(oldAnchor, realAnchor) {
