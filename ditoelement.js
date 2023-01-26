@@ -417,9 +417,6 @@ class DitoElement extends HTMLElement {
     }
 
     this.clearRenderQueue();
-    if (document.body.querySelector(this.localName + ' ' + this.localName)) {
-      throw new Error('Custom element ' + this.localName + ' is recursively called. Stopping the render....');
-    }
 
     this.$self.rendering = true;
     let res = false;
@@ -510,18 +507,32 @@ class DitoElement extends HTMLElement {
     return node;
   }
 
-  actionItems(node) {
+  actionItems(node, currentScope, isFor = false) {
     if (node.$self) {
+      if (!isFor && currentScope.isInjected(node)) {
+        return;
+      }
+
+      if (
+        !node.$self.forBox.isItem
+        && (
+          !node.getAttribute
+          || (node.getAttribute && !node.getAttribute(this.anchorAliasAttr))
+        )
+      ) {
+        node.$self.parent.$self.children.push(node);
+      }
+
       node.$self.parent.setupUnique(node);
       node.$self.parent.actionItem(node);
     }
 
     node.childNodes.forEach(child => {
-      this.actionItems(child);
+      this.actionItems(child, currentScope, isFor);
     });
   }
 
-  renderInjected(item, scope = this) {
+  renderInjected(item, scope = this, isFor = false) {
     let rendered = [];
     scope.querySelectorAll('dito-inject').forEach(inject => {
       const uses = inject.$self?.actions?.uses;
@@ -551,14 +562,13 @@ class DitoElement extends HTMLElement {
               return;
             }
 
-            let [node, subRendered] = this.initInjected(inject, template, use, uses);
-            node.removeAttribute(this.packAttrName);
+            let [node, subRendered] = this.initInjected(inject, template, use, uses, isFor);
             rendered = rendered.concat(subRendered);
           }.bind(this));
         });
       } else {
         this.$self.default.injected.forEach(template => {
-          this.initInjected(inject, template, use);
+          this.initInjected(inject, template, use, uses, isFor);
         });
       }
       inject.remove();
@@ -567,7 +577,7 @@ class DitoElement extends HTMLElement {
     return rendered;
   }
 
-  initInjected(inject, template, use, uses) {
+  initInjected(inject, template, use, uses, isFor) {
     let scope = null, useName = 'use', rendered = [];
     const forActions = [];
     const toRender = [];
@@ -612,17 +622,9 @@ class DitoElement extends HTMLElement {
         node.removeAttribute(this.useNameAttrName);
       }
 
-      if (
-        !node.$self.forBox.isItem
-        && (
-          !node.getAttribute
-          || (node.getAttribute && !node.getAttribute(this.anchorAliasAttr))
-        )
-      ) {
-        node.$self.parent.$self.children.push(node);
-      } else if (node.getAttribute && node.getAttribute(this.anchorAliasAttr)) {
+      if (node.getAttribute && node.getAttribute(this.anchorAliasAttr)) {
         node.$self.for.parent.$self.for.anchors[0] = node;
-        this.$self.forNodes.push(node.$self.for.parent);
+        node.$self.parent.$self.forNodes.push(node.$self.for.parent);
         forActions.push(node.$self.for.parent);
       }
     }.bind(this.$self.parent));
@@ -642,7 +644,7 @@ class DitoElement extends HTMLElement {
       child.defineCssCallback();
       child.queueRender();
     })
-    this.$self.parent?.actionItems(node);
+    this.$self.parent?.actionItems(node, this, isFor);
 
     return [node, rendered];
   }
@@ -1028,7 +1030,7 @@ class DitoElement extends HTMLElement {
       anchor.$self.children.push(clone);
 
       if (this.$self.parent) {
-        const rendered = this.renderInjected(this.$self.parent, clone);
+        const rendered = this.renderInjected(this.$self.parent, clone, true);
         anchor.$self.forGenerated[i] = anchor.$self.forGenerated[i].concat(rendered);
       }
     }
@@ -1116,10 +1118,12 @@ class DitoElement extends HTMLElement {
     const index = this.attributes[this.indexAtr].value,
       time = this.attributes[this.timeAtr].value,
       path = node.localName + '@' + index + '@' + time;
+
     if (!this.$self.parent) {
       return path;
     }
-    return this.$self.parent.$self.path + '.' + path;
+
+    return this.$self.parent.getPath(this.$self.parent) + '.' + path;
   }
 
   pathToCss(path) {
