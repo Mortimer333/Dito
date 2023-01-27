@@ -446,7 +446,11 @@ class DitoElement extends HTMLElement {
       }
 
       this.$self.forNodes.forEach(child => {
-        this.actionFor(child);
+        try {
+          this.actionFor(child);
+        } catch (e) {
+          console.error('For error', error)
+        }
       });
 
       this.searchForNotDownloaded(this);
@@ -719,7 +723,11 @@ class DitoElement extends HTMLElement {
   }
 
   setInput(input, node) {
-    node.$[input.name] = this.getExecuteable(input.value, node)(...this.getObservablesValues(node));
+    try {
+      node.$[input.name] = this.getExecuteable(input.value, node)(...this.getObservablesValues(node));
+    } catch (e) {
+      console.error('Input error - ' + input.value, e);
+    }
   }
 
   setupBinds(item) {
@@ -868,10 +876,30 @@ class DitoElement extends HTMLElement {
       return;
     }
 
-    this.actionIf(item, actions.ifs || [], 'ifs');
-    this.actionAttrs(item, actions.attrs || [], 'attrs');
-    this.actionExecutables(item, actions.executables || [], 'executables');
-    this.setupInputs(item);
+    try {
+      this.actionIf(item, actions.ifs || [], 'ifs');
+    } catch (e) {
+      console.error('If error', e)
+    }
+
+    try {
+      this.actionAttrs(item, actions.attrs || [], 'attrs');
+    } catch (e) {
+      console.error('Attr error', e)
+    }
+
+    try {
+      this.actionExecutables(item, actions.executables || [], 'executables');
+    } catch (e) {
+      console.error('Exec error', e)
+    }
+
+    try {
+      this.setupInputs(item);
+    } catch (e) {
+      console.error('Input error', e)
+    }
+
   }
 
   actionFor(node, indent = ' ') {
