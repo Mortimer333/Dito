@@ -1129,8 +1129,6 @@ class DitoElement extends HTMLElement {
 
     const rep = node.$self.if.replacement;
     if (!document.body.contains(rep) && !document.body.contains(node)) {
-      this.removeFromChildren(rep);
-      this.removeFromChildren(node);
       return;
     }
 
