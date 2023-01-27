@@ -449,7 +449,7 @@ class DitoElement extends HTMLElement {
         try {
           this.actionFor(child);
         } catch (e) {
-          console.error('For error', error)
+          console.error('For error', e)
         }
       });
 
