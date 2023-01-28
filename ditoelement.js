@@ -1063,8 +1063,6 @@ class DitoElement extends HTMLElement {
       }
     }
 
-
-
     if (anchor.nodeType !== 3) {
       this.reconstructForAnchor(anchor, anchor)
     }
@@ -1214,7 +1212,9 @@ class DitoElement extends HTMLElement {
     const alias = aliases[0], anchor = document.createElement('a');
     anchor.setAttribute('dito-anchor', 1);
     anchor.setAttribute(this.anchorAliasAttr, alias);
-    this.defineSelf(node);
+    if (!node.$self) {
+      this.defineSelf(node);
+    }
     this.defineSelf(anchor);
     anchor.$self.parent = this;
     node.removeAttribute(alias);
