@@ -420,6 +420,10 @@ class DitoElement extends HTMLElement {
 
     this.$self.rendering = true;
     let res = false;
+    if (document.querySelector(this.$self.css.path) !== this) {
+      this.setCssScope();
+    }
+
     await this.beforeRender();
     if (!this.$self.rendered) {
       this.dispatchEvent(window.__dito.events.firstrender);
