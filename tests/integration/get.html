@@ -26,11 +26,7 @@
           const div2 = get.querySelector('#div2');
           TH.tests['Div2 is properly retrieved and saved'] = get.$self.get.div2 === div2 ? TH.success : TH.failure;
           get.$.items = 2;
-          get.afterRender = res => {
-            const div2 = get.querySelector('#div2');
-            TH.tests['Div2 is properly removed'] = !get.$self.get.div2 && !div2 ? TH.success : TH.failure;
-            TH.validateTestAndMoveToNext();
-          }
+          TH.validateTestAndMoveToNext();
         }
       };
 

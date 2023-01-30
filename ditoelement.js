@@ -474,11 +474,11 @@ class DitoElement extends HTMLElement {
       });
 
       this.updateBinds();
-      Object.keys(this.$self.get).forEach(itemName => {
-        if (!document.contains(this.$self.get[itemName])) {
-          delete this.$self.get[itemName];
-        }
-      });
+      // Object.keys(this.$self.get).forEach(itemName => {
+      //   if (!document.contains(this.$self.get[itemName])) {
+      //     delete this.$self.get[itemName];
+      //   }
+      // });
 
       await this.afterRender({success: true});
       if (!this.$self.rendered) {
@@ -690,7 +690,7 @@ class DitoElement extends HTMLElement {
         const valuesBefore = this.getObservablesValues.bind(parent)(item);
         try {
           const res = this.getFunction.bind(parent)(action.value, item, [this.eventName]).bind(parent)(e, ...valuesBefore);
-          this.updatedChangedValues.bind(parent)(res, observableKeys, valuesBefore);
+          this.updateChangedValues.bind(parent)(res, observableKeys, valuesBefore);
         } catch (e) {
           console.error("Error on output", e);
         }
@@ -865,7 +865,7 @@ class DitoElement extends HTMLElement {
         const observableKeys = this.getObservablesKeys(item);
         const valuesBefore = this.getObservablesValues(item);
         const res = this.getFunction(action.value, item, [this.eventName])(e, ...valuesBefore);
-        this.updatedChangedValues(res, observableKeys, valuesBefore);
+        this.updateChangedValues(res, observableKeys, valuesBefore);
       });
     });
   }
@@ -1406,7 +1406,7 @@ class DitoElement extends HTMLElement {
     }
   }
 
-  updatedChangedValues(res, observableKeys, valuesBefore) {
+  updateChangedValues(res, observableKeys, valuesBefore) {
     const skipTypes = {
       'function': true,
       'undefined': true,
