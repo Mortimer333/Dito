@@ -24,12 +24,14 @@ class DitoElement extends HTMLElement {
   }
 
   /* "EVENTS" */
-  prepare(){}               // Before constructor starts but after HTMLElement constructor
-  init(){}                  // After constructor finishes
-  beforeRender(){}          // Before render
-  afterRender(result){}     // After render
-  beforeCssRender(){}       // Before CSS render
-  afterCssRender(result){}  // After CSS render
+  prepare(){}                // Before constructor starts but after HTMLElement constructor
+  init(){}                   // After constructor finishes
+  beforeRender(){}           // Before render
+  beforeFirstRender(){}      // Before first render
+  afterRender(result){}      // After render
+  afterFirstRender(result){} // After first render
+  beforeCssRender(){}        // Before CSS render
+  afterCssRender(result){}   // After CSS render
 
   getDefaults(){}           // Placeholder
 
@@ -216,6 +218,7 @@ class DitoElement extends HTMLElement {
       value: {
         attributes: {},
         actions: {},
+        setEvents: {},
         children: [],
         binds: {},
         css : {
@@ -251,6 +254,7 @@ class DitoElement extends HTMLElement {
         uniqueNodes: new WeakMap(),
         childNodes: new WeakMap(),
         get: {},
+        getName: '',
         template: {},
       },
       writable: true
@@ -426,6 +430,7 @@ class DitoElement extends HTMLElement {
 
     await this.beforeRender();
     if (!this.$self.rendered) {
+      await this.beforeFirstRender();
       this.dispatchEvent(window.__dito.events.firstrender);
     } else {
       this.dispatchEvent(window.__dito.events.render);
@@ -478,14 +483,10 @@ class DitoElement extends HTMLElement {
       });
 
       this.updateBinds();
-      // Object.keys(this.$self.get).forEach(itemName => {
-      //   if (!document.contains(this.$self.get[itemName])) {
-      //     delete this.$self.get[itemName];
-      //   }
-      // });
 
       await this.afterRender({success: true});
       if (!this.$self.rendered) {
+        await this.afterFirstRender({success: true});
         this.dispatchEvent(window.__dito.events.firstrendered);
         window.__dito.main.firstRendered.delete(this);
         this.$self.rendered = true;
@@ -657,9 +658,17 @@ class DitoElement extends HTMLElement {
     return [node, rendered];
   }
 
-  setupUnique(item) {
+  tearUnique(item) {
+    this.tearEvents(item);
+    this.tearOutput(item);
+    this.tearGets(item);
+  }
+
+  setupUnique(item, skipBinding = false) {
     this.setupEvents(item);
-    this.setupBinds(item);
+    if (!skipBinding) {
+      this.setupBinds(item);
+    }
     this.setupOutputs(item);
     this.setupGets(item);
   }
@@ -675,6 +684,16 @@ class DitoElement extends HTMLElement {
     }
     const name = this.getExecuteable(actions[0], item)(...this.getObservablesValues(item));
     this.$self.get[name] = item;
+    item.$self.getName = name;
+  }
+
+  tearGets(item) {
+    const actions = item.$self?.actions?.gets;
+    if (!actions) {
+      return;
+    }
+
+    delete this.$self.get[item.$self.getName];
   }
 
   setupOutputs(item) {
@@ -699,6 +718,17 @@ class DitoElement extends HTMLElement {
           console.error("Error on output", e);
         }
       }.bind(item);
+    });
+  }
+
+  tearOutput(item) {
+    const actions = item.$self?.actions?.outputs;
+    if (!actions) {
+      return;
+    }
+
+    actions.forEach(action => {
+      delete item.$output[action.name];
     });
   }
 
@@ -865,11 +895,29 @@ class DitoElement extends HTMLElement {
     }
 
     actions.forEach(action => {
-      item.addEventListener(action.name, (e) => {
+      if (!item.$self.setEvents[action.name]) {
+        item.$self.setEvents[action.name] = [];
+      }
+      const fun = e => {
         const observableKeys = this.getObservablesKeys(item);
         const valuesBefore = this.getObservablesValues(item);
         const res = this.getFunction(action.value, item, [this.eventName])(e, ...valuesBefore);
         this.updateChangedValues(res, observableKeys, valuesBefore);
+      };
+      item.$self.setEvents[action.name].push(fun)
+      item.addEventListener(action.name, fun, true);
+    });
+  }
+
+  tearEvents(item) {
+    const actions = item.$self?.actions?.setEvents;
+    if (!actions) {
+      return;
+    }
+
+    Object.values(actions).forEach(actionName => {
+      actions[actionName].forEach(fun => {
+        item.removeEventListener(actionName, fun, true);
       });
     });
   }
@@ -982,6 +1030,8 @@ class DitoElement extends HTMLElement {
     anchor.$self.forGenerated.forEach((generatedChildren, i) => {
       const key = keys[i], value = values[i];
       generatedChildren.forEach(child => {
+        this.tearUnique(child);
+        this.setupUnique(child, true);
         child.$self.scope = Object.assign({}, child.$self.scope, anchor.$self.scope);
         child.$self.forBox.key = key;
         child.$self.forBox.value = value;
