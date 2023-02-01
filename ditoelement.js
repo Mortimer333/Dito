@@ -688,11 +688,6 @@ class DitoElement extends HTMLElement {
   }
 
   tearGets(item) {
-    const actions = item.$self?.actions?.gets;
-    if (!actions) {
-      return;
-    }
-
     delete this.$self.get[item.$self.getName];
   }
 
@@ -910,15 +905,16 @@ class DitoElement extends HTMLElement {
   }
 
   tearEvents(item) {
-    const actions = item.$self?.actions?.setEvents;
+    const actions = item.$self?.setEvents;
     if (!actions) {
       return;
     }
 
-    Object.values(actions).forEach(actionName => {
+    Object.keys(actions).forEach(actionName => {
       actions[actionName].forEach(fun => {
         item.removeEventListener(actionName, fun, true);
       });
+      item.$self.setEvents[actionName] = [];
     });
   }
 
@@ -1030,8 +1026,10 @@ class DitoElement extends HTMLElement {
     anchor.$self.forGenerated.forEach((generatedChildren, i) => {
       const key = keys[i], value = values[i];
       generatedChildren.forEach(child => {
-        this.tearUnique(child);
-        this.setupUnique(child, true);
+        if (!this.isInUnique(child)) {
+          child.$self.parent.tearUnique(child);
+          child.$self.parent.setupUnique(child, true);
+        }
         child.$self.scope = Object.assign({}, child.$self.scope, anchor.$self.scope);
         child.$self.forBox.key = key;
         child.$self.forBox.value = value;
@@ -1120,6 +1118,10 @@ class DitoElement extends HTMLElement {
     if (anchor.nodeType !== 3) {
       this.reconstructForAnchor(anchor, anchor)
     }
+  }
+
+  isInUnique(item) {
+    return this.$self.uniqueChildren.includes(item);
   }
 
   removeFromChildren(item) {
