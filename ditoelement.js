@@ -532,8 +532,13 @@ class DitoElement extends HTMLElement {
         node.$self.parent.$self.children.push(node);
       }
 
-      node.$self.parent.setupUnique(node);
-      node.$self.parent.actionItem(node);
+      const parent = node.$self.parent;
+      parent.setupUnique(node);
+      parent.actionItem(node);
+      const index = parent.$self.uniqueChildren.indexOf(node);
+      if (index !== -1) {
+        parent.$self.uniqueChildren.splice(index, 1);
+      }
     }
 
     node.childNodes.forEach(child => {
