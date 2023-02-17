@@ -905,7 +905,7 @@ class DitoElement extends HTMLElement {
         this.updateChangedValues(res, observableKeys, valuesBefore);
       };
       item.$self.setEvents[action.name].push(fun)
-      item.addEventListener(action.name, fun, true);
+      item.addEventListener(action.name, fun, false);
     });
   }
 
@@ -917,7 +917,7 @@ class DitoElement extends HTMLElement {
 
     Object.keys(actions).forEach(actionName => {
       actions[actionName].forEach(fun => {
-        item.removeEventListener(actionName, fun, true);
+        item.removeEventListener(actionName, fun, false);
       });
       item.$self.setEvents[actionName] = [];
     });
