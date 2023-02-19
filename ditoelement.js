@@ -595,7 +595,7 @@ class DitoElement extends HTMLElement {
     let scope = null, useName = 'use', rendered = [];
     const forActions = [];
     const toRender = [];
-    if (use && template.getAttribute(this.useNameAttrName)) {
+    if (use && template.getAttribute && template.getAttribute(this.useNameAttrName)) {
       useName = template.getAttribute(this.useNameAttrName);
       scope = {[useName] : use};
     } else if (use) {
