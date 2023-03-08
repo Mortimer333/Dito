@@ -609,7 +609,6 @@ class DitoElement extends HTMLElement {
       rendered.push(node);
 
       if (node.$self.if?.isReplacement) {
-        console.log(node.$self.if)
         node.$self.if.parent.$self.if.replacement = node;
       }
 
