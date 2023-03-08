@@ -608,6 +608,11 @@ class DitoElement extends HTMLElement {
       node.$self.actions.uses = {value: uses, name: useName}
       rendered.push(node);
 
+      if (node.$self.if?.isReplacement) {
+        console.log(node.$self.if)
+        node.$self.if.parent.$self.if.replacement = node;
+      }
+
       if (template.$bound) {
         node.$bound = Object.assign({}, template.$bound);
       }
@@ -1184,6 +1189,12 @@ class DitoElement extends HTMLElement {
         condition: actions[0],
         replacement: document.createTextNode('')
       }
+      this.defineSelf(node.$self.if.replacement);
+      node.$self.if.replacement.$self.parent = this;
+      node.$self.if.replacement.$self.if = {
+        isReplacement: true,
+        parent: node
+      };
     }
 
     const rep = node.$self.if.replacement;

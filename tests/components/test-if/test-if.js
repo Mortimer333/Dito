@@ -7,6 +7,12 @@ class TestIf extends DitoElement {
     this.$.display3 = true;
     this.$.display4 = true;
     this.$.display4Iter = 2;
+    this.$.injectShow = false;
+    this.$.showEmpty = false;
+    this.$.injectShow2 = false;
+    this.$.showEmpty2 = false;
+    this.$.injectShow3 = false;
+    this.$.showEmpty3 = false;
   }
 }
 export {TestIf as default};

@@ -10,3 +10,14 @@
     display4
   </div>
 </test-injected>
+<test-injected @if="injectShow" hidden>
+  <test-empty @if="showEmpty" hidden></test-empty>
+</test-injected>
+
+<test-injected @if="injectShow2" hidden2>
+  <test-empty @if="showEmpty2" hidden2></test-empty>
+</test-injected>
+
+<test-injected @if="injectShow3" hidden3>
+  <test-empty @if="showEmpty3" hidden3></test-empty>
+</test-injected>
