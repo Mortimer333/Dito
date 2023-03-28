@@ -35,11 +35,11 @@ class Dito {
     document.head.appendChild(this.styleNode);
 
     Object.defineProperty(window, "__dito", {
-        value: {
-          main: this,
-          registered: {}
-        },
-        writable: false
+      value: {
+        main: this,
+        registered: {}
+      },
+      writable: false
     });
 
     this.defineMutationObserver();
@@ -114,6 +114,45 @@ class Dito {
     }
     this.downloadFinished = true;
     this.callback(...this.arguments);
+  }
+
+  bulk(components, version, prefix = '') {
+    if (!Array.isArray(components) && typeof components == 'object' && components !== null) {
+      const keys = Object.keys(components);
+      keys.forEach(key => {
+        this.handleBulk(components[key], version, prefix + key);
+      });
+    } else if (Array.isArray(components)) {
+      this.handleBulk(components, version, prefix);
+    }
+  }
+
+  handleBulk(paths, version, prefix = '') {
+    paths.forEach(component => {
+      if (typeof component == 'string') {
+        let force = false;
+        if (component[0] === '!') {
+          force = true;
+          component = component.substring(1);
+        }
+        let absolute = (prefix + component).split('/');
+        let absolutePrefix = absolute.slice(0,-1).join('/');
+        if (absolutePrefix.length > 0) {
+          absolutePrefix += '/';
+        }
+        this.register(
+          absolute.slice(-1).join(''),
+          version,
+          absolutePrefix,
+          force
+        );
+      } else {
+        const keys = Object.keys(component);
+        keys.forEach(key => {
+          this.handleBulk(component[key], version, prefix + key);
+        });
+      }
+    });
   }
 
   register(name, version, path = '', force = false) {
@@ -252,37 +291,37 @@ class Dito {
 
           ({ default: js } = js);
           Object.defineProperty(js.prototype, "__dito", {
-              value: {
-                actions: {
-                  fors: {},
-                  for_keys: {},
-                  for_values: {},
-                  ifs: {},
-                  outputs: {},
-                  inputs: {},
-                  attrs: {},
-                  binds: {},
-                  events: {},
-                  executables: {},
-                  packs: {},
-                  unames: {},
-                  uses: {},
-                  gets: {},
-                  for_mins: {},
-                  for_min_defs: {}
-                },
-                css: {
-                  actions: {
-                    scopes: {},
-                    executables: {},
-                    templates: {}
-                  },
-                  content: '',
-                  scoped: [],
-                  global: [],
-                },
+            value: {
+              actions: {
+                fors: {},
+                for_keys: {},
+                for_values: {},
+                ifs: {},
+                outputs: {},
+                inputs: {},
+                attrs: {},
+                binds: {},
+                events: {},
+                executables: {},
+                packs: {},
+                unames: {},
+                uses: {},
+                gets: {},
+                for_mins: {},
+                for_min_defs: {}
               },
-              writable: false
+              css: {
+                actions: {
+                  scopes: {},
+                  executables: {},
+                  templates: {}
+                },
+                content: '',
+                scoped: [],
+                global: [],
+              },
+            },
+            writable: false
           });
           js.prototype.__dito.html = html;
           js.prototype.__dito.css.content = css;
