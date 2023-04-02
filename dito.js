@@ -75,6 +75,13 @@ class Dito {
       cancelable: true,
       composed: false,
     });
+
+    window.__dito.events.loadfinished = new CustomEvent("loadfinished", {
+      detail: {},
+      bubbles: false,
+      cancelable: true,
+      composed: false,
+    });
   }
 
   defineMutationObserver() {

@@ -412,6 +412,9 @@ class DitoElement extends HTMLElement {
 
   async render(force = false) {
     if (!force && (this.$self.renderInProgress || !document.body.contains(this))) {
+      if (!document.body.contains(this)) {
+        this.dispatchEvent(window.__dito.events.loadfinished);
+      }
       return;
     }
 
@@ -463,6 +466,7 @@ class DitoElement extends HTMLElement {
       });
 
       this.searchForNotDownloaded(this);
+      const promises = [];
       this.querySelectorAll(Object.keys(window.__dito.registered).join(', ')).forEach(custom => {
         if (!custom.$self) {
           this.defineSelf(custom);
@@ -470,6 +474,16 @@ class DitoElement extends HTMLElement {
 
         if (!custom.$self.parent) {
           custom.$self.parent = this;
+        }
+
+        if (!this.$self.rendered) {
+          promises.push(new Promise((resolve, reject) => {
+            const fn = e => {
+              custom.removeEventListener('loadfinished', fn, true);
+              resolve();
+            };
+            custom.addEventListener('loadfinished', fn, true);
+          }));
         }
       });
 
@@ -485,6 +499,13 @@ class DitoElement extends HTMLElement {
       this.updateBinds();
 
       await this.afterRender({success: true});
+      if (promises.length > 0) {
+        Promise.all(promises).then(value => {
+          this.dispatchEvent(window.__dito.events.loadfinished);
+        })
+      } else {
+        this.dispatchEvent(window.__dito.events.loadfinished);
+      }
       if (!this.$self.rendered) {
         await this.afterFirstRender({success: true});
         this.dispatchEvent(window.__dito.events.firstrendered);
