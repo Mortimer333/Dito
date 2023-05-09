@@ -411,7 +411,7 @@ class DitoElement extends HTMLElement {
 
   async render(force = false) {
     if (!force && (this.$self.queueRenderInProgress || this.$self.rendering || !document.body.contains(this))) {
-      if (document.body.contains(this)) {
+      if (!document.body.contains(this)) {
         this.dispatchEvent(window.__dito.events.loadfinished);
       }
       return;
