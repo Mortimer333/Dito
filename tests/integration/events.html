@@ -21,6 +21,7 @@
           TH.tests['Empty had his first rendered event called'] =
             events.$self.renderEventAfter === 'first after' ? TH.success : TH.failure;
 
+          await TH.waitForElementToRender(empty);
           await empty.render();
           TH.tests['Empty had his second render event called'] =
             events.$self.renderEventBefore === 'normal before'? TH.success : TH.failure;

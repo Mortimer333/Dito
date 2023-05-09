@@ -57,6 +57,12 @@ const dispatchNativeEvent = function (node, name) {
   node.dispatchEvent(event);
 };
 
+const waitForElementToRender = async el => {
+  while (!el.$self?.rendered || el.$self?.rendering) {
+    await new Promise(r => setTimeout(r, 100));
+  }
+}
+
 beforeTest();
 
 export {
@@ -74,4 +80,5 @@ export {
   setTestCounter,
   beforeTest,
   dispatchNativeEvent,
+  waitForElementToRender,
 };

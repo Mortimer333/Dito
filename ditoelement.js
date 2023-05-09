@@ -16,8 +16,8 @@ class DitoElement extends HTMLElement {
     this.prepare();
     this.defineObservable();
     this.saveMethods();
-    this.$self.cssRenderInProgress = false;
-    this.$self.renderInProgress = false;
+    this.$self.cssqueueRenderInProgress = false;
+    this.$self.queueRenderInProgress = false;
     this.defineCallback();
     this.defineCssCallback();
     this.defineDefaults();
@@ -54,14 +54,14 @@ class DitoElement extends HTMLElement {
 
   defineCallback() {
     this.$self.debounceRender = this.debounce(e => {
-      this.$self.renderInProgress = false;
+      this.$self.queueRenderInProgress = false;
       this.render();
     });
   }
 
   defineCssCallback() {
     this.$self.debounceCssRender = this.debounce(e => {
-      this.$self.cssRenderInProgress = false;
+      this.$self.cssqueueRenderInProgress = false;
       this.cssRender();
     });
   }
@@ -116,7 +116,6 @@ class DitoElement extends HTMLElement {
     if (this.$self.css.scoped) {
       this.queueCssRender();
     }
-    this.$self.css.scoped = null;
     this.setAttribute(this.timeAtr, +new Date());
     this.setAttribute(this.indexAtr, Array.prototype.indexOf.call(this.parentElement.children, this));
     this.$self.path = this.getPath(this);
@@ -136,22 +135,22 @@ class DitoElement extends HTMLElement {
   }
 
   queueRender() {
-    this.$self.renderInProgress = true;
+    this.$self.queueRenderInProgress = true;
     this.$self.debounceRender();
   }
 
   clearRenderQueue() {
-    this.$self.renderInProgress = false;
+    this.$self.queueRenderInProgress = false;
     this.$self.debounceRender('clear');
   }
 
   queueCssRender() {
-    this.$self.cssRenderInProgress = true;
+    this.$self.cssqueueRenderInProgress = true;
     this.$self.debounceCssRender();
   }
 
   clearCssRenderQueue() {
-    this.$self.cssRenderInProgress = false;
+    this.$self.cssqueueRenderInProgress = false;
     this.$self.debounceCssRender('clear');
   }
 
@@ -226,7 +225,7 @@ class DitoElement extends HTMLElement {
           indices: [],
           path: null,
           rendered: false,
-          renderInProgress: false,
+          queueRenderInProgress: false,
           scoped: null
         },
         default: {
@@ -368,7 +367,7 @@ class DitoElement extends HTMLElement {
   }
 
   async cssRender() {
-    if (this.$self.css.renderInProgress || !document.body.contains(this)) {
+    if (this.$self.css.queueRenderInProgress || !document.body.contains(this)) {
       return;
     }
 
@@ -411,14 +410,14 @@ class DitoElement extends HTMLElement {
   }
 
   async render(force = false) {
-    if (!force && (this.$self.renderInProgress || !document.body.contains(this))) {
-      if (!document.body.contains(this)) {
+    if (!force && (this.$self.queueRenderInProgress || this.$self.rendering || !document.body.contains(this))) {
+      if (document.body.contains(this)) {
         this.dispatchEvent(window.__dito.events.loadfinished);
       }
       return;
     }
 
-    if (this.$self.parent && this.$self.parent.$self.rendering) {
+    if (this.$self.parent?.$self?.rendering) {
       this.queueRender();
       return;
     }
@@ -773,7 +772,7 @@ class DitoElement extends HTMLElement {
             this.$self.toInput.set(item, [action]);
           }
         } else {
-          console.error("Selected node was not made with Dito library and can't have assigned input");
+          console.error("Selected node " + item.localName + " was not made with Dito library and can't have assigned input");
         }
       } else {
         this.setInput(action, item);
