@@ -42,7 +42,7 @@ class DitoElement extends HTMLElement {
 
     this.clearRenderQueue();
 
-    if (!window.__dito.main.firstRendered.get(this)) {
+    if (!this.$self.rendered) {
       window.__dito.main.firstRendered.set(this, true);
       delete window.__dito.main.downloadCheck[this.localName];
       this.firstRenderBeforeActions();
