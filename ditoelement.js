@@ -237,7 +237,9 @@ class DitoElement extends HTMLElement {
           key: null,
           value: null,
           keyName: null,
-          valueName: null
+          valueName: null,
+          anchor: null,
+          index: null
         },
         forNodes: [],
         injected: [],
@@ -536,9 +538,9 @@ class DitoElement extends HTMLElement {
     return node;
   }
 
-  actionItems(node, currentScope, isFor = false) {
+  actionItems(node, currentScope, isInFor = false) {
     if (node.$self) {
-      if (!isFor && currentScope.isInjected(node)) {
+      if (!isInFor && currentScope.isInjected(node)) {
         return;
       }
 
@@ -562,18 +564,18 @@ class DitoElement extends HTMLElement {
     }
 
     node.childNodes.forEach(child => {
-      this.actionItems(child, currentScope, isFor);
+      this.actionItems(child, currentScope, isInFor);
     });
   }
 
-  renderInjected(item, scope = this, isFor = false) {
+  renderInjected(item, scope = this, isInFor = false) {
     let rendered = [];
     scope.querySelectorAll('dito-inject').forEach(inject => {
       const uses = inject.$self?.actions?.uses;
       let use = null;
       if (uses?.length > 0) {
         if (uses.length > 1) {
-          throw new Error('Dito inject can one have one use variable');
+          throw new Error('Dito inject can have only one use variable');
         }
 
         use = this.getExecuteable(uses[0], inject)(...this.getObservablesValues(inject));
@@ -596,13 +598,13 @@ class DitoElement extends HTMLElement {
               return;
             }
 
-            let [node, subRendered] = this.initInjected(inject, template, use, uses, isFor);
+            let [node, subRendered] = this.initInjected(inject, template, use, uses, isInFor);
             rendered = rendered.concat(subRendered);
           }.bind(this));
         });
       } else {
         this.$self.default.injected.forEach(template => {
-          this.initInjected(inject, template, use, uses, isFor);
+          this.initInjected(inject, template, use, uses, isInFor);
         });
       }
       inject.remove();
@@ -611,7 +613,7 @@ class DitoElement extends HTMLElement {
     return rendered;
   }
 
-  initInjected(inject, template, use, uses, isFor) {
+  initInjected(inject, template, use, uses, isInFor) {
     let scope = null, useName = 'use', rendered = [];
     const forActions = [];
     const toRender = [];
@@ -621,12 +623,14 @@ class DitoElement extends HTMLElement {
     } else if (use) {
       scope = { use };
     }
-
     const node = this.cloneNodeRecursive(template, function(template, node) {
       node.$self = Object.assign({}, template.$self);
       node.$self.rendered = false;
       node.$self.actions.uses = {value: uses, name: useName}
       rendered.push(node);
+      if (template.$self.for.anchor) {
+        template.$self.for.anchor.$self.children[template.$self.for.index] = node;
+      }
 
       if (node.$self.if?.isReplacement) {
         node.$self.if.parent.$self.if.replacement = node;
@@ -660,10 +664,16 @@ class DitoElement extends HTMLElement {
         node.removeAttribute(this.useNameAttrName);
       }
 
-      if (node.getAttribute && node.getAttribute(this.anchorAliasAttr)) {
-        node.$self.for.parent.$self.for.anchors[0] = node;
+      if (node.$self.for.parent) {
+        node.$self.children = []
+        node.$self.for.parent.$self.for.anchors.push(node);
         node.$self.parent.$self.forNodes.push(node.$self.for.parent);
-        forActions.push(node.$self.for.parent);
+        forActions.push([node.$self.for.parent, node.$self.parent]);
+        node.$self.parent.removeFromChildren(template)
+
+        template.$self.children.forEach(child => {
+          child.remove();
+        })
       }
     }.bind(this.$self.parent));
 
@@ -673,7 +683,7 @@ class DitoElement extends HTMLElement {
 
     inject.parentElement.insertBefore(node, inject);
     forActions.forEach(child => {
-      this.$self.parent?.actionFor(child);
+      child[1].actionFor(child[0]);
     });
 
     toRender.forEach(child => {
@@ -682,7 +692,11 @@ class DitoElement extends HTMLElement {
       child.defineCssCallback();
       child.queueRender();
     })
-    this.$self.parent?.actionItems(node, this, isFor);
+    if (node.$self) {
+      node.$self.parent?.actionItems(node, this, isInFor);
+    } else {
+      this.$self.parent?.actionItems(node, this, isInFor);
+    }
 
     return [node, rendered];
   }
@@ -1136,6 +1150,12 @@ class DitoElement extends HTMLElement {
         }
       });
 
+      if (!clone.$self) {
+        this.defineSelf(clone);
+        clone.$self.parent = this;
+        clone.$self.for.anchor = anchor;
+        clone.$self.for.index = i;
+      }
       anchor.$self.children.push(clone);
 
       if (this.$self.parent) {
@@ -1173,6 +1193,11 @@ class DitoElement extends HTMLElement {
     newAnchor.$self = Object.assign({}, realAnchor.$self);
     const forTemplate = newAnchor.$self.for.parent;
     forTemplate.$self.for.anchors.push(newAnchor);
+    realAnchor.$self.children.forEach((child, i) => {
+      child.$self.for.anchor = newAnchor;
+      child.$self.for.index = i;
+    });
+
     return newAnchor;
   }
 
@@ -1361,8 +1386,6 @@ class DitoElement extends HTMLElement {
     let res = true;
     if (!this.querySelector(all)) {
       res = false;
-    } else if(this.localName === 'test-inject-pack3') {
-      throw new Error('stop')
     }
 
     if (node.nodeType !== 3) {

@@ -10,14 +10,16 @@
       import * as TH from "../test.js";
 
       const container = TH.getContainer({
-        callback: () => {
+        callback: async () => {
           let bind = document.body.querySelector('test-bind');
           const bounds = bind.querySelectorAll('test-bound');
-          const innerText = '0@a0@a=>0@a0@a=>0@a=>0@a0@a=>0@a=>1@v0@a=>1@v0@a=>1@v=>0@a0@a=>1@v=>1@v1@v1@v=>0@a1@v=>0@a'
-          + '=>0@a1@v=>0@a=>1@v1@v=>1@v1@v=>1@v=>0@a1@v=>1@v=>1@v0=>00=>11=>01=>1';
+          const innerText = '0@a0@a=>0@a0@a=>0@a=>0@a0@a=>0@a=>1@v0@a=>1@v0@a=>1@v=>0@a0@a=>1@v=>1@v1@v1@v=>0@a1@v=>0'
+            + '@a=>0@a1@v=>0@a=>1@v1@v=>1@v1@v=>1@v=>0@a1@v=>1@v=>1@v0=>00=>11=>01=>1';
           const firsts = bind.querySelectorAll('[name="first"]');
           const seconds = bind.querySelectorAll('[name="second"]');
           const native = bind.querySelector('#native');
+          bind.render(true);
+          await TH.waitForElementToRender(bind)
           // innerText of bind is not updated yet who knows when the cycle will update it, so we just force it to
           // create new text by creating new element and cloning all the nodes
           const tmp = document.createElement('div');

@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>Test</title>
+  </head>
+  <body>
+    <test-for-nested></test-for-nested>
+    <script type="module">
+      import * as TH from "../test.js";
+
+      const container = TH.getContainer({
+        callback: async e => {
+          TH.tests['For in properly updated'] = TH.failure;
+          get.$.length = 4;
+          get.render(true);
+          await TH.waitForElementToRender(get);
+          const lvl2 = get.querySelector('test-for-nested-lvl-2');
+          console.log(lvl2.children.length)
+          TH.tests['For in properly updated'] = lvl2.children.length === 4 ? TH.success : TH.failure;
+
+          TH.validateTestAndMoveToNext();
+        }
+      });
+      container.register('test-for-nested', Math.random());
+      container.register('test-for-nested-lvl-1', Math.random(), 'test-for-nested/');
+      container.register('test-for-nested-lvl-2', Math.random(), 'test-for-nested/test-for-nested-lvl-1/');
+      await container.load();
+      const get = document.querySelector('test-for-nested');
+    </script>
+  </body>
+</html>
