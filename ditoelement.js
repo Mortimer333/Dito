@@ -33,7 +33,7 @@ class DitoElement extends HTMLElement {
   beforeCssRender(){}        // Before CSS render
   afterCssRender(result){}   // After CSS render
 
-  getDefaults(){}           // Placeholder
+  getDefaults(){}            // Placeholder
 
   async connectedCallback() {
     if (!document.body.contains(this)) {
@@ -615,14 +615,15 @@ class DitoElement extends HTMLElement {
 
   initInjected(inject, template, use, uses, isInFor) {
     let scope = null, useName = 'use', rendered = [];
-    const forActions = [];
-    const toRender = [];
+    const forActions = [], toRender = [], toRemove = [];
     if (use && template.getAttribute && template.getAttribute(this.useNameAttrName)) {
       useName = template.getAttribute(this.useNameAttrName);
       scope = {[useName] : use};
     } else if (use) {
       scope = { use };
     }
+
+
     const node = this.cloneNodeRecursive(template, function(template, node) {
       node.$self = Object.assign({}, template.$self);
       node.$self.rendered = false;
@@ -669,17 +670,24 @@ class DitoElement extends HTMLElement {
         node.$self.for.parent.$self.for.anchors.push(node);
         node.$self.parent.$self.forNodes.push(node.$self.for.parent);
         forActions.push([node.$self.for.parent, node.$self.parent]);
-        node.$self.parent.removeFromChildren(template)
 
         template.$self.children.forEach(child => {
           child.remove();
         })
       }
+
+      toRemove.push(template);
+      node.$self.parent.$self.children.push(node);
     }.bind(this.$self.parent));
 
     if (!node) {
       throw new Error("Injected node wasn't properly cloned");
     }
+
+    toRemove.forEach(node => {
+      node.$self.parent.removeFromChildren(node)
+      node.remove();
+    })
 
     inject.parentElement.insertBefore(node, inject);
     forActions.forEach(child => {

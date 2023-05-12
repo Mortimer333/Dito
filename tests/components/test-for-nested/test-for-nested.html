@@ -3,3 +3,10 @@
     {{ $key }}
   </div>
 </test-for-nested-lvl-1>
+<div @for="objs" @value="obj">
+  <div>
+    <test-for-nested-lvl-2 @i:value="obj.value" id="secondNestedOut">
+      <p>{{ obj.value }}</p>
+    </test-for-nested-lvl-2>
+  </div>
+</div>

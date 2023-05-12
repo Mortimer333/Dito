@@ -19,6 +19,14 @@
           console.log(lvl2.children.length)
           TH.tests['For in properly updated'] = lvl2.children.length === 4 ? TH.success : TH.failure;
 
+          TH.tests['For out properly updated'] = TH.failure;
+          get.$.objs = [{value: 'a'}];
+          get.render(true);
+          await TH.waitForElementToRender(get);
+          const secondNestedOut = document.getElementById('secondNestedOut');
+          TH.tests['For out properly updated'] = secondNestedOut.innerText.trim().replaceAll("\n", '') === 'aa'
+            ? TH.success : TH.failure;
+
           TH.validateTestAndMoveToNext();
         }
       });
