@@ -16,7 +16,6 @@
           get.render(true);
           await TH.waitForElementToRender(get);
           const lvl2 = get.querySelector('test-for-nested-lvl-2');
-          console.log(lvl2.children.length)
           TH.tests['For in properly updated'] = lvl2.children.length === 4 ? TH.success : TH.failure;
 
           TH.tests['For out properly updated'] = TH.failure;
@@ -27,11 +26,16 @@
           TH.tests['For out properly updated'] = secondNestedOut.innerText.trim().replaceAll("\n", '') === 'aa'
             ? TH.success : TH.failure;
 
+          const loop = get.querySelector('test-for-loop-inject');
+          TH.tests['Dito inject in for loop properly rendered'] = loop.innerText.trim().replaceAll("\n", '') === '012'
+            ? TH.success : TH.failure;
+
           TH.validateTestAndMoveToNext();
         }
       });
       container.register('test-for-nested', Math.random());
       container.register('test-for-nested-lvl-1', Math.random(), 'test-for-nested/');
+      container.register('test-for-loop-inject', Math.random(), 'test-for-nested/');
       container.register('test-for-nested-lvl-2', Math.random(), 'test-for-nested/test-for-nested-lvl-1/');
       await container.load();
       const get = document.querySelector('test-for-nested');

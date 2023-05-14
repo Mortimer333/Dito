@@ -623,7 +623,6 @@ class DitoElement extends HTMLElement {
       scope = { use };
     }
 
-
     const node = this.cloneNodeRecursive(template, function(template, node) {
       node.$self = Object.assign({}, template.$self);
       node.$self.rendered = false;
@@ -676,18 +675,12 @@ class DitoElement extends HTMLElement {
         })
       }
 
-      toRemove.push(template);
       node.$self.parent.$self.children.push(node);
     }.bind(this.$self.parent));
 
     if (!node) {
       throw new Error("Injected node wasn't properly cloned");
     }
-
-    toRemove.forEach(node => {
-      node.$self.parent.removeFromChildren(node)
-      node.remove();
-    })
 
     inject.parentElement.insertBefore(node, inject);
     forActions.forEach(child => {
