@@ -494,10 +494,8 @@ class DitoElement extends HTMLElement {
       }
 
       this.$self.children.forEach(child => {
-        if (this.localName == 'cod-monster-randomizer') console.log('action', child)
         this.actionItem(child);
       });
-      if (this.localName == 'cod-monster-randomizer') console.log("==========================")
 
       this.updateBinds();
 
