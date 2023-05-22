@@ -171,11 +171,11 @@ class Dito {
     const sheet = this.styleNode.sheet;
     const index = sheet.cssRules.length;
     sheet.insertRule(
-      name + ':not([dito-ready]):not([dito-show]) {opacity: 0; transition: opacity .25s;}',
+      name + ':not([dito-ready]):not([dito-show]) {opacity: 0;}',
       sheet.cssRules.length
     );
     sheet.insertRule(
-      name + '[dito-ready]:not([dito-show]) {opacity: 1; transition: opacity .25s;}',
+      name + '[dito-ready]:not([dito-show]) {opacity: 1; transition: opacity .5s;}',
       sheet.cssRules.length
     );
 
