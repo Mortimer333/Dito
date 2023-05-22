@@ -3,6 +3,7 @@ class DitoElement extends HTMLElement {
   valueName = "$value";
   eventName = "$event";
   indexAtr = 'dito-i';
+  readyAtr = 'dito-ready';
   packAttrName = 'dito-pack';
   useNameAttrName = 'dito-use-name';
   timeAtr = 'dito-t';
@@ -513,6 +514,7 @@ class DitoElement extends HTMLElement {
         window.__dito.main.firstRendered.delete(this);
         this.$self.rendered = true;
         window.__dito.main.allDownloaded();
+        this.setAttribute(this.readyAtr, '1')
       } else {
         this.dispatchEvent(window.__dito.events.rendered);
       }

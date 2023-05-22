@@ -168,6 +168,16 @@ class Dito {
     }
 
     window.__dito.registered[name] = true;
+    const sheet = this.styleNode.sheet;
+    const index = sheet.cssRules.length;
+    sheet.insertRule(
+      name + ':not([dito-ready]):not([dito-show]) {opacity: 0; transition: opacity .25s;}',
+      sheet.cssRules.length
+    );
+    sheet.insertRule(
+      name + '[dito-ready]:not([dito-show]) {opacity: 1; transition: opacity .25s;}',
+      sheet.cssRules.length
+    );
 
     // If it's not force and there is currently no instance of this component on site - don't retrieve it
     if (!force && !document.querySelector(name)) {
@@ -289,12 +299,6 @@ class Dito {
 
           const range = document.createRange();
           range.selectNodeContents(document.createElement('div')); // fix for safari
-          if (range.createContextualFragment(html).querySelector(component)) {
-            console.error(
-              "Script detected direct recursive use of components in `" + component + "`. " +
-              "Components' additional call won't be rendered to avoid inifnite loop."
-            );
-          }
 
           ({ default: js } = js);
           Object.defineProperty(js.prototype, "__dito", {
