@@ -629,9 +629,9 @@ class DitoElement extends HTMLElement {
 
     const node = this.cloneNodeRecursive(template, function(template, node) {
       node.$self = Object.assign({}, template.$self);
+      node.$self.setEvents = {};
       node.$self.rendered = false;
       node.$self.actions.uses = {value: uses, name: useName}
-      rendered.push(node);
       if (template.$self.for.anchor) {
         template.$self.for.anchor.$self.children[template.$self.for.index] = node;
       }
@@ -680,6 +680,7 @@ class DitoElement extends HTMLElement {
         node.$self.forBox.injectIndex = forIndex;
       }
 
+      rendered.push(node);
       node.$self.parent.$self.children.push(node);
     }.bind(this.$self.parent));
 
@@ -954,12 +955,12 @@ class DitoElement extends HTMLElement {
   }
 
   tearEvents(item) {
-    const actions = item.$self?.setEvents;
-    if (!actions) {
+    const actions = item.$self?.setEvents, keys = Object.keys(actions);
+    if (keys.length == 0) {
       return;
     }
 
-    Object.keys(actions).forEach(actionName => {
+    keys.forEach(actionName => {
       actions[actionName].forEach(fun => {
         item.removeEventListener(actionName, fun, false);
       });
