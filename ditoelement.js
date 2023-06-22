@@ -460,7 +460,6 @@ class DitoElement extends HTMLElement {
         }
       }
 
-      // Actioning ifs twice because of possible hidden fors
       this.$self.children.forEach(child => {
         try {
           this.actionIf(child, child.$self?.actions?.ifs || [], 'ifs');
@@ -1012,6 +1011,18 @@ class DitoElement extends HTMLElement {
     }
   }
 
+  isInIf(node) {
+    if (node.$self?.actions?.ifs) {
+      return true;
+    }
+
+    if (node.parentElement) {
+      return this.isInIf(node.parentElement);
+    }
+
+    return false;
+  }
+
   actionFor(node, indent = ' ') {
     if (!node.$self.for) {
       throw new Error("Node marked as for doesn't have required values");
@@ -1023,7 +1034,7 @@ class DitoElement extends HTMLElement {
       const anchor = anchors[i];
 
       if (!document.body.contains(anchor.parentElement)) {
-        if (anchors.length > 1) {
+        if (anchors.length > 1 && !this.isInIf(anchor)) {
           node.$self.for.anchors.splice(i, 1);
           i--;
         }
