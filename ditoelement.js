@@ -460,7 +460,6 @@ class DitoElement extends HTMLElement {
         }
       }
 
-      // Actioning ifs twice because of possible hidden fors
       this.$self.children.forEach(child => {
         try {
           this.actionIf(child, child.$self?.actions?.ifs || [], 'ifs');
@@ -1023,7 +1022,7 @@ class DitoElement extends HTMLElement {
       const anchor = anchors[i];
 
       if (!document.body.contains(anchor.parentElement)) {
-        if (anchors.length > 1) {
+        if (anchor.nodeName === 'A') {
           node.$self.for.anchors.splice(i, 1);
           i--;
         }
