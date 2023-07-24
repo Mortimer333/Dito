@@ -11,5 +11,7 @@
   </div>
 </div>
 <test-for-loop-inject>
-  <p @a:title="use">{{ use }}</p>
+  <test-injected>
+    <p @a:title="use.num">{{ use.num }}</p>
+  </test-injected>
 </test-for-loop-inject>

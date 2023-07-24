@@ -17,14 +17,13 @@ class DitoElement extends HTMLElement {
     this.prepare();
     this.defineObservable();
     this.saveMethods();
-    this.$self.cssqueueRenderInProgress = false;
+    this.$self.cssQueueRenderInProgress = false;
     this.$self.queueRenderInProgress = false;
     this.defineCallback();
     this.defineCssCallback();
     this.defineDefaults();
   }
 
-  /* "EVENTS" */
   prepare(){}                // Before constructor starts but after HTMLElement constructor
   init(){}                   // After constructor finishes
   beforeRender(){}           // Before render
@@ -33,7 +32,6 @@ class DitoElement extends HTMLElement {
   afterFirstRender(result){} // After first render
   beforeCssRender(){}        // Before CSS render
   afterCssRender(result){}   // After CSS render
-
   getDefaults(){}            // Placeholder
 
   async connectedCallback() {
@@ -46,7 +44,7 @@ class DitoElement extends HTMLElement {
     if (!this.$self.rendered) {
       window.__dito.main.firstRendered.set(this, true);
       delete window.__dito.main.downloadCheck[this.localName];
-      this.firstRenderBeforeActions();
+      this.beforeFirstRenderActions();
       await this.init();
     }
 
@@ -62,7 +60,7 @@ class DitoElement extends HTMLElement {
 
   defineCssCallback() {
     this.$self.debounceCssRender = this.debounce(e => {
-      this.$self.cssqueueRenderInProgress = false;
+      this.$self.cssQueueRenderInProgress = false;
       this.cssRender();
     });
   }
@@ -101,7 +99,7 @@ class DitoElement extends HTMLElement {
     }.bind(this));
   }
 
-  firstRenderBeforeActions() {
+  beforeFirstRenderActions() {
     const parent = this.$self.parent;
     if (parent) {
       const inputs = parent.$self.toInput.get(this) || [];
@@ -146,12 +144,12 @@ class DitoElement extends HTMLElement {
   }
 
   queueCssRender() {
-    this.$self.cssqueueRenderInProgress = true;
+    this.$self.cssQueueRenderInProgress = true;
     this.$self.debounceCssRender();
   }
 
   clearCssRenderQueue() {
-    this.$self.cssqueueRenderInProgress = false;
+    this.$self.cssQueueRenderInProgress = false;
     this.$self.debounceCssRender('clear');
   }
 
@@ -169,7 +167,7 @@ class DitoElement extends HTMLElement {
           }
 
           if (this.tag.$bound[prop]) {
-            const { provider, receiver } = this.tag.$bound[prop];
+            const { provider } = this.tag.$bound[prop];
             if (provider.target.$[provider.name] !== value) {
               provider.target.$[provider.name] = value;
             }
@@ -195,9 +193,14 @@ class DitoElement extends HTMLElement {
       value: new Proxy({}, {
         tag: this,
         set (obj, prop, value) {
+          if (prop[0] == '$') {
+            throw new Error("You can't create variables on this.$css starting with `$`, it's a taken prefix");
+          }
+
           if (value !== obj[prop]) {
             this.tag.queueCssRender(prop);
           }
+
           return Reflect.set(...arguments);
         }
       }),
@@ -247,6 +250,7 @@ class DitoElement extends HTMLElement {
         injected: [],
         injectedPacks: {},
         parent: null,
+        injectedParent: {},
         path: null,
         rendered: false,
         rendering: false,
@@ -488,7 +492,7 @@ class DitoElement extends HTMLElement {
         }
 
         if (!this.$self.rendered) {
-          promises.push(new Promise((resolve, reject) => {
+          promises.push(new Promise(resolve => {
             const fn = e => {
               custom.removeEventListener('loadfinished', fn, true);
               resolve();
@@ -507,11 +511,12 @@ class DitoElement extends HTMLElement {
         this.actionItem(child);
       });
 
+      // @todo Might be good idea to update binds before item actions
       this.updateBinds();
 
       await this.afterRender({success: true});
       if (promises.length > 0) {
-        Promise.all(promises).then(value => {
+        Promise.all(promises).then(e => {
           this.dispatchEvent(window.__dito.events.loadfinished);
         })
       } else {
@@ -627,7 +632,7 @@ class DitoElement extends HTMLElement {
 
   initInjected(inject, template, use, uses, forAnchor, forIndex) {
     let scope = null, useName = 'use', rendered = [];
-    const forActions = [], toRender = [], toRemove = [];
+    const forActions = [], toRender = [], tag = this;
     if (use && template.getAttribute && template.getAttribute(this.useNameAttrName)) {
       useName = template.getAttribute(this.useNameAttrName);
       scope = {[useName] : use};
@@ -637,6 +642,7 @@ class DitoElement extends HTMLElement {
 
     const node = this.cloneNodeRecursive(template, function(template, node) {
       node.$self = Object.assign({}, template.$self);
+      node.$self.injectedParent = tag;
       node.$self.setEvents = {};
       node.$self.rendered = false;
       node.$self.actions.uses = {value: uses, name: useName}
@@ -1179,7 +1185,7 @@ class DitoElement extends HTMLElement {
         }
 
         anchor.$self.anchorGenerated[i].push(newTextA);
-        this.actionFor(newTextA.$self.for.parent, indent + '-- ');
+        this.actionFor(newTextA.$self.for.parent);
       });
 
       if (!clone.$self) {
@@ -1360,7 +1366,8 @@ class DitoElement extends HTMLElement {
       throw new Error('There can only be one `value` on single node');
     }
 
-    const alias = aliases[0], anchor = document.createElement('a');
+    const alias = aliases[0],
+      anchor = document.createElement('a');
     anchor.setAttribute('dito-anchor', 1);
     anchor.setAttribute(this.anchorAliasAttr, alias);
     if (!node.$self) {
@@ -1378,10 +1385,12 @@ class DitoElement extends HTMLElement {
       node.$self.forBox.valueName = values[0];
     }
 
-    node.$self.forBox.anchors = this.getAnchorPaths(node);
+    node.$self.forBox.anchors = this.getAnchorPaths(node); // Save nested fors to action them later in renderFor
+
     if (!this.isInjected(node)) {
       this.$self.forNodes.push(node);
     } else {
+      // Reset attribute on old anchor, so script picks them up again
       const keys = Object.keys(this.__dito.actions.packs);
       for (let i=0; i < keys.length; i++) {
         const alias = keys[i];
@@ -1405,13 +1414,13 @@ class DitoElement extends HTMLElement {
   isInjected(node) {
     let copy = {...window.__dito.registered};
     delete copy[this.localName];
-    const keys = Object.keys(copy);
+    const keys = Object.keys(copy),
+      path = this.$self.css.path;
     if (keys.length === 0) {
       return false;
     }
 
-    let all = this.$self.css.path + ' ' + keys.join(' [dito-find-me], ' + this.$self.css.path + ' ')
-      + ' [dito-find-me]';
+    let all = path + ' ' + keys.join(' [dito-find-me], ' + path + ' ') + ' [dito-find-me]';
     if (node.nodeType !== 3) {
       node.setAttribute('dito-find-me', '');
     } else {
@@ -1538,7 +1547,7 @@ class DitoElement extends HTMLElement {
     }
 
     let promises = [];
-    parent.querySelectorAll(keys.join(',')).forEach((node, i) => {
+    parent.querySelectorAll(keys.join(',')).forEach(node => {
       if (notDownloaded[node.localName]) {
         const component = notDownloaded[node.localName];
         delete notDownloaded[node.localName];
@@ -1549,9 +1558,9 @@ class DitoElement extends HTMLElement {
     });
 
     if (promises.length > 0) {
-      (async function() {
+      (async e => {
         await window.__dito.main.load(promises);
-      }).bind(this)()
+      })()
     }
   }
 
@@ -1598,22 +1607,23 @@ class DitoElement extends HTMLElement {
   }
 
   compileFindAndReplace(text, lm, prefix, attrName, settings = {}) {
-    let attr, start = 0, action = this.__dito.actions[attrName], { hasName, isCss, skipValue, replace } = settings;
-    if (isCss) {
-      action = this.__dito.css.actions[attrName]
-    }
+    let attr,
+      start = 0,
+      { hasName, isCss, skipValue, replace } = settings,
+      action = isCss ? this.__dito.css.actions[attrName] : this.__dito.actions[attrName];
+
     while (attr = this.getCompiledAttribute(text, lm, skipValue, start)) {
       const { name, value } = attr;
       const plc = replace || prefix + name.start + '-' + value.end;
       if (hasName) {
         action[plc] = {
-          name: text.substr(name.start + lm.length, name.end - (name.start + lm.length)).trim(),
-          value: text.substr(value.start + 1, value.end - 1 - value.start),
+          name: text.substring(name.start + lm.length, name.end).trim(),
+          value: text.substring(value.start + 1, value.end),
         };
       } else {
-        action[plc] = text.substr(value.start + 1, value.end - 1 - value.start);
+        action[plc] = text.substring(value.start + 1, value.end);
       }
-      text = text.replaceAll(text.substr(name.start, value.end - name.start + 1), plc);
+      text = text.replaceAll(text.substring(name.start, value.end + 1), plc);
     }
 
     return text;
@@ -1719,7 +1729,8 @@ class DitoElement extends HTMLElement {
     const keys = [
       ...Object.keys(this.methods),
       ...Object.keys(this.$),
-      ...Object.keys(node.$self.scope)
+      ...Object.keys(node.$self.scope),
+      ...Object.keys(this.getInjectedScopes(node.$self.injectedParent)),
     ];
 
     keys.push(node.$self.forBox.keyName || this.keyName);
@@ -1739,13 +1750,27 @@ class DitoElement extends HTMLElement {
     const values = [
       ...Object.values(this.methods),
       ...Object.values(this.$),
-      ...Object.values(node.$self.scope)
+      ...Object.values(node.$self.scope),
+      ...Object.values(this.getInjectedScopes(node.$self.injectedParent)),
     ];
 
     values.push(node.$self.forBox.key);
     values.push(node.$self.forBox.value);
 
     return values;
+  }
+
+  getInjectedScopes(parent) {
+    let scope = {};
+    if (parent?.$self?.injectedParent) {
+      scope = Object.assign({}, this.getInjectedScopes(parent.$self.injectedParent), scope);
+    }
+
+    if (parent?.$self?.scope) {
+      scope = Object.assign({}, parent.$self.scope, scope);
+    }
+
+    return scope;
   }
 
   getCSSObservablesValues() {
@@ -1756,7 +1781,7 @@ class DitoElement extends HTMLElement {
   }
 
   setMutationObserver(node) {
-    window.__dito.mutationObserve(node);
+    window.__dito.mutationObserver(node);
   }
 
   debounce (func, timeout = 10) {

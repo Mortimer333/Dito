@@ -30,9 +30,27 @@
           TH.tests['Dito inject in for loop properly rendered'] = loop.innerText.trim().replaceAll("\n", '') === '012'
             ? TH.success : TH.failure;
 
+          loop.$.length = [
+            {
+              num: 2,
+            }, {
+              num: 3,
+            }, {
+              num: 4,
+            }
+          ];
+
+          loop.render(true);
+          await TH.waitForElementToRender(loop);
+          get.render(true);
+          await TH.waitForElementToRender(get);
+          console.log(loop.innerText)
+          TH.tests['Dito inject in for loop properly updated'] = loop.innerText.trim().replaceAll("\n", '') === '234'
+            ? TH.success : TH.failure;
           TH.validateTestAndMoveToNext();
         }
       });
+      container.register('test-injected', Math.random());
       container.register('test-for-nested', Math.random());
       container.register('test-for-nested-lvl-1', Math.random(), 'test-for-nested/');
       container.register('test-for-loop-inject', Math.random(), 'test-for-nested/');
