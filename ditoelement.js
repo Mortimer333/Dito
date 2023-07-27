@@ -1,6 +1,7 @@
 class DitoElement extends HTMLElement {
   keyName = "$key";
   valueName = "$value";
+  nodeName = "$node";
   eventName = "$event";
   indexAtr = 'dito-i';
   readyAtr = 'dito-ready';
@@ -1731,10 +1732,10 @@ class DitoElement extends HTMLElement {
       ...Object.keys(this.$),
       ...Object.keys(node.$self.scope),
       ...Object.keys(this.getInjectedScopes(node.$self.injectedParent)),
+      node.$self.forBox.keyName || this.keyName,
+      node.$self.forBox.valueName || this.valueName,
+      this.nodeName
     ];
-
-    keys.push(node.$self.forBox.keyName || this.keyName);
-    keys.push(node.$self.forBox.valueName || this.valueName);
 
     return keys;
   }
@@ -1752,10 +1753,10 @@ class DitoElement extends HTMLElement {
       ...Object.values(this.$),
       ...Object.values(node.$self.scope),
       ...Object.values(this.getInjectedScopes(node.$self.injectedParent)),
+      node.$self.forBox.key,
+      node.$self.forBox.value,
+      node,
     ];
-
-    values.push(node.$self.forBox.key);
-    values.push(node.$self.forBox.value);
 
     return values;
   }
