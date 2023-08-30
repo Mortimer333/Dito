@@ -1747,11 +1747,14 @@ class DitoElement extends HTMLElement {
 
   getCSSExecuteable(script) {
     script = 'return ' + script;
-    if (!this.cachedScripts[script]) {
-      this.cacheScript(script, this.getCSSObservablesKeys());
+    const keys = this.getCSSObservablesKeys(),
+      cacheKey = keys.join(',') + script
+    ;
+    if (!this.cachedScripts[cacheKey]) {
+      this.cacheScript(cacheKey, script, keys);
     }
 
-    return this.cachedScripts[script];
+    return this.cachedScripts[cacheKey];
   }
 
   getFunction(script, node, vars = []) {
