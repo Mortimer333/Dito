@@ -652,6 +652,7 @@ class DitoElement extends HTMLElement {
       node.$self = Object.assign({}, template.$self);
       node.$self.injectedParent = tag;
       node.$self.setEvents = {};
+      node.$self.toBind = [];
       node.$self.rendered = false;
       node.$self.actions.uses = { value: uses, name: useName };
       if (template.$self.for.anchor) {
