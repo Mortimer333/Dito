@@ -655,6 +655,8 @@ class DitoElement extends HTMLElement {
       node.$self.toBind = [];
       node.$self.rendered = false;
       node.$self.actions.uses = { value: uses, name: useName };
+      node.$binder = {};
+      node.$bound = {};
       if (template.$self.for.anchor) {
         template.$self.for.anchor.$self.children[template.$self.for.index] = node;
       }
@@ -663,20 +665,12 @@ class DitoElement extends HTMLElement {
         node.$self.if.parent.$self.if.replacement = node;
       }
 
-      if (template.$bound) {
-        node.$bound = Object.assign({}, template.$bound);
-      }
-
-      if (template.$binder) {
-        node.$binder = Object.assign({}, template.$binder);
-      }
-
       if (template.$output) {
         node.$output = Object.assign({}, template.$output);
       }
 
       if (scope) {
-        node.$self.scope = Object.assign({}, node.$self.scope, scope);
+        node.$self.scope = JSON.parse(JSON.stringify(Object.assign({}, node.$self.scope, scope)));
       }
 
       if (window.__dito.main.firstRendered.get(template)) {
@@ -691,8 +685,8 @@ class DitoElement extends HTMLElement {
         node.removeAttribute(this.useNameAttrName);
       }
 
+      node.$self.children = [];
       if (node.$self.for.parent) {
-        node.$self.children = [];
         node.$self.for.parent.$self.for.anchors.push(node);
         node.$self.parent.$self.forNodes.push(node.$self.for.parent);
         forActions.push([node.$self.for.parent, node.$self.parent]);
@@ -775,12 +769,13 @@ class DitoElement extends HTMLElement {
       }
 
       item.$output[action.name] = {};
-      item.$output[action.name].emit = function(e) {
+      item.$output[action.name].emit = async function(e) {
         const parent = this.$self.parent,
           observableKeys = this.getObservablesKeys.bind(parent)(item),
           valuesBefore = this.getObservablesValues.bind(parent)(item);
         try {
-          const res = this.getFunction.bind(parent)(action.value, item, [this.eventName]).bind(parent)(e, ...valuesBefore);
+          let res = await this.getFunction.bind(parent)(action.value, item, [this.eventName]).bind(parent);
+          res = await res(e, ...valuesBefore);
           this.updateChangedValues.bind(parent)(res, observableKeys, valuesBefore);
         } catch (e) {
           console.error('Error on output', e);
