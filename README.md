@@ -25,19 +25,165 @@ export { EarthElement as default };
 <h1 class="earth-class">Planet: earth 🌎</h1>
 ```
 
-# Components
-Main purpose of this library is to have reusable Front End components with their own scope (both CSS and JS) without need for large framework to make it work.
+# Why even try?
+The purpose of this library is to have dynamic, scoped and reusable FE components without need for larger framework or any dependencies which works in plain JS.
 
-The main difference between this and i.e. Vue is that components are not on the site but are downloaded later. So you can register hundreds of components but if they are not used on current page they will not be downloaded which helps with keeping the website slim.
+The main difference between this and other libraries is lazy loading of the components and client template rendering. Register hundreds of components and watch them load only if they are used (also cached and reused after page refresh).
 
-**!IMPORTANT** - To use any of the library features you have to create component and point Dito instance where to look for it. You cannot use any of it functionality inside the plain html file even if you've included library. Script is forcing the use of components.
+# Quick Start
+Start with creating your first component, let's name it `showcase-earth` (must contain hyphen `-`):
+```
+public/ <- Website root folder
+-- components/
+-- -- dito.js
+-- -- ditoelement.js
+-- -- showcase-earth/
+-- -- -- showcase-earth.js
+-- -- -- showcase-earth.css
+-- -- -- showcase-earth.html
+```
+We are following Angular-like naming pattern when creating our components. 
 
-To start whole process create new instance of `Dito` and set URL path to the folder containing your components:
+Now fill your JS with:
+```js
+import { DitoElement } from 'components/ditoelement.js';
+class EarthElement extends DitoElement {
+  init() {
+    this.$.icon = '🌎';
+    this.$.name = 'earth';
+    this.$.className = 'earth-class';
+  }
+}
+export { EarthElement as default };
+```
+and HTML with:
+```html
+<h1 @a:class="className">Planet: {{ name }} {{ icon }}</h1>
+```
+just like the example above. Notice that all used variable in the HTML file are assigned to the attribute `$` which works as a global scope for HTML template. Think of it as a barbaric version of variable visibility and anything set in `$` is accessible in HTML.
+
+We also need to create our index file and request just created component:
+```html
+<body>
+  <showcase-earth></showcase-earth>
+</body>
+```
+
+Now create new instance of `Dito` (and only one) and set URL path to the folder containing your components:
 ```js
 const container = new Dito({
-  url: 'http://localhost/components/',
+  url: 'http://localhost:80/components/',
 });
 ```
+
+> There must be only one instance of Dito per website and attempt to create second will result in error. If you need to access it from different point then you can find it under `window.__dito` or just `__dito`.
+
+Register your first component by `Dito::register` method which requires the name of the component and version (for cache bursting if necessary):
+```js
+container.register('showcase-earth', 1);
+```
+With all our components registered we can call `Dito::load` method which will start searching current file for registered components and loads them asynchronously.
+```js
+await container.load();
+```
+
+At this point our body should look like this:
+```html
+<body>
+  <showcase-earth></showcase-earth>
+  <script type="module">
+    import { Dito } from 'components/dito.js';
+    const container = new Dito({
+      url: 'http://localhost:80/components/',
+    });
+    container.register('earth-element', 1);
+    await container.load();
+    console.log('Top level components loaded!')
+  </script>
+</body>
+```
+and render into this:
+
+```html
+<body>
+  <showcase-earth dito-t="1696445746936" dito-i="1" dito-ready>
+    <h1 class="earth-class">Planet: earth 🌎</h1>
+  </showcase-earth>
+  <script type="module">[...]</script>
+</body>
+```
+We Are Done! Few steps are required and I wouldn't call it the easiest to learn library on the world. You need to understand basics, at least, to start with it but once learned it's pretty good and pleasant to use.
+
+## Framework
+If you are looking for a ready to go project check this:
+- 💥 Micro Front End,
+- 💥 One-Page Application with Router,
+- 💥 NPM configured Tailwind CSS and esbuild for Dito components with dev/prod mode,
+- 💥 User/Permissions System,
+
+application made with Dito 🔥.
+
+## Advanced stuff
+With the ___Quick Start___ you can't really use the library, it's only to honestly show the very basics of setup and first usage. If you want to be able to use `@actions`, `Injectables`, `Dynamic CSS`, `Observables`, `In-Out Communication` and understand `Life Cycles` then have a read (from top to bottom):
+
+- `Settings`
+- `{{ Executables }}`
+- `Observables`
+  - `$ and Methods` - HTML Scope
+  - `$css` - CSS Scope
+    - `@self` - Dynamic CSS
+- `@actions`:
+  - `@if`
+    - How do I find `if` anchor?
+  - `@for`
+    - `@key`
+    - `@value`
+    - HTML Nested Scopes with `@for`
+    - `@min`
+    - `@def-min`
+  - `@e` - Event Listener
+    - Set JS variables in HTML
+  - `@a` - Attribute Setter
+  - `@get` - Getters (basically getElementById but easier)
+- `Components Communication`
+  - `@i` - Input
+  - `@o` - Output
+  - `@b` ⚗️ - Two-Way Bind #angular
+- `Life Cycles`
+  - Methods:
+    - `init`
+    - `beforeRender`
+    - `afterRender`
+    - `beforeCssRender`
+    - `afterCssRender`
+    - `beforeFirstRender`
+    - `afterFirstRender`
+    - `destroyed` 🚫
+  - Events:
+    - `loadfinished`
+    - `render`
+    - `rendered`
+    - `firstrender`
+    - `firstrendered`
+    - `destroyed` 🚫
+- `Injectables`
+  - `Packs`
+  - `@use`
+  - `@uname` ⚗️
+  - Passing injection down
+- Professional Topics:
+  - `$self`
+  - `$bound`
+  - `$binder`
+  - Manual Rendering and Render Queue
+  - Rules for setting Scope Variable (`$` and `$css`) in terms of performance
+  - Content Security Policy that prohibits unsafe-eval
+  - You should read and use source code
+  - Components loading
+  - Dito Attributes
+- Weirdness 💀
+
+
 ## Settings
 You can pass into the instance few settings to customize the behaviour of the library:
 - **[Required] url** - url to the folder with components
