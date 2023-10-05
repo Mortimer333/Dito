@@ -81,7 +81,7 @@ const container = new Dito({
 });
 ```
 
-> There must be only one instance of Dito per website and attempt to create second will result in error. If you need to access it from different point then you can find it under `window.__dito` or just `__dito`.
+> There must be only one instance of Dito per website and attempt to create second will result in error. If you need to access it from different point then you can find it under `window.__dito.main` or just `__dito.main`.
 
 Register your first component by `Dito::register` method which requires the name of the component and version (for cache bursting if necessary):
 ```js
@@ -132,9 +132,8 @@ application made with Dito 🔥.
 With the ___Quick Start___ you can't really use the library, it's only to honestly show the very basics of setup and first usage. If you want to be able to use `@actions`, `Injectables`, `Dynamic CSS`, `Observables`, `In-Out Communication` and understand `Life Cycles` then have a read (from top to bottom):
 
 - [`Settings`](documentation/SETTINGS.md)
-  - Register
-  - Load
-  - Bulk Register
+- [`Dito::register & Dito::load`](documentation/REGISTER&LOAD.md)
+  - `Dito::bulkRegister`
 - `{{ Executables }}`
 - `Observables`
   - `$ and Methods` - HTML Scope
