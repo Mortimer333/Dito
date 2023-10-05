@@ -1,28 +1,33 @@
 # Dito
 Lightweight library with components, template syntax, bindings and dynamic CSS.
 
+- [Quick Start](#quick-start)
+- [Table of Contents](#advanced-stuff)
+
+## Preview
 ### JS:
 ```js
 import { DitoElement } from 'ditoelement.js';
-class EarthElement extends DitoElement {
+class PlanetElement extends DitoElement {
   init() {
-    this.$.icon = '🌎';
-    this.$.name = 'earth';
-    this.$.className = 'earth-class';
+    this.$.icons = ['🌎', ,'🪐'];
+    this.$.planets = ['earth', ,'jupiter'];
+    this.$.className = 'planet-class';
   }
 }
-export { EarthElement as default };
+export { PlanetElement as default };
 ```
 
 ### HTML:
 ```html
-<h1 @a:class="className">Planet: {{name}} {{icon}}</h1>
+<h1 @a:class="className" @for="3" @if="$value !== 1">Planet {{ $value + 1 }}: {{ planets[$value] }} {{ icons[$value] }}</h1>
 ```
 
 ### Output:
 
 ```html
-<h1 class="earth-class">Planet: earth 🌎</h1>
+<h1 class="planet-class">Planet 1: earth 🌎</h1>
+<h1 class="planet-class">Planet 3: jupiter 🪐</h1>
 ```
 
 # Why even try?
@@ -60,7 +65,7 @@ and HTML with:
 ```html
 <h1 @a:class="className">Planet: {{ name }} {{ icon }}</h1>
 ```
-just like the example above. Notice that all used variable in the HTML file are assigned to the attribute `$` which works as a global scope for HTML template. Think of it as a barbaric version of variable visibility and anything set in `$` is accessible in HTML.
+Notice that all used variable in the HTML file are assigned to the attribute `$` which works as a global scope for HTML template. Think of it as a barbaric version of variable visibility and anything set in `$` is accessible in HTML.
 
 We also need to create our index file and request just created component:
 ```html
@@ -127,6 +132,8 @@ application made with Dito 🔥.
 With the ___Quick Start___ you can't really use the library, it's only to honestly show the very basics of setup and first usage. If you want to be able to use `@actions`, `Injectables`, `Dynamic CSS`, `Observables`, `In-Out Communication` and understand `Life Cycles` then have a read (from top to bottom):
 
 - [`Settings`](documentation/SETTINGS.md)
+  - Register
+  - Load
   - Bulk Register
 - `{{ Executables }}`
 - `Observables`

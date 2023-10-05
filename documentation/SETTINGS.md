@@ -1,4 +1,4 @@
-[< back](../README.md)
+[< back](../README.md#advanced-stuff)
 # Settings
 You can pass into the instance few settings to customize the behaviour of the library:
 
