@@ -126,7 +126,8 @@ application made with Dito 🔥.
 ## Advanced stuff
 With the ___Quick Start___ you can't really use the library, it's only to honestly show the very basics of setup and first usage. If you want to be able to use `@actions`, `Injectables`, `Dynamic CSS`, `Observables`, `In-Out Communication` and understand `Life Cycles` then have a read (from top to bottom):
 
-- `Settings`
+- [`Settings`](documentation/SETTINGS.md)
+  - Bulk Register
 - `{{ Executables }}`
 - `Observables`
   - `$ and Methods` - HTML Scope
@@ -184,17 +185,7 @@ With the ___Quick Start___ you can't really use the library, it's only to honest
 - Weirdness 💀
 
 
-## Settings
-You can pass into the instance few settings to customize the behaviour of the library:
-- **[Required] url** - url to the folder with components
-- **[Optional] headers** - what headers should be sent with requests for components' files (except for JS file request as this is done with native `import` method)
-  - Default: `<empty object>`
-- **[Optional] params** - what parameters should be sent in `uri` when requesting `CSS` and `HTML`
-  - Default: `<empty object>`
-- **[Optional] localStorage** - should your components be saved into `localStorage` for later use or retrieved each time user requests your site from server
-  - Default: `true`
-- **[Optional] callback** - function which will be fired when all components are downloaded and rendered
-- **[Optional] arguments** - arguments to pass into callback function
+
 
 ## Register component
 
