@@ -1,4 +1,5 @@
-[< back](../README.md#advanced-stuff)
+[< Back](../README.md#advanced-stuff)
+
 # Settings
 You can pass into the instance few settings to customize the behaviour of the library:
 
@@ -27,14 +28,16 @@ new Dito({
   arguments: ['key', 'value'],
 });
 ```
-### localStorage
+### `localStorage`
 This library saves `HTML` and `CSS` files in user localStorage to save a little on requesting data from server. 
 They are saved together with their version number used when registering the components, so with new version new 
 components will be retrieved. Just remember to bump a version or disable this feature. 
-### callback
+### `callback`
 Callback must be function. It will be called when all (not only top level) components are loaded. This method being called means that page has loaded and is ready to use.
 
 ## Dito Instance
 
 Dito instance can be only created once and after creation can be found in `window.__dito.main` attribute.
 Multiple attempts of creating Dito instance will result in error and failure. 
+
+[Dito::register & Dito::load >](REGISTER&LOAD.md)
