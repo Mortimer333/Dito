@@ -154,7 +154,7 @@ and focus on  `<user-delete-modal>` registration. As you can see `path` used for
 other as its  nested inside of `<user-panel>`. We have to make sure to provide correct path to the component or it 
 won't load properly.
 
-> There is an alternative to `register` which everyone should be aware of: `bulkRegister` which is very useful when 
+> There is an alternative to `register` which everyone should be aware of: `bulk` which is very useful when 
 > you have quite the amount of components with similar namespaces. [You can check it out here]().
 
 ### Start The Load
@@ -176,5 +176,5 @@ and let's say that current index looks like this:
 So if for example we have requested `<user-panel>` then when `load` finished `<user-delete-modal>` will
 still be unloaded (in this scenario we are assuming that `<user-delete-modal>` is visible from the start).
 
-[Dito::bulkRegister >](REGISTER&LOAD/BULKREGISTER.md)
-[{{ Executables }} >](EXECUTABLES.md)
+[Dito::bulk >](REGISTER&LOAD/BULKREGISTER.md)
+[{{ Observables }} >](OBSERVABLES.md)

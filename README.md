@@ -133,12 +133,12 @@ With the ___Quick Start___ you can't really use the library, it's only to honest
 
 - [`Settings`](documentation/SETTINGS.md)
 - [`Dito::register & Dito::load`](documentation/REGISTER&LOAD.md)
-  - `Dito::bulkRegister`
-- `{{ Executables }}`
-- `Observables`
-  - `$ and Methods` - HTML Scope
+  - [`Dito::bulk`](documentation/REGISTER&LOAD/BULKREGISTER.md)
+- [`Observables & Scope`](documentation/OBSERVABLES.md)
+  - `$` - HTML Scope
   - `$css` - CSS Scope
-    - `@self` - Dynamic CSS
+- [`{{ Executables }}`](documentation/EXECUTABLES.md)
+  - [`@self` - Dynamic CSS](documentation/EXECUTABLES/DYNAMICCSS.md)
 - `@actions`:
   - `@if`
     - How do I find `if` anchor?
