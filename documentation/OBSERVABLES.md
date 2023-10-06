@@ -36,13 +36,13 @@ With this variable set we can create our HTML which will conditionally show titl
 ```html
 <h1 @if="showTitle">User Panel Title</h1>
 ```
+> Ignore for now anything prefixed with `@`, it will be explained later
 
 ### Methods
 But this is boring, now we can't see the title whatever we do. Let's add button which will let us preview it:
 ```html
 <button @e:click="toggleTitle()">Toggle title</button>
 ```
-> Ignore for now anything prefixed with `@`, it will be explained later
 
 We also need to created used method `toggleTitle`:
 ```js
@@ -56,7 +56,7 @@ class UserPanel extends DitoElement {
   }
 }
 ```
-Notice that we didn't add the function to the `$` set we were able to access it inside the HTML. 
+Notice that we didn't add the function to the `$` yet we were able to access it inside the HTML. 
 It is because methods are scoped per class, so anything in this class can be used in the HTML/CSS
 but any methods from the parent are inaccessible to the script.
 
@@ -64,9 +64,9 @@ but any methods from the parent are inaccessible to the script.
 Now clicking the button should resolve in title showing up after small moment. Why was there a moment of timeout
 before action took effect?
 
-To not rerender component each time variable has been changed there is a debounce queue which will resolve the action 
-in 200ms after last change was detected. But if you need for the change to appear right away you need to clear
-queue and request render manually:
+To not rerender component each time variable was changed (for example when changing 10 variables in a row) there is a 
+debounce queue which will resolve the action in 200ms after last change was detected. But if you need the change to 
+appear right away you can to clear queue and request render manually:
 ```js
 toggleTitleNow() {
   this.$.showTitle = !this.$.showTitle;
@@ -78,10 +78,11 @@ code above will result in instantaneous change in the website, be it disappearan
 
 ### Object and Arrays
 Change detection works ideally with simple types but has problems with objects and arrays. If you didn't
-assign new object or array it won't detect that inside of it was changed due to performance reasons. To 
-manually trigger render you can use `render` method but this might not work as intended due to multiple 
-checks and validation before allowing for component to render. To make sure that component will be rerendered
-use `queueRender` which will after short while will result in the component rerendering:
+assign new object or array it won't detect that something has changed, so we need to trigger manually.
+
+To manually trigger render you can use `render` method but this might not work as intended due to multiple 
+checks and validations before allowing for component to render. To make sure that component will be rerendered
+use `queueRender` which after short while will result in the component rerendering:
 ```js
 addToArray(item) {
   this.$.array.push(item);
@@ -89,6 +90,8 @@ addToArray(item) {
 }
 ```
 As you might notice this library allows for a lot of manual interaction with core components and allows to
-overwrite script decisions with your own. It's all about control and flexibility.
+overwrite script decisions with your own. It's all about control and flexibility. Although I would like to find 
+way to check if any property in object was changed without any performance sacrifice :/ (I'm not setting `Proxy` on each
+attribute).
 
 [{{ Executables }} >](EXECUTABLES.md)
