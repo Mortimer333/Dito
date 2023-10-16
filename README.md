@@ -144,7 +144,7 @@ With the ___Quick Start___ you can't really use the library, it's only to honest
     - [`@min`](documentation/ACTIONS/FOR.md#min)
     - [`@def-min`](documentation/ACTIONS/FOR.md#def-min)
   - [`@e` - Event Listener](documentation/ACTIONS.md#e)
-    - [Set JS variables in HTML](documentation/ACTIONS.md#set-js-variables-in-html)
+    - [Update JS variables in HTML](documentation/ACTIONS.md#update-js-variables-in-html)
   - [`@a` - Attribute Setter](documentation/ACTIONS.md#a)
   - [`@get` - Getter](documentation/ACTIONS.md#get)
 - `Component's Communication`

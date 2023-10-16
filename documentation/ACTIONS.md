@@ -6,9 +6,10 @@
 Anything with prefix `@` is considered an action but this chapter will only cover most basic actions:
 - [`@if`](#if)
 - [`@for`](#for) for more details [here](ACTIONS/FOR.md)
-- `@e`
-- `@a`
-- `@get`
+- [`@e`](#e)
+  - [Update JS variables in HTML](#update-js-variables-in-html)
+- [`@a`](#a)
+- [`@get`](#get)
 
 Very important: action's condition must start and end with Quotation Marks (`"`) otherwise script will return an error.
 
@@ -68,7 +69,7 @@ With `@e` you cna assign the same event multiple times if needed:
 </button>
 ```
 
-#### Set JS variables in HTML
+#### Update JS variables in HTML
 
 Using events you can, from HTML level, change `$`'s attribute's value by simply changing it between apostrophes:
 ```html
