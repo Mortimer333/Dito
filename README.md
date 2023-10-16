@@ -65,7 +65,7 @@ and HTML with:
 ```html
 <h1 @a:class="className">Planet: {{ name }} {{ icon }}</h1>
 ```
-Notice that all used variable in the HTML file are assigned to the attribute `$` which works as a global scope for HTML template. Think of it as a barbaric version of variable visibility and anything set in `$` is accessible in HTML.
+Notice that all variables used in the HTML file are assigned to the attribute `$` which works as a global scope for HTML template. Think of it as a barbaric version of variable visibility and anything set in `$` is accessible in HTML.
 
 We also need to create our index file and request just created component:
 ```html
@@ -117,7 +117,7 @@ and render into this:
   <script type="module">[...]</script>
 </body>
 ```
-We Are Done! Few steps are required and I wouldn't call it the easiest to learn library on the world. You need to understand basics, at least, to start with it but once learned it's pretty good and pleasant to use.
+We Are Done! Few steps are required and I wouldn't call it the easiest to learn library in the world. You need to understand basics, at least, to start with it but once learned it's pretty good and pleasant to use.
 
 ## Framework
 If you are looking for a ready to go project check this:
@@ -126,7 +126,7 @@ If you are looking for a ready to go project check this:
 - 💥 NPM configured Tailwind CSS and esbuild for Dito components with dev/prod mode,
 - 💥 User/Permissions System,
 
-application made with Dito 🔥.
+app skeleton made on Dito 🔥.
 
 ## Advanced stuff
 With the ___Quick Start___ you can't really use the library, it's only to honestly show the very basics of setup and first usage. If you want to be able to use `@actions`, `Injectables`, `Dynamic CSS`, `Observables`, `In-Out Communication` and understand `Life Cycles` then have a read (from top to bottom):
@@ -135,24 +135,19 @@ With the ___Quick Start___ you can't really use the library, it's only to honest
 - [`Dito::register & Dito::load`](documentation/REGISTER&LOAD.md)
   - [`Dito::bulk`](documentation/REGISTER&LOAD/BULKREGISTER.md)
 - [`Observables & Scope`](documentation/OBSERVABLES.md)
-  - `$` - HTML Scope
-  - `$css` - CSS Scope
 - [`{{ Executables }}`](documentation/EXECUTABLES.md)
   - [`@self` - Dynamic CSS](documentation/EXECUTABLES/DYNAMICCSS.md)
-- `@actions`:
-  - `@if`
-    - How do I find `if` anchor?
-  - `@for`
-    - `@key`
-    - `@value`
-    - HTML Nested Scopes with `@for`
-    - `@min`
-    - `@def-min`
-  - `@e` - Event Listener
-    - Set JS variables in HTML
-  - `@a` - Attribute Setter
-  - `@get` - Getters (basically getElementById but easier)
-- `Components Communication`
+- [`@actions`](documentation/ACTIONS.md):
+  - [`@if`](documentation/ACTIONS.md#if)
+  - [`@for`](documentation/ACTIONS.md#for)
+    - [`@key` and `@value`](documentation/ACTIONS/FOR.md#value-and-key)
+    - [`@min`](documentation/ACTIONS/FOR.md#min)
+    - [`@def-min`](documentation/ACTIONS/FOR.md#def-min)
+  - [`@e` - Event Listener](documentation/ACTIONS.md#e)
+    - [Set JS variables in HTML](documentation/ACTIONS.md#set-js-variables-in-html)
+  - [`@a` - Attribute Setter](documentation/ACTIONS.md#a)
+  - [`@get` - Getter](documentation/ACTIONS.md#get)
+- `Component's Communication`
   - `@i` - Input
   - `@o` - Output
   - `@b` ⚗️ - Two-Way Bind #angular
