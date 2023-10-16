@@ -53,8 +53,8 @@ Output:
 Thanks to them, we can nest loops as our soul desire and have better readability. 
 
 ### `@min`
-If you want to make sure your for will loop at least some amount of times you can use `@min` special attribute. 
-It will make sure that `@for` action will iterate at until it reaches the minimum or and of the iterable 
+If you want to make sure your `for` will loop at least some amount of times you can use `@min` conjoined action. 
+It will make sure that `@for` action will iterate until defined minimum or end of the iterable is reached
 (whichever is higher).
 ```html
 <p @for="['1', '2']" @min="3">{{ $key }} : {{ $value }}</p>
@@ -65,12 +65,12 @@ Output:
 <p>1 : 2</p>
 <p>2 : </p>
 ```
-Notice that we are missing value for the additional loop and script sets `$value` to `null`. We can fix it with the 
+Notice that we are missing value for the additional loop because script sets `$value` to `null`. We can fix it with the 
 another action.
 
 ### `@def-min`
 
-To this `action` we can pass the default value which will be injected into `$value` when for will start doing additional 
+To this `action` we can pass the default value which will be injected into `$value` when `for` will start doing additional 
 loops to reach the bare minimum:
 ```html
 <p @for="['1', '2']" @min="3" @def-min="'default'">{{ $key }} : {{ $value }}</p>
