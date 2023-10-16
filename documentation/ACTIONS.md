@@ -1,5 +1,5 @@
 [< Back](EXECUTABLES.md)      
-[< Table of Contents](../.README.md#advanced-stuff)
+[< Table of Contents](../README.md#advanced-stuff)
 
 # @ctions
 

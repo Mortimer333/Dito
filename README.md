@@ -147,10 +147,11 @@ With the ___Quick Start___ you can't really use the library, it's only to honest
     - [Update JS variables in HTML](documentation/ACTIONS.md#update-js-variables-in-html)
   - [`@a` - Attribute Setter](documentation/ACTIONS.md#a)
   - [`@get` - Getter](documentation/ACTIONS.md#get)
-- `Component's Communication`
-  - `@i` - Input
-  - `@o` - Output
-  - `@b` ⚗️ - Two-Way Bind #angular
+- [`Component's Communication`](documentation/COMPONENTSCOMMUNICATION.md)
+  - [`@i` - Input](documentation/COMPONENTSCOMMUNICATION.md#i)
+  - [`@o` - Output](documentation/COMPONENTSCOMMUNICATION.md#o)
+  - [`@b` ⚗️ - Two-Way Bind #angular](documentation/COMPONENTSCOMMUNICATION.md#b-experimental)
+    - [Binding native nodes](documentation/COMPONENTSCOMMUNICATION.md#binding-native-nodes)
 - `Life Cycles`
   - Methods:
     - `init`

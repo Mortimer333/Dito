@@ -1,5 +1,5 @@
 [< Back](../ACTIONS.md)      
-[< Table of Contents](../.README.md#advanced-stuff)
+[< Table of Contents](../README.md#advanced-stuff)
 
 # `@for` in detail
 
