@@ -5,9 +5,9 @@
 
 `@for` has few `conjoined actions` which allow us to expand its possibilities. 
 
-- `@value` and `@key`
-- `@min`
-- `@def-min`
+- [`@value` and `@key`](#value-and-key)
+- [`@min`](#min)
+- [`@def-min`](#def-min)
 
 ### `@value` and `@key`
 
