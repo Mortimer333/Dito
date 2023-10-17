@@ -28,11 +28,11 @@ And additional event for internal purposes: [loadfinished](#loadfinished)
 Init method is called first time new instance of component has been added to the page. If it was hidden with `@if`
 it should trigger only when condition returns truthy value. 
 
-So, it at the top of the `Life Cycle` which means that it is before anything has been rendered. 
+It's placed at the top of the `Life Cycle` - before anything has been rendered. 
 In `init` you don't have access to any contents of the component (this also refers to `@get`) because component wasn't
 rendered yet for the first time.
 
-I normally use `init` for retrieving data from server and/or set all variables on `$` - initialize your component.
+I normally use `init` for retrieving data from server and/or set all variables on `$` - initializing my component.
 > `init` method is treated by script as a `Promise`, which means that you can do any calls you need and script will
 > wait for them to finish before going to another step.
 ```js

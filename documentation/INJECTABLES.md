@@ -129,7 +129,7 @@ A lot to unpack here, but I still feel that an example from real life will reall
 ### `dito-inject`
 ##### Default behaviour
 Dito comes with predefined custom node `dito-inject`. As you have seen it is used to mark where library
-should inject code provide inside the tag (between opening and closing tags). It can be used without any `package`:
+should inject code provided inside the tag (between opening and closing tags). It can be used without any `package`:
 ```html
 <h1 class="hero-title">
   <dito-inject></dito-inject>
@@ -205,11 +205,12 @@ This will render into:
 Pretty useful, isn't it?
 
 #### `@use`
-Okey, we can now pass HTML templates into children and differ between them but what about passing data into them from 
-the child component? I would like for my template to show different number depending on what award the use has won!
+Okey, we can now pass HTML templates into children and differ between them. What about passing data from injected 
+component into injected HTML templates? I would like for my template to show different number depending on what 
+award the user has won!
 
 For that purpose we can use `@use` `conjoined action`. It will inject a variable `use` which will hold anything you 
-will pass into the action's value. This variable is only available in all actions in the `injectable` scope. 
+will pass into the action's value. This variable is only available in all actions in the packed tag's scope. 
 
 Have a look:
 ```html
@@ -244,7 +245,7 @@ Render:
 
 #### `@uname` ⚗️
 
-> Experimental feature, use on your own risk
+> Experimental feature, use at your own risk
 
 If you need to change the name of injected varibale from `use` when using `@use` action you can change it be using 
 `@uname` action:
@@ -267,8 +268,8 @@ If you need to change the name of injected varibale from `use` when using `@use`
 
 #### Passing injected template, passing components etc.
 
-In few cases you have created such convoluted component that you want to allow user to pass injected data down to even 
-more nested components or even allow user to pass other components.
+In few cases you might have created such convoluted component that you want to allow user to pass injected data down to 
+even more nested components or even allow user to pass other components.
 
 All is possible! At least I'm striving for it. I'm not marking this functionality as `expermiental` because I've tested
 it enough to use it on my own production, but it is a pretty complex case. I am not suprised to still find bugs when 
