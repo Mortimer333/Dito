@@ -93,4 +93,4 @@ omnipotent but is pretty useful for inputs:
 <input type="text" @b:value="value">
 ```
 
-[Life Cycles >](LIFECYCLES.md)
+[Life Cycle >](LIFECYCLE.md)

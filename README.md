@@ -129,7 +129,9 @@ If you are looking for a ready to go project check this:
 app skeleton made on Dito 🔥.
 
 ## Advanced stuff
-With the ___Quick Start___ you can't really use the library, it's only to honestly show the very basics of setup and first usage. If you want to be able to use `@actions`, `Injectables`, `Dynamic CSS`, `Observables`, `In-Out Communication` and understand `Life Cycles` then have a read (from top to bottom):
+With the ___Quick Start___ you can't really use the library, it's only to honestly show the very basics of setup and 
+first usage. If you want to be able to use `@actions`, `Injectables`, `Dynamic CSS`, `Observables`, 
+`In-Out Communication` and understand `Component's Life Cycle` then have a read (from top to bottom):
 
 - [`Settings`](documentation/SETTINGS.md)
 - [`Dito::register & Dito::load`](documentation/REGISTER&LOAD.md)
@@ -152,28 +154,29 @@ With the ___Quick Start___ you can't really use the library, it's only to honest
   - [`@o` - Output](documentation/COMPONENTSCOMMUNICATION.md#o)
   - [`@b` ⚗️ - Two-Way Bind #angular](documentation/COMPONENTSCOMMUNICATION.md#b-experimental)
     - [Binding native nodes](documentation/COMPONENTSCOMMUNICATION.md#binding-native-nodes)
-- `Life Cycles`
+- [`Life Cycle`](documentation/LIFECYCLE.md)
   - Methods:
-    - `init`
-    - `beforeRender`
-    - `afterRender`
-    - `beforeCssRender`
-    - `afterCssRender`
-    - `beforeFirstRender`
-    - `afterFirstRender`
+    - [`init`](documentation/LIFECYCLE.md#init)
+    - [`beforeFirstRender`](documentation/LIFECYCLE.md#beforefirstrender)
+    - [`afterFirstRender`](documentation/LIFECYCLE.md#afterfirstrender)
+    - [`beforeRender`](documentation/LIFECYCLE.md#beforerender)
+    - [`afterRender`](documentation/LIFECYCLE.md#afterrender)
+    - [`beforeCssRender`](documentation/LIFECYCLE.md#beforecssrender)
+    - [`afterCssRender`](documentation/LIFECYCLE.md#aftercssrender)
     - `destroyed` 🚫
-  - Events:
-    - `loadfinished`
-    - `render`
-    - `rendered`
-    - `firstrender`
-    - `firstrendered`
+  - [Events](documentation/LIFECYCLE.md#events):
+    - [`loadfinished`](documentation/LIFECYCLE.md#loadfinished)
+    - [`render`](documentation/LIFECYCLE.md#render---beforerender)
+    - [`rendered`](documentation/LIFECYCLE.md#rendered---afterrender)
+    - [`firstrender`](documentation/LIFECYCLE.md#firstrender---beforefirstrender)
+    - [`firstrendered`](documentation/LIFECYCLE.md#firstrendered---afterfirstrender)
     - `destroyed` 🚫
-- `Injectables`
-  - `Packs`
-  - `@use`
-  - `@uname` ⚗️
-  - Passing injection down
+- [`Injectables`](documentation/INJECTABLES.md)
+  - [`default behaviour`](documentation/INJECTABLES.md#default-behaviour)
+  - [`@pack`](documentation/INJECTABLES.md#pack)
+  - [`@use`](documentation/INJECTABLES.md#use)
+  - [`@uname` ⚗️](documentation/INJECTABLES.md#uname-)
+  - [Passing down](documentation/INJECTABLES.md#passing-injected-template-passing-components-etc)
 - Professional Topics:
   - `$self`
   - `$bound`
@@ -181,9 +184,9 @@ With the ___Quick Start___ you can't really use the library, it's only to honest
   - Manual Rendering and Render Queue
   - Rules for setting Scope Variable (`$` and `$css`) in terms of performance
   - Content Security Policy that prohibits unsafe-eval
-  - You should read and use source code
   - Components loading
   - Dito Attributes
+- You should read and use source code
 - Weirdness 💀
 
 
