@@ -2,6 +2,7 @@
 Lightweight library with components, template syntax, bindings and dynamic CSS.
 
 - [Quick Start](#quick-start)
+- [Framework](#framework)
 - [Table of Contents](#advanced-stuff)
 
 ## Preview
