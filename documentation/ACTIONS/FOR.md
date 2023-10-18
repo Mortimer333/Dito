@@ -82,4 +82,4 @@ Output:
 <p>2 : default</p>
 ```
 
-[Component's Communication >](../COMPONENTSCOMMUNICATION.md)
+[Default Attributes >](DEFAULTATTRIBUTES.md)

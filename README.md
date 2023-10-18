@@ -149,7 +149,7 @@ first usage. If you want to be able to use `@actions`, `Injectables`, `Dynamic C
     - [Update JS variables in HTML](documentation/ACTIONS.md#update-js-variables-in-html)
   - [`@a` - Attribute Setter](documentation/ACTIONS.md#a)
   - [`@get` - Getter](documentation/ACTIONS.md#get)
-- getDefaults
+- [Default Attributes](documentation/DEFAULTATTRIBUTES.md)
 - [`Component's Communication`](documentation/COMPONENTSCOMMUNICATION.md)
   - [`@i` - Input](documentation/COMPONENTSCOMMUNICATION.md#i)
   - [`@o` - Output](documentation/COMPONENTSCOMMUNICATION.md#o)

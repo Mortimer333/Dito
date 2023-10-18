@@ -139,4 +139,4 @@ getAllTickets() {
 
 [@for in detail >](ACTIONS/FOR.md)
 
-[Component's Communication >](COMPONENTSCOMMUNICATION.md)
+[Default Attributes >](DEFAULTATTRIBUTES.md)
