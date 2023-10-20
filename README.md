@@ -1,6 +1,9 @@
 # Dito
 Lightweight library with components, template syntax, bindings and dynamic CSS.
 
+- [Installation](#installation)
+  - [native](#native)
+  - [npm](#npm)
 - [Quick Start](#quick-start)
 - [Framework](#framework)
 - [Table of Contents](#advanced-stuff)
@@ -38,6 +41,30 @@ export {PlanetElement as default};
 The purpose of this library is to have dynamic, scoped and reusable FE components without need for larger framework or any dependencies which works in plain JS.
 
 The main difference between this and other libraries is lazy loading of the components and client template rendering. Register hundreds of components and watch them load only if they are used (also cached and reused after page refresh).
+
+## Installation
+
+#### Native
+Just download [dito.min.js](src/dito.min.js) and [ditoelement.min.js](src/ditoelement.min.js) and require them as
+modules on your page:
+```html
+<script type="module" src="/media/script/dist/dito.min.js" charset="utf-8"></script>
+```
+or just inside other module script:
+```js
+import { DitoElement } from "/media/script/dist/dito.min.js";
+class CustomElement extends DitoElement {
+  // [...]
+}
+```
+but remember that you will have to update them by hand each time new version is released.
+#### `npm`
+
+```bash
+npm i @mortimer333/dito
+```
+This would be it for `node` project, but it is not really a `node` module. So if you want to use `npm` but without
+`webpack` or `gulp` check this [installation document](documentation/INSTALLATION.md).
 
 # Quick Start
 Start with creating your first component, let's name it `showcase-earth` (must contain hyphen `-`):
@@ -121,7 +148,9 @@ and render into this:
   <script type="module">[...]</script>
 </body>
 ```
-We Are Done! Few steps are required and I wouldn't call it the easiest to learn library in the world. You need to understand basics, at least, to start with it but once learned it's pretty good and pleasant to use.
+We Are Done! Few steps are required and I wouldn't call it the easiest to learn library in the world. You need to 
+understand basics, at least, to start with it but once learned it's pretty good and pleasant to use.
+
 
 ## Framework
 If you are looking for a ready to go project check this:

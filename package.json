@@ -1,8 +1,10 @@
 {
-  "name": "ditoelement",
+  "name": "@mortimer333/dito",
+  "type": "module",
   "version": "1.0.0",
   "description": "Lightweight library with components, template syntax, bindings and dynamic CSS. ",
   "main": "src/index.js",
+  "module": "src/index.module.js",
   "directories": {
     "test": "tests"
   },
@@ -13,14 +15,16 @@
     "type": "git",
     "url": "git+ssh://git@github.com/Mortimer333/Dito.git"
   },
-  "files": ["/src/*.min.js"],
+  "files": [
+    "/src/*.js"
+  ],
   "keywords": [
     "components",
     "lightweight",
     "templating",
     "dynamic css"
   ],
-  "author": "Michal Dzierzbicki",
+  "author": "Michał Dzierzbicki",
   "license": "GPL-2.0-only",
   "bugs": {
     "url": "https://github.com/Mortimer333/Dito/issues"
