@@ -1,5 +1,5 @@
 {
-  "name": "@mortimer333/dito",
+  "name": "@mortimer333/ditoelement",
   "version": "1.0.0",
   "description": "Lightweight library with components, template syntax, bindings and dynamic CSS. ",
   "main": "src/index.js",
