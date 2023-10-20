@@ -1,5 +1,5 @@
-import { Dito } from './dito.js';
-import { DitoElement } from './ditoelement.js';
+import { Dito } from './dito.min.js';
+import { DitoElement } from './ditoelement.min.js';
 
 export {
   Dito,
