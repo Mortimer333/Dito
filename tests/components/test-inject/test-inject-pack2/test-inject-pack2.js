@@ -1,4 +1,4 @@
-import { DitoElement } from '../../../../ditoelement.js';
+import { DitoElement } from '../../../../src/ditoelement.js';
 class TestInjectPack2 extends DitoElement {
   init() {
     this.$.pack2 = 'pack2';

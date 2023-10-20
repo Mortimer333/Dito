@@ -5,13 +5,13 @@
 
 Some topics are not required to know but might be useful when extending basic functionality (which I strongly encourage
 you do). I will try to touch those topics and introduce you to inner working of the library but the best way to 
-understand it is to reads both source files [`dito.js`](../dito.js) and [`ditoelement.js`](../ditoelement.js).
+understand it is to reads both source files [`dito.js`](../src/dito.js) and [`ditoelement.js`](../src/ditoelement.js).
 
 ### `$self`
 
 Next to `$` and `$css` lays `$self` which describes the status of the component. From it you can read if component was 
 rendered, is being rendered, parent etc. List is huge and ever expanding so check out the [method which defines this 
-variable](../ditoelement.js#L221) or log it on the live application.
+variable](../src/ditoelement.js#L221) or log it on the live application.
 
 We have already used it once to determinate if component was rendered at least once in 
 [`Life Cycles`](LIFECYCLE.md#beforerender), so you can search for example there.

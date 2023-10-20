@@ -7,16 +7,19 @@ Lightweight library with components, template syntax, bindings and dynamic CSS.
 
 ## Preview
 ### JS:
+
 ```js
-import { DitoElement } from 'ditoelement.js';
+import {DitoElement} from 'src/ditoelement.js';
+
 class PlanetElement extends DitoElement {
   init() {
-    this.$.icons = ['🌎', ,'🪐'];
-    this.$.planets = ['earth', ,'jupiter'];
+    this.$.icons = ['🌎', , '🪐'];
+    this.$.planets = ['earth', , 'jupiter'];
     this.$.className = 'planet-class';
   }
 }
-export { PlanetElement as default };
+
+export {PlanetElement as default};
 ```
 
 ### HTML:

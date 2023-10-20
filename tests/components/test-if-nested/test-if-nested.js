@@ -1,4 +1,4 @@
-import { DitoElement } from '../../../ditoelement.js';
+import { DitoElement } from '../../../src/ditoelement.js';
 class TestIfNested extends DitoElement {
   init() {
     this.$.nestedIter = [{href: true, icon: true},{href: true, icon: true}];

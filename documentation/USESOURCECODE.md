@@ -94,6 +94,6 @@ Also, this is not some high level grimoire of compilers (_#angular.ts_) but simp
 a fork - just for one component even. I do it and it's really helpful to have specialized components with different 
 set of rules.
 
-[dito.js](../dito.js)
+[dito.js](../src/dito.js)
 
-[ditoelement.js](../ditoelement.js)
+[ditoelement.js](../src/ditoelement.js)
