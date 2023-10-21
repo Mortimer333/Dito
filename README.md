@@ -71,7 +71,7 @@ If you are looking for a ready to go project or just example check this:
 - 💥 NPM configured Tailwind CSS and esbuild for Dito components with dev/prod mode,
 - 💥 User/Permissions System,
 
-app skeleton made with Dito 🔥.
+[app skeleton made with Dito 🔥.](https://github.com/Mortimer333/IdemDito)
 
 ## Quick Start
 Start with creating your first component, let's name it `showcase-earth` (must contain hyphen `-`):
