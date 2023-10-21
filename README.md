@@ -4,15 +4,15 @@ Lightweight library with components, template syntax, bindings and dynamic CSS.
 - [Installation](#installation)
   - [native](#native)
   - [npm](#npm)
-- [Quick Start](#quick-start)
 - [Framework](#framework)
-- [Table of Contents](#advanced-stuff)
+- [Quick Start](#quick-start)
+- [Documentation](#advanced-stuff)
 
 ## Preview
 ### JS:
 
 ```js
-import {DitoElement} from 'src/ditoelement.js';
+import { DitoElement } from 'src/ditoelement.js';
 
 class PlanetElement extends DitoElement {
   init() {
@@ -22,7 +22,7 @@ class PlanetElement extends DitoElement {
   }
 }
 
-export {PlanetElement as default};
+export { PlanetElement as default };
 ```
 
 ### HTML:
@@ -37,10 +37,9 @@ export {PlanetElement as default};
 <h1 class="planet-class">Planet 3: jupiter 🪐</h1>
 ```
 
-# Why even try?
-The purpose of this library is to have dynamic, scoped and reusable FE components without need for larger framework or any dependencies which works in plain JS.
-
-The main difference between this and other libraries is lazy loading of the components and client template rendering. Register hundreds of components and watch them load only if they are used (also cached and reused after page refresh).
+## Why even try?
+The purpose of this library is to have dynamic, scoped and reusable FE components packed with functionality 
+without need for any framework or dependencies which works in plain JS. 
 
 ## Installation
 
@@ -50,7 +49,6 @@ modules on your page:
 ```html
 <script type="module" src="/media/script/dist/dito.min.js" charset="utf-8"></script>
 ```
-or just inside other module script:
 ```js
 import { DitoElement } from "/media/script/dist/dito.min.js";
 class CustomElement extends DitoElement {
@@ -66,7 +64,16 @@ npm i @mortimer333/dito
 This would be it for `node` project, but it is not really a `node` module. So if you want to use `npm` but without
 `webpack` or `gulp` check this [installation document](documentation/INSTALLATION.md).
 
-# Quick Start
+## Framework
+If you are looking for a ready to go project or just example check this:
+- 💥 Micro Front End,
+- 💥 One-Page Application with Router,
+- 💥 NPM configured Tailwind CSS and esbuild for Dito components with dev/prod mode,
+- 💥 User/Permissions System,
+
+app skeleton made with Dito 🔥.
+
+## Quick Start
 Start with creating your first component, let's name it `showcase-earth` (must contain hyphen `-`):
 ```
 public/ <- Website root folder
@@ -150,16 +157,6 @@ and render into this:
 ```
 We Are Done! Few steps are required and I wouldn't call it the easiest to learn library in the world. You need to 
 understand basics, at least, to start with it but once learned it's pretty good and pleasant to use.
-
-
-## Framework
-If you are looking for a ready to go project check this:
-- 💥 Micro Front End,
-- 💥 One-Page Application with Router,
-- 💥 NPM configured Tailwind CSS and esbuild for Dito components with dev/prod mode,
-- 💥 User/Permissions System,
-
-app skeleton made on Dito 🔥.
 
 ## Advanced stuff
 With the ___Quick Start___ you can't really use the library, it's only to honestly show the very basics of setup and 

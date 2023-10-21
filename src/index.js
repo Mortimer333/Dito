@@ -1,7 +1,7 @@
 import { Dito } from './dito.min.js';
 import { DitoElement } from './ditoelement.min.js';
 
-export {
+module.exports = {
   Dito,
   DitoElement,
 };

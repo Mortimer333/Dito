@@ -13,7 +13,7 @@ In your `package.json` in `scripts` put something similar to this:
 {
   "scripts": {
     "dito": "esbuild dito.bundle.js --bundle --minify --platform=neutral --main-fields=module,main --outfile=dist/dito.js",
-    "ditoelement": "esbuild dito.bundle.js --bundle --minify --platform=neutral --main-fields=module,main --outfile=dist/dito.js"
+    "ditoelement": "esbuild ditoelement.bundle.js --bundle --minify --platform=neutral --main-fields=module,main --outfile=dist/ditoelement.js"
   }
 }
 ```
@@ -22,16 +22,16 @@ and in `dito.bundle.js`:
 import { Dito } from '@mortimer333/dito';
 
 export {
-  Dito
-}
+  Dito,
+};
 ```
 the same setup for `ditoelement.bundle.js`:
 ```js
 import { DitoElement } from '@mortimer333/dito';
 
 export {
-  DitoElement
-}
+  DitoElement,
+};
 ```
 This will generate in your `dist/` two files `dito.js` and `ditoelement.js` which will hold respectively `Dito`
 and `DitoElement` classes in module format ready to be retrieved by `dist/dito.js` instead of
