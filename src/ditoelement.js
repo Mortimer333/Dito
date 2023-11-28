@@ -670,7 +670,7 @@ class DitoElement extends HTMLElement {
       }
 
       if (scope) {
-        node.$self.scope = JSON.parse(JSON.stringify(Object.assign({}, node.$self.scope, scope)));
+        node.$self.scope = Object.assign({}, node.$self.scope, scope);
       }
 
       if (window.__dito.main.firstRendered.get(template)) {
