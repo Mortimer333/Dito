@@ -776,7 +776,8 @@ class DitoElement extends HTMLElement {
         try {
           let res = await this.getFunction.bind(parent)(action.value, item, [this.eventName]).bind(parent);
           res = await res(e, ...valuesBefore);
-          this.updateChangedValues.bind(parent)(res, observableKeys, valuesBefore);
+          this.updateChangedValues.bind(parent)(res.slice(0, -1), observableKeys, valuesBefore);
+          return res[res.length - 1];
         } catch (e) {
           console.error('Error on output', e);
         }
@@ -1757,7 +1758,10 @@ class DitoElement extends HTMLElement {
     const observableKeys = this.getObservablesKeys(node),
       keys = this.getObservablesKeys(node)
     ;
-    script = script + '; return [' + keys.join(',') + '];';
+    if (script.length === 0) {
+      script = 'null';
+    }
+    script = 'const $result = ' + script + '; return [' + keys.join(',') + ', $result];';
 
     const cacheKey = keys.join(',') + script;
 

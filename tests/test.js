@@ -1,5 +1,5 @@
-import { DitoElement } from "../../ditoelement.js";
-import { Dito } from "../../dito.js";
+import { DitoElement } from "../src/ditoelement.js";
+import { Dito } from "../src/dito.js";
 const URL = 'http://dito.local/';
 const order = [
   'attributes', 'bindandfor', 'callback', 'css', 'cssscopes', 'defaults',  'events', 'for_min', 'for_reverse',
