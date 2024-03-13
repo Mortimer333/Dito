@@ -69,19 +69,19 @@ class DitoElement extends HTMLElement {
 
   defineDefaults() {
     const defaults = this.getDefaults() || {},
-      types = {
-        append: (name, attr) => {
-          const currentAttr = this.getAttribute(name) || '';
-          this.setAttribute(name, currentAttr + ' ' + attr.value);
-        },
-        replace: (name, attr) => {
-          this.setAttribute(name, attr.value);
-        },
-        add: (name, attr) => {
-          const currentAttr = this.getAttribute(name) || '';
-          this.setAttribute(name, currentAttr + attr.value);
-        },
-      };
+        types = {
+          append: (name, attr) => {
+            const currentAttr = this.getAttribute(name) || '';
+            this.setAttribute(name, currentAttr + ' ' + attr.value);
+          },
+          replace: (name, attr) => {
+            this.setAttribute(name, attr.value);
+          },
+          add: (name, attr) => {
+            const currentAttr = this.getAttribute(name) || '';
+            this.setAttribute(name, currentAttr + attr.value);
+          },
+        };
 
     Object.defineProperty(this.$self, 'default', {
       value: defaults,
@@ -90,7 +90,7 @@ class DitoElement extends HTMLElement {
 
     Object.keys(defaults).forEach(function(key) {
       const attr = defaults[key],
-        type = attr.type || 'append';
+          type = attr.type || 'append';
 
       if (!types[type]) {
         console.error('Attribute create as type `' + type + '` is not supported');
@@ -310,8 +310,8 @@ class DitoElement extends HTMLElement {
 
   separateRules(css) {
     let inRule = false,
-      lastEnd = 0,
-      nested = 0;
+        lastEnd = 0,
+        nested = 0;
     const rules = [];
 
     for (let i = 0; i < css.length; i++) {
@@ -397,7 +397,7 @@ class DitoElement extends HTMLElement {
       const sheet = window.__dito.main.styleNode.sheet;
       this.$self.css.scoped.forEach(rule => {
         const ruleCss = rule.rule.replaceAll('@self', this.$self.css.path),
-          css = this.resolveCssExecutables(ruleCss);
+            css = this.resolveCssExecutables(ruleCss);
         if (rule.index === -1) {
           rule.index = sheet.cssRules.length;
           sheet.insertRule(css, sheet.cssRules.length);
@@ -565,11 +565,11 @@ class DitoElement extends HTMLElement {
       }
 
       if (
-        !node.$self.forBox.isItem
-        && (
-          !node.getAttribute
-          || (node.getAttribute && !node.getAttribute(this.anchorAliasAttr))
-        )
+          !node.$self.forBox.isItem
+          && (
+              !node.getAttribute
+              || (node.getAttribute && !node.getAttribute(this.anchorAliasAttr))
+          )
       ) {
         node.$self.parent.$self.children.push(node);
       }
@@ -610,8 +610,8 @@ class DitoElement extends HTMLElement {
             }
 
             const packName = this.getExecuteable(
-              template.getAttribute(this.packAttrName),
-              item,
+                template.getAttribute(this.packAttrName),
+                item,
             )(...this.getObservablesValues(item));
 
             if (packName != pack) {
@@ -636,11 +636,11 @@ class DitoElement extends HTMLElement {
 
   initInjected(inject, template, use, uses, forAnchor, forIndex) {
     let scope = null,
-      useName = 'use',
-      rendered = [];
+        useName = 'use',
+        rendered = [];
     const forActions = [],
-      toRender = [],
-      tag = this;
+        toRender = [],
+        tag = this;
     if (use && template.getAttribute && template.getAttribute(this.useNameAttrName)) {
       useName = template.getAttribute(this.useNameAttrName);
       scope = { [useName]: use };
@@ -654,7 +654,15 @@ class DitoElement extends HTMLElement {
       node.$self.setEvents = {};
       node.$self.toBind = [];
       node.$self.rendered = false;
-      node.$self.actions.uses = { value: uses, name: useName };
+      node.$self.actions.uses = template.$self?.actions?.uses || { value: uses, name: useName };
+      node.$self.css = {
+        compiled: false,
+        indices: [],
+        path: null,
+        rendered: false,
+        queueRenderInProgress: false,
+        scoped: null,
+      };
       node.$binder = {};
       node.$bound = {};
       if (template.$self.for.anchor) {
@@ -771,8 +779,8 @@ class DitoElement extends HTMLElement {
       item.$output[action.name] = {};
       item.$output[action.name].emit = async function(e) {
         const parent = this.$self.parent,
-          observableKeys = this.getObservablesKeys.bind(parent)(item),
-          valuesBefore = this.getObservablesValues.bind(parent)(item);
+            observableKeys = this.getObservablesKeys.bind(parent)(item),
+            valuesBefore = this.getObservablesValues.bind(parent)(item);
         try {
           let res = await this.getFunction.bind(parent)(action.value, item, [this.eventName]).bind(parent);
           res = await res(e, ...valuesBefore);
@@ -837,8 +845,8 @@ class DitoElement extends HTMLElement {
     actions.forEach(function(action) {
       if (typeof this.$[action.value] == 'undefined') {
         console.error(
-          'Observable in `' + this.constructor.name + '` doesn\'t have `'
-          + action.value + '` variable, skipping binding...',
+            'Observable in `' + this.constructor.name + '` doesn\'t have `'
+            + action.value + '` variable, skipping binding...',
         );
         return;
       }
@@ -938,7 +946,7 @@ class DitoElement extends HTMLElement {
     Object.values(this.$binder).forEach(binds => {
       binds.forEach(bind => {
         const { receiver, provider } = bind,
-          child = receiver.target;
+            child = receiver.target;
         if (window.__dito.registered[child.localName]) {
           receiver.target.$[receiver.name] = this.$[provider.name];
         } else {
@@ -964,8 +972,8 @@ class DitoElement extends HTMLElement {
       }
       const fun = e => {
         const observableKeys = this.getObservablesKeys(item),
-          valuesBefore = this.getObservablesValues(item),
-          res = this.getFunction(action.value, item, [this.eventName])(e, ...valuesBefore);
+            valuesBefore = this.getObservablesValues(item),
+            res = this.getFunction(action.value, item, [this.eventName])(e, ...valuesBefore);
         this.updateChangedValues(res, observableKeys, valuesBefore);
       };
       item.$self.setEvents[action.name].push(fun);
@@ -975,7 +983,7 @@ class DitoElement extends HTMLElement {
 
   tearEvents(item) {
     const actions = item.$self?.setEvents,
-      keys = Object.keys(actions);
+        keys = Object.keys(actions);
     if (keys.length == 0) {
       return;
     }
@@ -1062,7 +1070,7 @@ class DitoElement extends HTMLElement {
       }
 
       let res = this.getExecuteable(condition, anchor)(...this.getObservablesValues(anchor)),
-        type = typeof res;
+          type = typeof res;
       if (type == 'string') {
         res = res * 1;
         type = typeof res;
@@ -1112,7 +1120,7 @@ class DitoElement extends HTMLElement {
     const tmpParent = document.createElement('div');
     anchor.$self.forGenerated.forEach((generatedChildren, i) => {
       const key = keys[i],
-        value = values[i];
+          value = values[i];
       generatedChildren.forEach(child => {
         if (!this.isInUnique(child)) {
           child.$self.parent.tearUnique(child);
@@ -1135,7 +1143,7 @@ class DitoElement extends HTMLElement {
 
     anchor.$self.anchorGenerated.forEach((subAnchors, i) => {
       const key = keys[i],
-        value = values[i];
+          value = values[i];
       subAnchors.forEach(subAnchor => {
         if (node.$self.forBox.keyName) {
           subAnchor.$self.scope[node.$self.forBox.keyName] = key;
@@ -1152,8 +1160,8 @@ class DitoElement extends HTMLElement {
     const actions = this.__dito.actions;
     for (var i = anchor.$self.children.length; i < keys.length; i++) {
       const key = keys[i],
-        value = values[i],
-        clone = node.cloneNode(true);
+          value = values[i],
+          clone = node.cloneNode(true);
       anchor.$self.forGenerated[i] = [];
       tmpParent.appendChild(clone);
       this.iterateOverActions(tmpParent, (action, alias, child) => {
@@ -1175,7 +1183,7 @@ class DitoElement extends HTMLElement {
       // Nested fors
       node.$self.forBox.anchors.forEach(path => {
         const newAnchor = clone.querySelector(path),
-          realAnchor = node.querySelector(path);
+            realAnchor = node.querySelector(path);
         if (!newAnchor || !realAnchor) {
           throw new Error('No anchor found!');
         }
@@ -1266,7 +1274,11 @@ class DitoElement extends HTMLElement {
 
   actionAttrs(node, actions) {
     actions.forEach(action => {
-      node.setAttribute(action.name, this.getExecuteable(action.value, node)(...this.getObservablesValues(node)));
+      let value = this.getExecuteable(action.value, node)(...this.getObservablesValues(node));
+      if (action.name === 'src' && !value) {
+        value = '';
+      }
+      node.setAttribute(action.name, value);
     });
   }
 
@@ -1307,8 +1319,8 @@ class DitoElement extends HTMLElement {
 
   getPath(node) {
     const index = this.attributes[this.indexAtr].value,
-      time = this.attributes[this.timeAtr].value,
-      path = node.localName + '@' + index + '@' + time;
+        time = this.attributes[this.timeAtr].value,
+        path = node.localName + '@' + index + '@' + time;
 
     if (!this.$self.parent) {
       return path;
@@ -1331,7 +1343,7 @@ class DitoElement extends HTMLElement {
 
   assignChildren(tmp) {
     const actions = this.__dito.actions,
-      forKeys = Object.keys(actions.fors);
+        forKeys = Object.keys(actions.fors);
     if (forKeys.length > 0) {
       Object.values(tmp.querySelectorAll('[' + forKeys.join('], [') + ']')).reverse().forEach(node => {
         this.defineFor(node);
@@ -1345,9 +1357,9 @@ class DitoElement extends HTMLElement {
 
   defineFor(node) {
     const actions = this.__dito.actions,
-      aliases = [],
-      keys = [],
-      values = [];
+        aliases = [],
+        keys = [],
+        values = [];
     let min, minDef;
     node.getAttributeNames().forEach(name => {
       if (actions.fors[name]) {
@@ -1380,7 +1392,7 @@ class DitoElement extends HTMLElement {
     }
 
     const alias = aliases[0],
-      anchor = document.createElement('a');
+        anchor = document.createElement('a');
     anchor.setAttribute('dito-anchor', 1);
     anchor.setAttribute(this.anchorAliasAttr, alias);
     if (!node.$self) {
@@ -1428,7 +1440,7 @@ class DitoElement extends HTMLElement {
     const copy = { ...window.__dito.registered };
     delete copy[this.localName];
     const keys = Object.keys(copy),
-      path = this.$self.css.path;
+        path = this.$self.css.path;
     if (keys.length === 0) {
       return false;
     }
@@ -1555,7 +1567,7 @@ class DitoElement extends HTMLElement {
 
   searchForNotDownloaded(parent) {
     const notDownloaded = window.__dito.main.notDownloaded,
-      keys = Object.keys(notDownloaded);
+        keys = Object.keys(notDownloaded);
     if (keys.length == 0) {
       return;
     }
@@ -1566,7 +1578,7 @@ class DitoElement extends HTMLElement {
         const component = notDownloaded[node.localName];
         delete notDownloaded[node.localName];
         promises.push(
-          ...window.__dito.main.createRegisterPromise(component.path, component.name, component.version),
+            ...window.__dito.main.createRegisterPromise(component.path, component.name, component.version),
         );
       }
     });
@@ -1587,10 +1599,10 @@ class DitoElement extends HTMLElement {
 
     observableKeys.forEach((key, i) => {
       if (
-        key[0] !== '$'
-        && !skipTypes[typeof this.$[key]]
-        && !skipTypes[typeof res[i]]
-        && valuesBefore[i] !== res[i]
+          key[0] !== '$'
+          && !skipTypes[typeof this.$[key]]
+          && !skipTypes[typeof res[i]]
+          && valuesBefore[i] !== res[i]
       ) {
         this.$[key] = res[i];
       }
@@ -1622,13 +1634,13 @@ class DitoElement extends HTMLElement {
 
   compileFindAndReplace(text, lm, prefix, attrName, settings = {}) {
     let attr,
-      start = 0,
-      { hasName, isCss, skipValue, replace } = settings,
-      action = isCss ? this.__dito.css.actions[attrName] : this.__dito.actions[attrName];
+        start = 0,
+        { hasName, isCss, skipValue, replace } = settings,
+        action = isCss ? this.__dito.css.actions[attrName] : this.__dito.actions[attrName];
 
     while (attr = this.getCompiledAttribute(text, lm, skipValue, start)) {
       const { name, value } = attr,
-        plc = replace || prefix + name.start + '-' + value.end;
+          plc = replace || prefix + name.start + '-' + value.end;
       if (hasName) {
         action[plc] = {
           name: text.substring(name.start + lm.length, name.end).trim(),
@@ -1646,11 +1658,11 @@ class DitoElement extends HTMLElement {
   getCompiledAttribute(text, lm, skipValue = false, start = 0) {
     const aStart = text.indexOf(lm, start);
     if (
-      aStart === -1
-      || (
-        aStart === 0
-        && !/\s/g.test(text[aStart - 1])
-      )
+        aStart === -1
+        || (
+            aStart === 0
+            && !/\s/g.test(text[aStart - 1])
+        )
     ) {
       return false;
     }
@@ -1675,16 +1687,16 @@ class DitoElement extends HTMLElement {
     }
 
     const strings = {
-        '"': true,
-        '\'': true,
-        '`': true,
-      },
+          '"': true,
+          '\'': true,
+          '`': true,
+        },
 
-      wrapper = strings[text[aEnd + 1]];
+        wrapper = strings[text[aEnd + 1]];
     if (!wrapper) {
       console.error(
-        'String wrapper for `' + lm + '` in `' + this.constructor.name
-        + '` not found (found letter: `' + text[aEnd + 1] + '`), skipping',
+          'String wrapper for `' + lm + '` in `' + this.constructor.name
+          + '` not found (found letter: `' + text[aEnd + 1] + '`), skipping',
       );
       return this.getCompiledAttribute(text, lm, skipValue, aEnd);
     }
@@ -1733,7 +1745,7 @@ class DitoElement extends HTMLElement {
   getExecuteable(script, node) {
     script = 'return ' + script;
     const keys = this.getObservablesKeys(node),
-      cacheKey = keys.join(',') + script
+        cacheKey = keys.join(',') + script
     ;
     if (!this.cachedScripts[cacheKey]) {
       this.cacheScript(cacheKey, script, this.getObservablesKeys(node));
@@ -1745,7 +1757,7 @@ class DitoElement extends HTMLElement {
   getCSSExecuteable(script) {
     script = 'return ' + script;
     const keys = this.getCSSObservablesKeys(),
-      cacheKey = keys.join(',') + script
+        cacheKey = keys.join(',') + script
     ;
     if (!this.cachedScripts[cacheKey]) {
       this.cacheScript(cacheKey, script, keys);
@@ -1756,7 +1768,7 @@ class DitoElement extends HTMLElement {
 
   getFunction(script, node, vars = []) {
     const observableKeys = this.getObservablesKeys(node),
-      keys = this.getObservablesKeys(node)
+        keys = this.getObservablesKeys(node)
     ;
     if (script.length === 0) {
       script = 'null';
