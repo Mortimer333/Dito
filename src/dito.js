@@ -21,8 +21,8 @@ class Dito {
       throw new Error('There can be only one instance of Dito');
     }
 
-    this.url = settings.url || window.location.origin;
-    if (this.url[this.url.length - 1] != '/') {
+    this.url = settings.url || location.origin;
+    if (!this.url.endsWith('/')) {
       this.url += '/';
     }
 
@@ -34,54 +34,38 @@ class Dito {
     this.styleNode = document.createElement('style');
     document.head.appendChild(this.styleNode);
 
-    Object.defineProperty(window, "__dito", {
-      value: {
-        main: this,
-        registered: {}
-      },
-      writable: false
-    });
-
+    this.defineWindowDito();
     this.defineMutationObserver();
     this.defineCustomEvents();
   }
 
+  defineWindowDito() {
+    Object.defineProperty(window, '__dito', {
+      value: {
+        main: this,
+        registered: {},
+      },
+      writable: false,
+    });
+  }
+
+  generateEvent(name) {
+    return new CustomEvent(name, {
+      detail: {},
+      bubbles: false,
+      cancelable: true,
+      composed: false,
+    });
+  }
+
   defineCustomEvents() {
-    window.__dito.events = {};
-    window.__dito.events.render = new CustomEvent("render", {
-      detail: {},
-      bubbles: false,
-      cancelable: true,
-      composed: false,
-    });
-
-    window.__dito.events.rendered = new CustomEvent("rendered", {
-      detail: {},
-      bubbles: false,
-      cancelable: true,
-      composed: false,
-    });
-
-    window.__dito.events.firstrender = new CustomEvent("firstrender", {
-      detail: {},
-      bubbles: false,
-      cancelable: true,
-      composed: false,
-    });
-
-    window.__dito.events.firstrendered = new CustomEvent("firstrendered", {
-      detail: {},
-      bubbles: false,
-      cancelable: true,
-      composed: false,
-    });
-
-    window.__dito.events.loadfinished = new CustomEvent("loadfinished", {
-      detail: {},
-      bubbles: false,
-      cancelable: true,
-      composed: false,
-    });
+    __dito.events = {
+      render: this.generateEvent('render'),
+      rendered: this.generateEvent('rendered'),
+      firstrender: this.generateEvent('firstrender'),
+      firstrendered: this.generateEvent('firstrendered'),
+      loadfinished: this.generateEvent('loadfinished'),
+    };
   }
 
   /**
@@ -90,28 +74,28 @@ class Dito {
   defineMutationObserver() {
     // Callback function to execute when mutations are observed
     const callback = mutationList => {
-      for (const mutation of mutationList) {
-        const binds = mutation?.target?.$self?.binds;
-        if (mutation.type === 'attributes' || !binds || !binds[mutation.attributeName]) {
-          return;
-        }
+          for (const mutation of mutationList) {
+            const binds = mutation?.target?.$self?.binds;
+            if (mutation.type === 'attributes' || !binds || !binds[mutation.attributeName]) {
+              return;
+            }
 
-        const {receiver, provider} = binds[mutation.attributeName];
+            const { receiver, provider } = binds[mutation.attributeName];
 
-        if (mutation.target.getAttribute(receiver.name) === provider.target.$[provider.name]) {
-          return;
-        }
+            if (mutation.target.getAttribute(receiver.name) === provider.target.$[provider.name]) {
+              return;
+            }
 
-        provider.target.$[provider.name] = mutation.target.getAttribute(receiver.name);
-      }
+            provider.target.$[provider.name] = mutation.target.getAttribute(receiver.name);
+          }
+        },
+
+        mutationObserver = new MutationObserver(callback),
+
+        config = { attributes: true };
+    __dito.mutationObserver = node => {
+      mutationObserver.observe(node, config);
     };
-
-    const mutationObserver = new MutationObserver(callback);
-
-    const config = { attributes: true };
-    window.__dito.mutationObserver = node => {
-      mutationObserver.observe(node, config)
-    }
   }
 
   /**
@@ -119,9 +103,9 @@ class Dito {
    */
   allDownloaded() {
     if (
-      this.downloadFinished
-      || Object.values(this.downloadCheck).length > 0
-      || !this.firstRendered.keys().next().done
+        this.downloadFinished
+        || Object.values(this.downloadCheck).length > 0
+        || !this.firstRendered.keys().next().done
     ) {
       return;
     }
@@ -148,20 +132,19 @@ class Dito {
           force = true;
           component = component.substring(1);
         }
-        let absolute = (prefix + component).split('/');
-        let absolutePrefix = absolute.slice(0,-1).join('/');
+        const absolute = (prefix + component).split('/');
+        let absolutePrefix = absolute.slice(0, -1).join('/');
         if (absolutePrefix.length > 0) {
           absolutePrefix += '/';
         }
         this.register(
-          absolute.slice(-1).join(''),
-          version,
-          absolutePrefix,
-          force
+            absolute.slice(-1).join(''),
+            version,
+            absolutePrefix,
+            force,
         );
       } else {
-        const keys = Object.keys(component);
-        keys.forEach(key => {
+        Object.keys(component).forEach(key => {
           this.handleBulk(component[key], version, prefix + key);
         });
       }
@@ -173,16 +156,15 @@ class Dito {
       throw new Error('Custom elements name must contain hyphen (-)');
     }
 
-    window.__dito.registered[name] = true;
+    __dito.registered[name] = true;
     const sheet = this.styleNode.sheet;
-    const index = sheet.cssRules.length;
     sheet.insertRule(
-      name + ':not([dito-ready]):not([dito-show]) {opacity: 0;}',
-      sheet.cssRules.length
+        name + ':not([dito-ready]):not([dito-show]) {opacity: 0;}',
+        sheet.cssRules.length,
     );
     sheet.insertRule(
-      name + '[dito-ready]:not([dito-show]) {opacity: 1; transition: opacity .5s;}',
-      sheet.cssRules.length
+        name + '[dito-ready]:not([dito-show]) {opacity: 1; transition: opacity .5s;}',
+        sheet.cssRules.length,
     );
 
     // If it's not force and there is currently no instance of this component on site - don't retrieve it
@@ -212,15 +194,16 @@ class Dito {
     }
 
     path = this.url + path + name + '/' + name + '.';
-    const js = import(path + 'js?v=' + version + this.getQuery());
-    const html = skip ? Promise.resolve(this._SKIP) : this.fetch(path + 'html?v=' + version + this.getQuery());
-    const css = skip ? Promise.resolve(this._SKIP) : this.fetch(path + 'css?v=' + version + this.getQuery());
+    const js = import(path + 'js?v=' + version + this.getQuery()),
+        html = skip ? Promise.resolve(this._SKIP) : this.fetch(path + 'html?v=' + version + this.getQuery()),
+        css = skip ? Promise.resolve(this._SKIP) : this.fetch(path + 'css?v=' + version + this.getQuery())
+    ;
 
     return [
       Promise.resolve(name + '_' + version),
-      html.catch((error) => error),
-      js.catch((error) => error),
-      css.catch((error) => error)
+      html.catch(error => error),
+      js.catch(error => error),
+      css.catch(error => error),
     ];
   }
 
@@ -232,13 +215,13 @@ class Dito {
     }
 
     await Promise.all(registered).then(async values => {
-      for (var i = 0; i < values.length; i += 4) {
+      for (let i = 0; i < values.length; i += 4) {
         const result = await this.handlePromies(values, i);
         if (!result) {
-            continue;
+          continue;
         }
 
-        let {promises, html, htmlSkipped, css, cssSkipped, js, component, version} = result;
+        let { promises, html, htmlSkipped, css, cssSkipped, js, component, version } = result;
         await Promise.all(promises).then(values => {
           if (!htmlSkipped && !cssSkipped) {
             html = values[0];
@@ -257,7 +240,7 @@ class Dito {
           ({ default: js } = js);
           this.defineDito(js, html, css);
 
-          this.components[component] = {name: component, js, html, css};
+          this.components[component] = { name: component, js, html, css };
           delete this.notDownloaded[component];
         });
       }
@@ -270,16 +253,17 @@ class Dito {
   }
 
   async handlePromies(values, i) {
-    let html = values[i + 1];
-    let js   = values[i + 2];
-    let css  = values[i + 3];
+    let html = values[i + 1],
+        js = values[i + 2],
+        css = values[i + 3]
+    ;
 
     if (html.message || js.message || css.message) {
       console.error(
-        'There was unexpected network error at #' + ((i/4) + 1) + '. Skipping...',
-        html,
-        js,
-        css
+          'There was unexpected network error at #' + ((i/4) + 1) + '. Skipping...',
+          html,
+          js,
+          css,
       );
       return null;
     }
@@ -290,25 +274,27 @@ class Dito {
     }
 
     const compAndVer = (values[i].split('_')),
-      version = compAndVer[compAndVer.length - 1],
-      component = compAndVer.slice(0, -1).join('_');
+        version = compAndVer[compAndVer.length - 1],
+        component = compAndVer.slice(0, -1).join('_')
+    ;
 
-    if (!await this.validateFiles(component, {html, css})) {
+    if (!await this.validateFiles(component, { html, css })) {
       return null;
     }
 
     const localComponent = JSON.parse(localStorage.getItem(this.getStorageName(component)) || 'false');
     if (!localComponent && (html === this._SKIP || css === this._SKIP)) {
       console.error(
-        'The component `' + component + '` was marked as already loaded once but' +
-        ' he is missing from localStorage. Skipping...'
+          'The component `' + component + '` was marked as already loaded once but'
+          + ' he is missing from localStorage. Skipping...',
       );
       return null;
     }
 
     let cssSkipped = false,
-      htmlSkipped = false,
-      promises = [];
+        htmlSkipped = false,
+        promises = []
+    ;
     if (html === this._SKIP) {
       htmlSkipped = true;
       html = localComponent.html;
@@ -323,11 +309,11 @@ class Dito {
       promises.push(css.text());
     }
 
-    return {promises, html, htmlSkipped, css, cssSkipped, js, component, version};
+    return { promises, html, htmlSkipped, css, cssSkipped, js, component, version };
   }
 
   defineDito(js, html, css) {
-    Object.defineProperty(js.prototype, "__dito", {
+    Object.defineProperty(js.prototype, '__dito', {
       value: {
         actions: {
           fors: {},
@@ -345,23 +331,22 @@ class Dito {
           uses: {},
           gets: {},
           for_mins: {},
-          for_min_defs: {}
+          for_min_defs: {},
         },
         css: {
           actions: {
             scopes: {},
             executables: {},
-            templates: {}
+            templates: {},
           },
-          content: '',
+          content: css,
           scoped: [],
           global: [],
         },
+        html,
       },
-      writable: false
+      writable: false,
     });
-    js.prototype.__dito.html = html;
-    js.prototype.__dito.css.content = css;
   }
 
   saveComponent(key, data) {
@@ -376,7 +361,7 @@ class Dito {
         const lengthBefore = localStorage.length;
         this.removeOldestComponent();
         if (lengthBefore === localStorage.length) {
-          console.error("Component `" + key + "` won't be cached because there is no space in localStorage");
+          console.error('Component `' + key + '` won\'t be cached because there is no space in localStorage');
           return;
         }
         this.saveComponent(key, data);
@@ -385,14 +370,14 @@ class Dito {
   }
 
   isDitoComponentKey(name) {
-    return name.substring(0, 6) === '_dito_';
+    return name.startsWith('_dito_');
   }
 
   removeOldestComponent() {
     const oldest = {
       key: null,
       time: null,
-    }
+    };
     for (let i=0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
       if (!this.isDitoComponentKey(key)) {
@@ -427,13 +412,13 @@ class Dito {
 
   async validateFiles(component, compFiles) {
     const fileKeys = Object.keys(compFiles);
-    for (var j = 0; j < fileKeys.length; j++) {
+    for (let j = 0; j < fileKeys.length; j++) {
       const file = compFiles[fileKeys[j]];
 
       if (!file.ok && file !== this._SKIP) {
         const error = await file.text();
         console.error(
-          key.toUpperCase() + " of component `" + component + "` returned an error: " + error + '. Skipping...'
+            key.toUpperCase() + ' of component `' + component + '` returned an error: ' + error + '. Skipping...',
         );
         return false;
       }
@@ -474,11 +459,11 @@ class Dito {
     } catch (e) {
       if (e.toString().match(/unsafe-eval|CSP/)) {
         console.error(
-          'It seems you are using the Dito in an ' +
-          'environment with Content Security Policy that prohibits unsafe-eval. ' +
-          'The template compiler cannot work in this environment. Consider ' +
-          'relaxing the policy to allow unsafe-eval or pre-compiling your ' +
-          'templates into render functions.'
+            'It seems you are using the Dito in an '
+            + 'environment with Content Security Policy that prohibits unsafe-eval. '
+            + 'The template compiler cannot work in this environment. Consider '
+            + 'relaxing the policy to allow unsafe-eval or pre-compiling your '
+            + 'templates into render functions.',
         );
       }
       return true;

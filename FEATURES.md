@@ -1,4 +1,6 @@
 # Features:
+- [DONE] CLEAR OLD NODES - old not existing nodes (for example generated with for) are still being compiled on render which is quickly becoming an issue
+- [IMPROVEMENT] Move component compilation to server and generate required files separated into categories (css rules, html with filled "replace me", file with all segrageated "replace me" etc.) in case of performance problems
 - [DONE] Templates: - extended dito-inject with calculated names and data injection, also can be called multiple times without problem
   - <del>can be transported between components</del>
   - <del>can be used in loops with different sets of data</del>
