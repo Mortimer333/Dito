@@ -3,7 +3,7 @@ import { Dito } from "../src/dito.js";
 const URL = 'http://dito.local/';
 const order = [
   'attributes', 'bindandfor', 'callback', 'css', 'cssscopes', 'defaults',  'events', 'for_min', 'for_reverse',
-  'for_nested', 'get', 'if', 'ifnested', 'injected', 'input', 'localstorage', 'output', 'settings',
+  'for_nested', 'get', 'if', 'ifnested', 'injected', 'input', 'localstorage', 'output', 'settings', 'scope',
 ];
 const tests = {};
 const success = 'SUCCESS';

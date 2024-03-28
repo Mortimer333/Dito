@@ -1,0 +1,11 @@
+<test-scope-tab-inner>
+  <div @pack="'prisoner'">
+<!--
+        Adding For n(1) actually makes it work for the first render but later forAction is unable to update scope of the
+        nodes (they get disjoined ?)
+-->
+<!--    <span @for="1">-->
+        <dito-inject></dito-inject>
+<!--    </span>-->
+  </div>
+</test-scope-tab-inner>

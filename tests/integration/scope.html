@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>Test</title>
+  </head>
+  <body>
+    <test-scope></test-scope>
+    <script type="module">
+      import * as TH from "../test.js";
+
+      /*
+        We have huge problem with keeping proper scope of nodes which have gone multiple injection (dito-inject).
+        It just gets lost and we end ub with empty object each time (if you wrap injection with for at the right moment
+        you can get one render with proper scope but later you have to reset for (bring it's children to 0) and render
+        it anew otherwise nodes scope won't update.
+       */
+      const container = TH.getContainer();
+      const ver = Math.random();
+      container.register('test-scope', ver);
+      container.register('test-inner-for', ver, 'test-scope/');
+      container.register('test-scope-for-item', ver, 'test-scope/');
+      container.register('test-scope-tab', ver, 'test-scope/');
+      container.register('test-scope-tab-inner', ver, 'test-scope/');
+      await container.load();
+
+      // TH.validateTestAndMoveToNext();
+    </script>
+  </body>
+</html>

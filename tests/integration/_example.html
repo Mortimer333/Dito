@@ -10,7 +10,8 @@
       import * as TH from "../test.js";
 
       const container = TH.getContainer();
-      container.register('test-empty', Math.random());
+      const ver = Math.random();
+      container.register('test-scope', ver);
       await container.load();
 
       TH.validateTestAndMoveToNext();
