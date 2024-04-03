@@ -34,7 +34,7 @@ class DitoElement extends HTMLElement {
   afterFirstRender(result) {} // After first render
   beforeCssRender() {} // Before CSS render
   afterCssRender(result) {} // After CSS render
-  getDefaults() {} // Set compontent default attributes
+  getDefaults() {} // Set component default attributes
 
   async connectedCallback() {
     if (!document.body.contains(this)) {
@@ -440,6 +440,17 @@ class DitoElement extends HTMLElement {
       return;
     }
 
+    // TODO
+    // if (self.parent) {
+    //   const injectParent = this.isInjected.bind(self.parent)(this);
+    //   console.log(this.localName, injectParent)
+    //   if (injectParent && (injectParent?.$self?.rendering || !injectParent?.$self?.rendered)) {
+    //     console.log('queue')
+    //     this.queueRender();
+    //     return;
+    //   }
+    // }
+
     this.clearRenderQueue();
 
     self.rendering = true;
@@ -624,8 +635,18 @@ class DitoElement extends HTMLElement {
   }
 
   renderInjected(item, scope = this, forAnchor = false, forIndex = false) {
+    console.log('rrender ========')
     let rendered = [];
-    scope.querySelectorAll('dito-inject').forEach(inject => {
+    const found = scope.querySelectorAll('dito-inject');
+    found.forEach(inject => {
+      const parent = inject?.$self?.parent || this;
+      if (!inject.$self) {
+        this.defineSelf(inject);
+        inject.$self.parent = parent;
+      }
+      if (this.isInjected(inject)) {
+        return;
+      }
       const uses = inject.$self?.actions?.uses;
       let use = null;
       if (uses?.length > 1) {
@@ -637,7 +658,7 @@ class DitoElement extends HTMLElement {
       }
 
       if (inject.$self?.actions?.packs?.length > 0) {
-        inject.$self.actions.packs.forEach(pack => {
+        inject.$self.actions.packs.forEach(function (pack) {
           pack = this.getExecuteable(pack, inject)(...this.getObservablesValues(inject));
           this.$self.default.injected.forEach(template => {
             if (template.nodeType === 3 || !template.getAttribute(this.packAttrName)) {
@@ -656,15 +677,19 @@ class DitoElement extends HTMLElement {
             const [, subRendered] = this.initInjected(inject, template, use, uses, forAnchor, forIndex);
             rendered = rendered.concat(subRendered);
           });
-        });
+        }.bind(parent));
       } else {
-        this.$self.default.injected.forEach(template => {
+        inject.$self.parent.$self.default.injected.forEach(function (template) {
           const [, subRendered] = this.initInjected(inject, template, use, uses, forAnchor, forIndex);
           rendered = rendered.concat(subRendered);
-        });
+        }.bind(parent));
       }
       inject.remove();
     });
+
+    if (found.length > 0 && rendered.length > 0) {
+      rendered = rendered.concat(this.renderInjected(item, scope, forAnchor, forIndex));
+    }
 
     return rendered;
   }
@@ -686,6 +711,9 @@ class DitoElement extends HTMLElement {
     }
 
     const node = this.cloneNodeRecursive(template, function(template, node) {
+      if (!template.$self.parent) {
+        return;
+      }
       node.$self = Object.assign({}, template.$self);
       node.$self.injectedParent = tag;
       node.$self.setEvents = {};
@@ -716,6 +744,7 @@ class DitoElement extends HTMLElement {
 
       if (scope) {
         node.$self.scope = Object.assign({}, node.$self.scope, scope);
+        template.$self.scope = Object.assign({}, node.$self.scope);
       }
 
       if (__dito.main.firstRendered.get(template)) {
@@ -744,8 +773,8 @@ class DitoElement extends HTMLElement {
 
       rendered.push(node);
       node.$self.parent.$self.children.push(node);
+      node.$self.parent.queueRender();
     }.bind(this.$self.parent));
-
     if (!node) {
       throw new Error('Injected node wasn\'t properly cloned');
     }
@@ -1193,6 +1222,7 @@ class DitoElement extends HTMLElement {
           child.$self.forBox.valueName = node.$self.forBox.valueName;
 
           const use = this.getExecuteable(uses.value, child)(...this.getObservablesValues(child));
+          console.log('use', use, uses.value, child, this.getObservablesValues(child), this.getObservablesKeys(child))
           child.$self.scope[uses.name] = use;
           child.$self.parent.actionItem(child);
         }
@@ -1517,17 +1547,14 @@ class DitoElement extends HTMLElement {
     }
 
     const all = path + ' ' + keys.join(' [dito-find-me], ' + path + ' ') + ' [dito-find-me]';
+
     if (node.nodeType !== 3) {
       node.setAttribute('dito-find-me', '');
     } else {
       node.parentElement.setAttribute('dito-find-me', '');
     }
 
-    let res = true;
-    if (!this.querySelector(all)) {
-      res = false;
-    }
-
+    let res = this.querySelector(all);
     if (node.nodeType !== 3) {
       node.removeAttribute('dito-find-me');
     } else {

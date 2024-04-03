@@ -1,3 +1,5 @@
-<span @for="rows" @value="row" @key="rowKey">
-    <dito-inject @use="{row, key: rowKey}" @pack="'row'"></dito-inject>
-  </span>
+<dito-inject @use="{row: {test:row}, key: 'key'}" @pack="'row'"></dito-inject>
+<span @for="rows" @value="row2" @key="rowKey2">
+  <dito-inject @use="{row: row2, key: rowKey2}" @pack="'row'"></dito-inject>
+</span>
+<button @e:click="change()">Change</button>

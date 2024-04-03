@@ -11,8 +11,8 @@
 
       /*
         We have huge problem with keeping proper scope of nodes which have gone multiple injection (dito-inject).
-        It just gets lost and we end ub with empty object each time (if you wrap injection with for at the right moment
-        you can get one render with proper scope but later you have to reset for (bring it's children to 0) and render
+        It just gets lost and we end up with empty object each time (if you wrap injection with for at the right moment
+        you can get one render with proper scope but later you have to reset for (bring its children to 0) and render
         it anew otherwise nodes scope won't update.
        */
       const container = TH.getContainer();
