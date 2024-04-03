@@ -202,11 +202,11 @@ first usage. If you want to be able to use `@actions`, `Injectables`, `Dynamic C
     - [`firstrender`](documentation/LIFECYCLE.md#firstrender---beforefirstrender)
     - [`firstrendered`](documentation/LIFECYCLE.md#firstrendered---afterfirstrender)
     - `destroyed` 🚫
-- [`Injectables`](documentation/INJECTABLES.md)
+- [`Injectables` 💀](documentation/INJECTABLES.md)
   - [`default behaviour`](documentation/INJECTABLES.md#default-behaviour)
   - [`@pack`](documentation/INJECTABLES.md#pack)
   - [`@use`](documentation/INJECTABLES.md#use)
-  - [`@uname` ⚗️](documentation/INJECTABLES.md#uname-)
+  - [`@uname`️](documentation/INJECTABLES.md#uname-)
   - [Passing down](documentation/INJECTABLES.md#passing-injected-template-passing-components-etc)
 - [Professional Topics:](documentation/PROFESSIONALTOPICS.md)
   - [`$self`](documentation/PROFESSIONALTOPICS.md#self)
